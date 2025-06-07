@@ -1,4 +1,4 @@
-package jsonpointer_test
+package benchmarks
 
 import (
 	"testing"
