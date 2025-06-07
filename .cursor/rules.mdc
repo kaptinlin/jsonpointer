@@ -1,0 +1,153 @@
+---
+description: JSON Pointer high-performance Golang implementation rules
+globs: 
+alwaysApply: true
+---
+# JSON Pointer Go Implementation Rules
+
+## Core Principles
+
+### 1. TypeScript Compatibility
+- Maintain 100% functional compatibility with json-pointer TypeScript implementation
+- Support all operations: parse, format, escape/unescape, get, find, validate
+- Preserve exact error semantics and edge case handling
+- Mirror TypeScript API behavior precisely
+
+### 2. Architecture Based on Reference Implementation
+- Follow algorithms from reference/json-pointer/src/ implementation
+- Align core operations with TypeScript API structure
+- Maintain validation logic consistency
+- Port all relevant test cases from __tests__/ directory
+
+### 3. Modern Go Best Practices
+- Implement zero-allocation hot paths where possible
+- Follow progressive optimization approach: correctness first, then performance
+- Use type constraints appropriately
+
+### 4. Code Quality Standards
+- All comments must be in English
+- Include references to TypeScript original code
+- Document algorithm complexity
+- Follow consistent comment format for exported functions
+
+### 5. Package Design
+- Clear separation of concerns
+- Interface-based design
+- Minimal external dependencies
+- Prefer standard library when possible
+
+## Comment Standards
+
+### Required Format for Exported Functions
+- Document function purpose in Go context
+- Include reference to TypeScript original code
+- Note any algorithmic complexity considerations
+- Use consistent English documentation
+
+### Requirements
+- All comments in English
+- Reference TypeScript source when relevant
+- Document performance characteristics
+- Maintain clean, readable code
+
+## Type System Design
+
+### Core Types
+Map TypeScript types to appropriate Go equivalents:
+- PathStep interface for string | number union type
+- Path as slice of PathStep elements
+- Reference struct with Val, Obj, Key fields
+- Specialized ArrayReference and ObjectReference types for type safety
+
+### Design Goals
+- Type safety without boxing overhead
+- Clean API surface
+- Performance-oriented design
+- Compatibility with Go idioms
+
+## API Design
+
+### Function Mapping
+Maintain 1:1 mapping with TypeScript functions:
+- ParseJsonPointer for pointer string to path conversion
+- FormatJsonPointer for path to pointer string conversion
+- EscapeComponent/UnescapeComponent for component encoding
+- Get for safe value retrieval
+- Find for contextual value location
+- Validation functions for input checking
+
+### Error Handling Philosophy
+- Functions that never fail in TypeScript should not return errors in Go
+- Functions that throw in TypeScript should return appropriate Go errors
+- Use simple error types matching TypeScript error messages
+- Avoid complex error hierarchies
+
+## Performance Strategy
+- Complete implementation of all core functions
+- Full test suite coverage
+- Clear, maintainable code
+- Proper error handling
+- Efficient slice operations
+- Multiple algorithm variants with benchmarking
+- Specialized string operations
+
+## Package Structure
+
+### File Organization
+- jsonpointer.go: Main API
+- types.go: Core type definitions
+- errors.go: Error definitions
+- util.go: Utility functions
+- find.go: Find operations
+- get.go: Get operations
+- validate.go: Validation functions
+
+### Dependencies
+- Minimal external dependencies
+- Standard library preference
+- Clean module boundaries
+
+## Testing Strategy
+
+### Test Coverage
+- Map all TypeScript test files to Go equivalents
+- Maintain comprehensive test coverage
+- Include performance benchmarks
+- Validate edge cases and error conditions
+
+### Test Structure
+- Clear test organization
+- Descriptive test names
+- Comprehensive assertion coverage
+- Performance regression testing
+
+## Implementation Guidelines
+
+### Simplicity Principles
+- Direct ports without over-engineering
+- Single implementation per operation
+- Avoid unnecessary complexity
+- Focus on maintainability
+
+### Success Criteria
+- All tests passing
+- Clean, readable implementation
+- Good performance characteristics
+
+## Development Process
+
+### Implementation Priority
+1. Core types and error definitions
+2. Utility functions
+3. Get operations
+4. Find operations
+5. Validation functions
+6. Main API integration
+7. Performance optimization
+8. Comprehensive testing
+
+### Quality Assurance
+- Code review for TypeScript compatibility
+- Performance benchmarking
+- Test coverage verification
+- Documentation completeness 
