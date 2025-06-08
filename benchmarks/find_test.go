@@ -53,7 +53,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -64,7 +64,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{"metadata", "version"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -75,7 +75,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{"users", 0, "name"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -86,7 +86,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{"users", 0, "profile", "settings", "notifications", "email"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -97,7 +97,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{"users", "-"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -108,7 +108,7 @@ func BenchmarkFind(b *testing.B) {
 		path := jsonpointer.Path{"nonexistent", "property"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err == nil {
 				b.Fatal("expected error")
 			}
@@ -157,7 +157,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := ""
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -168,7 +168,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/metadata/version"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -179,7 +179,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/users/0/name"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -190,7 +190,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/users/0/profile/settings/notifications/email"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -201,7 +201,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/users/-"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -216,7 +216,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/foo~1bar"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, docWithEscaped)
+			_, err := jsonpointer.FindByPointer(docWithEscaped, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -227,7 +227,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 		pointer := "/nonexistent/property"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err == nil {
 				b.Fatal("expected error")
 			}
@@ -256,7 +256,7 @@ func BenchmarkFindVsFindByPointer(b *testing.B) {
 
 	b.Run("Find", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.Find(doc, path)
+			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -265,7 +265,7 @@ func BenchmarkFindVsFindByPointer(b *testing.B) {
 
 	b.Run("FindByPointer", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := jsonpointer.FindByPointer(pointer, doc)
+			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -293,7 +293,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"metadata", "version"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path)
+			result := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
 			}
@@ -304,7 +304,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"users", 0, "profile", "email"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path)
+			result := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
 			}
@@ -315,7 +315,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"nonexistent", "property"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path)
+			result := jsonpointer.Get(doc, path...)
 			if result != nil {
 				b.Fatal("expected nil result")
 			}

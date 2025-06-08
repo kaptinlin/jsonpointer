@@ -7,35 +7,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestValidateJsonPointer tests JSON Pointer string validation.
-func TestValidateJsonPointer(t *testing.T) {
+// TestValidate tests JSON Pointer string validation.
+func TestValidate(t *testing.T) {
 	t.Run("valid empty string", func(t *testing.T) {
-		err := ValidateJsonPointer("")
+		err := Validate("")
 		assert.NoError(t, err)
 	})
 
 	t.Run("valid root pointer", func(t *testing.T) {
-		err := ValidateJsonPointer("/")
+		err := Validate("/")
 		assert.NoError(t, err)
 	})
 
 	t.Run("valid simple pointer", func(t *testing.T) {
-		err := ValidateJsonPointer("/foo")
+		err := Validate("/foo")
 		assert.NoError(t, err)
 	})
 
 	t.Run("valid nested pointer", func(t *testing.T) {
-		err := ValidateJsonPointer("/foo/bar/baz")
+		err := Validate("/foo/bar/baz")
 		assert.NoError(t, err)
 	})
 
 	t.Run("valid pointer with escaped characters", func(t *testing.T) {
-		err := ValidateJsonPointer("/foo~0bar/baz~1qux")
+		err := Validate("/foo~0bar/baz~1qux")
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid pointer without leading slash", func(t *testing.T) {
-		err := ValidateJsonPointer("foo/bar")
+		err := Validate("foo/bar")
 		assert.Error(t, err)
 		assert.Equal(t, "pointer invalid", err.Error())
 	})
@@ -43,7 +43,7 @@ func TestValidateJsonPointer(t *testing.T) {
 	t.Run("invalid pointer too long", func(t *testing.T) {
 		// Create a pointer longer than 1024 characters
 		longPointer := "/" + strings.Repeat("a", 1024)
-		err := ValidateJsonPointer(longPointer)
+		err := Validate(longPointer)
 		assert.Error(t, err)
 		assert.Equal(t, "pointer too long", err.Error())
 	})
@@ -51,17 +51,17 @@ func TestValidateJsonPointer(t *testing.T) {
 	t.Run("valid pointer exactly 1024 characters", func(t *testing.T) {
 		// Create a pointer exactly 1024 characters (including leading slash)
 		exactPointer := "/" + strings.Repeat("a", 1023)
-		err := ValidateJsonPointer(exactPointer)
+		err := Validate(exactPointer)
 		assert.NoError(t, err)
 	})
 
 	t.Run("validates path when not string", func(t *testing.T) {
 		// Valid path
-		err := ValidateJsonPointer(Path{"foo", "bar"})
+		err := Validate(Path{"foo", "bar"})
 		assert.NoError(t, err)
 
 		// Invalid path (not a slice)
-		err = ValidateJsonPointer(123)
+		err = Validate(123)
 		assert.Error(t, err)
 		assert.Equal(t, "invalid path", err.Error())
 	})
@@ -195,7 +195,7 @@ func TestValidatePath(t *testing.T) {
 // TestValidateEdgeCases tests edge cases and integration scenarios.
 func TestValidateEdgeCases(t *testing.T) {
 	t.Run("validate pointer with unicode characters", func(t *testing.T) {
-		err := ValidateJsonPointer("/café/naïve/résumé")
+		err := Validate("/café/naïve/résumé")
 		assert.NoError(t, err)
 	})
 
@@ -205,7 +205,7 @@ func TestValidateEdgeCases(t *testing.T) {
 	})
 
 	t.Run("validate pointer with numbers as strings", func(t *testing.T) {
-		err := ValidateJsonPointer("/0/1/2")
+		err := Validate("/0/1/2")
 		assert.NoError(t, err)
 	})
 
@@ -216,7 +216,7 @@ func TestValidateEdgeCases(t *testing.T) {
 
 	t.Run("validate complex nested pointer", func(t *testing.T) {
 		complexPointer := "/users/0/profile/settings/notifications/email/enabled"
-		err := ValidateJsonPointer(complexPointer)
+		err := Validate(complexPointer)
 		assert.NoError(t, err)
 	})
 

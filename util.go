@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// fastAtoi converts a string to an integer quickly, similar to woodsbury's implementation.
+// fastAtoi converts a string to an integer quickly.
 // Returns -1 if the string is not a valid non-negative integer.
 func fastAtoi(s string) int {
 	if len(s) == 0 {
@@ -45,7 +45,7 @@ func fastAtoi(s string) int {
 //	  if (component.indexOf('~') === -1) return component;
 //	  return component.replace(r1, '/').replace(r2, '~');
 //	}
-func UnescapeComponent(component string) string {
+func unescapeComponent(component string) string {
 	// Use strings.IndexByte for fast check if escaping is needed
 	if strings.IndexByte(component, '~') == -1 {
 		return component
@@ -81,7 +81,7 @@ func UnescapeComponent(component string) string {
 //	  if (component.indexOf('/') === -1 && component.indexOf('~') === -1) return component;
 //	  return component.replace(r3, '~0').replace(r4, '~1');
 //	}
-func EscapeComponent(component string) string {
+func escapeComponent(component string) string {
 	// Use strings.IndexByte for fast check
 	if strings.IndexByte(component, '/') == -1 && strings.IndexByte(component, '~') == -1 {
 		return component
@@ -112,7 +112,7 @@ func EscapeComponent(component string) string {
 //	  // TODO: Performance of this line can be improved: (1) don't use .split(); (2) don't use .map().
 //	  return pointer.slice(1).split('/').map(unescapeComponent);
 //	}
-func ParseJsonPointer(pointer string) Path {
+func parseJsonPointer(pointer string) Path {
 	if pointer == "" {
 		return Path{}
 	}
@@ -133,7 +133,7 @@ func ParseJsonPointer(pointer string) Path {
 		if i == len(pointer) || pointer[i] == '/' {
 			// Include empty string segments (like empty segments in "/foo///")
 			segment := pointer[start:i]
-			result = append(result, UnescapeComponent(segment))
+			result = append(result, unescapeComponent(segment))
 			start = i + 1
 		}
 	}
@@ -150,13 +150,13 @@ func ParseJsonPointer(pointer string) Path {
 //	  if (isRoot(path)) return '';
 //	  return '/' + path.map((component) => escapeComponent(String(component))).join('/');
 //	}
-func FormatJsonPointer(path Path) string {
+func formatJsonPointer(path Path) string {
 	if IsRoot(path) {
 		return ""
 	}
 	parts := make([]string, len(path))
 	for i, component := range path {
-		parts[i] = EscapeComponent(componentToString(component))
+		parts[i] = escapeComponent(componentToString(component))
 	}
 	return "/" + strings.Join(parts, "/")
 }
@@ -170,7 +170,7 @@ func FormatJsonPointer(path Path) string {
 func ToPath(pointer any) Path {
 	switch p := pointer.(type) {
 	case string:
-		return ParseJsonPointer(p)
+		return parseJsonPointer(p)
 	case Path:
 		return p
 	case []any:

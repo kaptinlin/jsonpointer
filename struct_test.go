@@ -97,7 +97,7 @@ func TestGetWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(user, tt.path)
+			result := Get(user, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -124,7 +124,7 @@ func TestFindWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ref, err := Find(user, tt.path)
+			ref, err := Find(user, tt.path...)
 			if err != nil {
 				t.Errorf("Find() error = %v", err)
 				return
@@ -159,7 +159,7 @@ func TestNestedStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(profile, tt.path)
+			result := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -192,7 +192,7 @@ func TestMixedMapAndStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path)
+			result := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -219,7 +219,7 @@ func TestFindByPointerWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ref, err := FindByPointer(tt.pointer, user)
+			ref, err := FindByPointer(user, tt.pointer)
 			if err != nil {
 				t.Errorf("FindByPointer() error = %v", err)
 				return
@@ -253,7 +253,7 @@ func TestFindByPointerNestedStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ref, err := FindByPointer(tt.pointer, profile)
+			ref, err := FindByPointer(profile, tt.pointer)
 			if err != nil {
 				t.Errorf("FindByPointer() error = %v", err)
 				return
@@ -287,7 +287,7 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(user, tt.path)
+				result := Get(user, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -309,7 +309,7 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ref, err := Find(user, tt.path)
+				ref, err := Find(user, tt.path...)
 				if err != nil {
 					t.Errorf("Find() error = %v", err)
 					return
@@ -335,7 +335,7 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ref, err := FindByPointer(tt.pointer, user)
+				ref, err := FindByPointer(user, tt.pointer)
 				if err != nil {
 					t.Errorf("FindByPointer() error = %v", err)
 					return
@@ -371,7 +371,7 @@ func TestNestedPointerToStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(profile, tt.path)
+			result := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -379,7 +379,7 @@ func TestNestedPointerToStruct(t *testing.T) {
 	}
 
 	// Test FindByPointer with nested pointer
-	ref, err := FindByPointer("/user/name", profile)
+	ref, err := FindByPointer(profile, "/user/name")
 	if err != nil {
 		t.Errorf("FindByPointer() error = %v", err)
 		return
@@ -401,7 +401,7 @@ func TestMultipleLevelsPointers(t *testing.T) {
 	userPtr := &user
 
 	// This should still work by dereferencing all pointers
-	name := Get(userPtr, Path{"name"})
+	name := Get(userPtr, "name")
 	if name != "Charlie" {
 		t.Errorf("Get() with double pointer = %v, want %v", name, "Charlie")
 	}
@@ -456,7 +456,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(company, tt.path)
+				result := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -465,7 +465,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		// Test array access separately (can't compare slices directly)
 		t.Run("Employee array access", func(t *testing.T) {
-			employees := Get(company, Path{"employees"})
+			employees := Get(company, "employees")
 			if employees == nil {
 				t.Error("Get() employees should not be nil")
 				return
@@ -500,7 +500,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(company, tt.path)
+				result := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -522,7 +522,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ref, err := FindByPointer(tt.pointer, company)
+				ref, err := FindByPointer(company, tt.pointer)
 				if err != nil {
 					t.Errorf("FindByPointer() error = %v", err)
 					return
@@ -586,7 +586,7 @@ func TestMapContainingStructs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path)
+			result := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -594,7 +594,7 @@ func TestMapContainingStructs(t *testing.T) {
 	}
 
 	// Test with FindByPointer
-	ref, err := FindByPointer("/profiles/admin/user/Email", data)
+	ref, err := FindByPointer(data, "/profiles/admin/user/Email")
 	if err != nil {
 		t.Errorf("FindByPointer() error = %v", err)
 	} else if ref.Val != "admin@example.com" {
@@ -637,7 +637,7 @@ func TestMixedDataEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path)
+			result := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -650,14 +650,14 @@ func TestNilPointerHandling(t *testing.T) {
 	var user *User = nil
 
 	// Should return nil for nil pointer
-	result := Get(user, Path{"name"})
+	result := Get(user, "name")
 	if result != nil {
 		t.Errorf("Get() with nil pointer = %v, want nil", result)
 	}
 
 	// FindByPointer should return a reference with nil values
 	// This is consistent with how other paths work when they can't be resolved
-	ref, err := FindByPointer("/name", user)
+	ref, err := FindByPointer(user, "/name")
 	if err != nil {
 		t.Errorf("FindByPointer() with nil pointer should not return error, got: %v", err)
 	}

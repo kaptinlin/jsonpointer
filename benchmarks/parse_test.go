@@ -6,14 +6,14 @@ import (
 	"github.com/kaptinlin/jsonpointer"
 )
 
-// BenchmarkParseJsonPointer benchmarks the ParseJsonPointer function.
+// BenchmarkParseJsonPointer benchmarks the Parse function.
 // Maps to: __bench__/parseJsonPointer.ts
 func BenchmarkParseJsonPointer(b *testing.B) {
 	b.Run("root_pointer", func(b *testing.B) {
 		pointer := ""
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 0 {
 				b.Fatal("expected empty path")
 			}
@@ -24,7 +24,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/foo"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 1 {
 				b.Fatal("expected single step path")
 			}
@@ -35,7 +35,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/foo/bar/baz"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 3 {
 				b.Fatal("expected three step path")
 			}
@@ -46,7 +46,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/users/0/profile/settings/notifications/email/enabled"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 7 {
 				b.Fatal("expected seven step path")
 			}
@@ -57,7 +57,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/foo~1bar/baz~0qux"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 2 {
 				b.Fatal("expected two step path")
 			}
@@ -68,7 +68,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/a~1b/c~0d/e~1f~0g"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 3 {
 				b.Fatal("expected three step path")
 			}
@@ -79,7 +79,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/0/1/2/3/4/5/6/7/8/9"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 10 {
 				b.Fatal("expected ten step path")
 			}
@@ -90,7 +90,7 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 		pointer := "/users/-"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.ParseJsonPointer(pointer)
+			result := jsonpointer.Parse(pointer)
 			if len(result) != 2 {
 				b.Fatal("expected two step path")
 			}
@@ -98,14 +98,13 @@ func BenchmarkParseJsonPointer(b *testing.B) {
 	})
 }
 
-// BenchmarkFormatJsonPointer benchmarks the FormatJsonPointer function.
+// BenchmarkFormatJsonPointer benchmarks the formatJsonPointer function.
 // Maps to: __bench__/parseJsonPointer.ts formatJsonPointer benchmarks
 func BenchmarkFormatJsonPointer(b *testing.B) {
 	b.Run("root_path", func(b *testing.B) {
-		path := jsonpointer.Path{}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format()
 			if result != "" {
 				b.Fatal("expected empty string")
 			}
@@ -113,10 +112,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("simple_path", func(b *testing.B) {
-		path := jsonpointer.Path{"foo"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format("foo")
 			if result != "/foo" {
 				b.Fatal("expected '/foo'")
 			}
@@ -124,10 +122,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("nested_path", func(b *testing.B) {
-		path := jsonpointer.Path{"foo", "bar", "baz"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format("foo", "bar", "baz")
 			if result != "/foo/bar/baz" {
 				b.Fatal("expected '/foo/bar/baz'")
 			}
@@ -135,10 +132,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("deep_nested_path", func(b *testing.B) {
-		path := jsonpointer.Path{"users", 0, "profile", "settings", "notifications", "email", "enabled"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format("users", 0, "profile", "settings", "notifications", "email", "enabled")
 			if result != "/users/0/profile/settings/notifications/email/enabled" {
 				b.Fatal("expected deep nested pointer")
 			}
@@ -146,10 +142,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("path_with_special_chars", func(b *testing.B) {
-		path := jsonpointer.Path{"foo/bar", "baz~qux"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format("foo/bar", "baz~qux")
 			if result != "/foo~1bar/baz~0qux" {
 				b.Fatal("expected escaped pointer")
 			}
@@ -157,10 +152,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("array_indices", func(b *testing.B) {
-		path := jsonpointer.Path{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 			if result != "/0/1/2/3/4/5/6/7/8/9" {
 				b.Fatal("expected array indices pointer")
 			}
@@ -168,10 +162,9 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	})
 
 	b.Run("array_end_marker", func(b *testing.B) {
-		path := jsonpointer.Path{"users", "-"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.FormatJsonPointer(path)
+			result := jsonpointer.Format("users", "-")
 			if result != "/users/-" {
 				b.Fatal("expected array end marker pointer")
 			}
@@ -196,8 +189,8 @@ func BenchmarkParseFormatRoundtrip(b *testing.B) {
 	b.Run("parse_format_roundtrip", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			pointer := testPointers[i%len(testPointers)]
-			path := jsonpointer.ParseJsonPointer(pointer)
-			result := jsonpointer.FormatJsonPointer(path)
+			path := jsonpointer.Parse(pointer)
+			result := jsonpointer.Format(path...)
 			if result != pointer {
 				b.Fatalf("roundtrip failed: %s != %s", result, pointer)
 			}
@@ -205,13 +198,13 @@ func BenchmarkParseFormatRoundtrip(b *testing.B) {
 	})
 }
 
-// BenchmarkEscapeComponent benchmarks the EscapeComponent function.
+// BenchmarkEscapeComponent benchmarks the escapeComponent function.
 func BenchmarkEscapeComponent(b *testing.B) {
 	b.Run("no_escape_needed", func(b *testing.B) {
 		component := "simple"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.EscapeComponent(component)
+			result := jsonpointer.Escape(component)
 			if result != component {
 				b.Fatal("expected no changes")
 			}
@@ -222,7 +215,7 @@ func BenchmarkEscapeComponent(b *testing.B) {
 		component := "foo/bar"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.EscapeComponent(component)
+			result := jsonpointer.Escape(component)
 			if result != "foo~1bar" {
 				b.Fatal("expected escaped slash")
 			}
@@ -233,7 +226,7 @@ func BenchmarkEscapeComponent(b *testing.B) {
 		component := "foo~bar"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.EscapeComponent(component)
+			result := jsonpointer.Escape(component)
 			if result != "foo~0bar" {
 				b.Fatal("expected escaped tilde")
 			}
@@ -244,7 +237,7 @@ func BenchmarkEscapeComponent(b *testing.B) {
 		component := "foo~bar/baz"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.EscapeComponent(component)
+			result := jsonpointer.Escape(component)
 			if result != "foo~0bar~1baz" {
 				b.Fatal("expected both escaped")
 			}
@@ -255,7 +248,7 @@ func BenchmarkEscapeComponent(b *testing.B) {
 		component := "~foo~/bar~/"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.EscapeComponent(component)
+			result := jsonpointer.Escape(component)
 			if result != "~0foo~0~1bar~0~1" {
 				b.Fatal("expected complex escaping")
 			}
@@ -263,13 +256,13 @@ func BenchmarkEscapeComponent(b *testing.B) {
 	})
 }
 
-// BenchmarkUnescapeComponent benchmarks the UnescapeComponent function.
+// BenchmarkUnescapeComponent benchmarks the unescapeComponent function.
 func BenchmarkUnescapeComponent(b *testing.B) {
 	b.Run("no_unescape_needed", func(b *testing.B) {
 		component := "simple"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.UnescapeComponent(component)
+			result := jsonpointer.Unescape(component)
 			if result != component {
 				b.Fatal("expected no changes")
 			}
@@ -280,7 +273,7 @@ func BenchmarkUnescapeComponent(b *testing.B) {
 		component := "foo~1bar"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.UnescapeComponent(component)
+			result := jsonpointer.Unescape(component)
 			if result != "foo/bar" {
 				b.Fatal("expected unescaped slash")
 			}
@@ -291,7 +284,7 @@ func BenchmarkUnescapeComponent(b *testing.B) {
 		component := "foo~0bar"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.UnescapeComponent(component)
+			result := jsonpointer.Unescape(component)
 			if result != "foo~bar" {
 				b.Fatal("expected unescaped tilde")
 			}
@@ -302,7 +295,7 @@ func BenchmarkUnescapeComponent(b *testing.B) {
 		component := "foo~0bar~1baz"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.UnescapeComponent(component)
+			result := jsonpointer.Unescape(component)
 			if result != "foo~bar/baz" {
 				b.Fatal("expected both unescaped")
 			}
@@ -313,7 +306,7 @@ func BenchmarkUnescapeComponent(b *testing.B) {
 		component := "~0foo~0~1bar~0~1"
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.UnescapeComponent(component)
+			result := jsonpointer.Unescape(component)
 			if result != "~foo~/bar~/" {
 				b.Fatal("expected complex unescaping")
 			}
@@ -339,8 +332,8 @@ func BenchmarkEscapeUnescapeRoundtrip(b *testing.B) {
 	b.Run("escape_unescape_roundtrip", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			component := testComponents[i%len(testComponents)]
-			escaped := jsonpointer.EscapeComponent(component)
-			result := jsonpointer.UnescapeComponent(escaped)
+			escaped := jsonpointer.Escape(component)
+			result := jsonpointer.Unescape(escaped)
 			if result != component {
 				b.Fatalf("roundtrip failed: %s != %s", result, component)
 			}

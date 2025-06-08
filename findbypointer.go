@@ -103,7 +103,7 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		case isObjectPointer(obj) && obj != nil:
 			// Handle object/map access
 			// Unescape the key component
-			keyStr = UnescapeComponent(keyStr)
+			keyStr = unescapeComponent(keyStr)
 			key = keyStr
 
 			objVal := reflect.ValueOf(obj)
@@ -117,11 +117,11 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 					val = nil // undefined in TypeScript
 				}
 			} else {
-				// 使用优化的 struct 字段查找处理结构体
+				// Handle struct with optimized field lookup
 				if structField(keyStr, &objVal) {
 					val = objVal.Interface()
 				} else {
-					val = nil // 字段未找到
+					val = nil // Field not found
 				}
 			}
 		default:

@@ -1,6 +1,6 @@
 ---
 description: JSON Pointer high-performance Golang implementation rules
-globs: 
+globs:
 alwaysApply: true
 ---
 # JSON Pointer Go Implementation Rules
@@ -54,7 +54,6 @@ alwaysApply: true
 
 ### Core Types
 Map TypeScript types to appropriate Go equivalents:
-- PathStep interface for string | number union type
 - Path as slice of PathStep elements
 - Reference struct with Val, Obj, Key fields
 - Specialized ArrayReference and ObjectReference types for type safety
@@ -150,4 +149,4 @@ Maintain 1:1 mapping with TypeScript functions:
 - Code review for TypeScript compatibility
 - Performance benchmarking
 - Test coverage verification
-- Documentation completeness 
+- Documentation completeness

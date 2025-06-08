@@ -8,15 +8,11 @@ import (
 	"strconv"
 )
 
-// PathStep represents a single step in a JSON Pointer path (string or number).
-// TypeScript original code:
-// export type PathStep = string | number;
-type PathStep = any
-
 // Path represents a JSON Pointer path as array of steps.
 // TypeScript original code:
 // export type Path = readonly PathStep[];
-type Path []PathStep
+// where PathStep = string | number;
+type Path []any
 
 // internalToken represents a single token in a JSON Pointer path with precomputed data.
 // This is used internally for performance optimization, not exposed in the API.
@@ -68,12 +64,12 @@ type ObjectReference[T any] struct {
 	Key string       `json:"key"`
 }
 
-// isArrayReference checks if a Reference points to an array element.
+// IsArrayReference checks if a Reference points to an array element.
 // TypeScript original code:
 // export const isArrayReference = <T = unknown>(ref: Reference): ref is ArrayReference<T> =>
 //
 //	isArray(ref.obj) && typeof ref.key === 'number';
-func isArrayReference(ref Reference) bool {
+func IsArrayReference(ref Reference) bool {
 	if ref.Obj == nil || ref.Key == nil {
 		return false
 	}
@@ -96,19 +92,19 @@ func isArrayReference(ref Reference) bool {
 	}
 }
 
-// isArrayEnd checks if an array reference points to the end of the array.
+// IsArrayEnd checks if an array reference points to the end of the array.
 // TypeScript original code:
 // export const isArrayEnd = (ref: ArrayReference): boolean => ref.obj.length === ref.key;
-func isArrayEnd[T any](ref ArrayReference[T]) bool {
+func IsArrayEnd[T any](ref ArrayReference[T]) bool {
 	return len(ref.Obj) == ref.Key
 }
 
-// isObjectReference checks if a Reference points to an object property.
+// IsObjectReference checks if a Reference points to an object property.
 // TypeScript original code:
 // export const isObjectReference = <T = unknown>(ref: Reference): ref is ObjectReference<T> =>
 //
 //	typeof ref.obj === 'object' && typeof ref.key === 'string';
-func isObjectReference(ref Reference) bool {
+func IsObjectReference(ref Reference) bool {
 	if ref.Obj == nil || ref.Key == nil {
 		return false
 	}

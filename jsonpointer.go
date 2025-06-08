@@ -12,7 +12,7 @@
 //	import "github.com/kaptinlin/jsonpointer"
 //
 //	// Parse JSON Pointer string to path
-//	path := jsonpointer.ParseJsonPointer("/users/0/name")
+//	path := jsonpointer.Parse("/users/0/name")
 //
 //	// Find value with error handling
 //	ref, err := jsonpointer.Find(data, path)
@@ -24,49 +24,62 @@
 //	value := jsonpointer.Get(data, path)
 //
 //	// Validate JSON Pointer
-//	err = jsonpointer.ValidateJsonPointer("/users/0/name")
-//
-// Breaking Change Notice:
-// This version is a complete rewrite using modern Go generics with zero backward compatibility.
-// All function signatures use 'any' instead of 'interface{}' and follow TypeScript API exactly.
+//	err = jsonpointer.Validate("/users/0/name")
 package jsonpointer
 
-// IsArrayReference checks if a Reference points to an array element.
-func IsArrayReference(ref Reference) bool {
-	return isArrayReference(ref)
+// Get retrieves a value from document using path components (never returns errors, returns nil for not found).
+func Get(doc any, path ...any) any {
+	if len(path) == 0 {
+		return doc
+	}
+	return get(doc, Path(path))
 }
 
-// IsArrayEnd checks if an array reference points to the end of the array.
-func IsArrayEnd[T any](ref ArrayReference[T]) bool {
-	return isArrayEnd(ref)
+// Find locates a reference in document using path components (returns errors for invalid operations).
+func Find(doc any, path ...any) (*Reference, error) {
+	if len(path) == 0 {
+		return &Reference{Val: doc}, nil
+	}
+	return find(doc, Path(path))
 }
 
-// IsObjectReference checks if a Reference points to an object property.
-func IsObjectReference(ref Reference) bool {
-	return isObjectReference(ref)
+// GetByPointer retrieves a value from document using JSON Pointer string (never returns errors).
+func GetByPointer(doc any, pointer string) any {
+	path := Parse(pointer)
+	return get(doc, path)
 }
 
-// ValidateJsonPointer validates a JSON Pointer string or Path.
-func ValidateJsonPointer(pointer any) error {
+// FindByPointer locates a reference in document using JSON Pointer string.
+func FindByPointer(doc any, pointer string) (*Reference, error) {
+	return findByPointer(pointer, doc)
+}
+
+// Parse parses a JSON Pointer string to a path array.
+func Parse(pointer string) Path {
+	return parseJsonPointer(pointer)
+}
+
+// Format formats path components into a JSON Pointer string.
+func Format(path ...any) string {
+	return formatJsonPointer(Path(path))
+}
+
+// Escape escapes special characters in a path component.
+func Escape(component string) string {
+	return escapeComponent(component)
+}
+
+// Unescape unescapes special characters in a path component.
+func Unescape(component string) string {
+	return unescapeComponent(component)
+}
+
+// Validate validates a JSON Pointer string or Path.
+func Validate(pointer any) error {
 	return validateJsonPointer(pointer)
 }
 
 // ValidatePath validates a path array.
 func ValidatePath(path any) error {
 	return validatePath(path)
-}
-
-// Get retrieves a value from object using path (never returns errors, returns nil for not found).
-func Get(val any, path Path) any {
-	return get(val, path)
-}
-
-// Find locates a reference in object using path (returns errors for invalid operations).
-func Find(val any, path Path) (*Reference, error) {
-	return find(val, path)
-}
-
-// FindByPointer optimized find operation using direct string parsing.
-func FindByPointer(pointer string, val any) (*Reference, error) {
-	return findByPointer(pointer, val)
 }

@@ -77,23 +77,23 @@ func main() {
 	fmt.Println("=== 1. Get Operations (never fail, returns nil if not found) ===")
 
 	// Get root
-	result := jsonpointer.Get(doc, jsonpointer.Path{})
+	result := jsonpointer.Get(doc)
 	fmt.Printf("Get root: %+v\n", result)
 
 	// Get simple property
-	result = jsonpointer.Get(doc, jsonpointer.Path{"metadata", "version"})
+	result = jsonpointer.Get(doc, "metadata", "version")
 	fmt.Printf("Get /metadata/version: %v\n", result)
 
 	// Get array element
-	result = jsonpointer.Get(doc, jsonpointer.Path{"users", 0, "name"})
+	result = jsonpointer.Get(doc, "users", 0, "name")
 	fmt.Printf("Get /users/0/name: %v\n", result)
 
 	// Get deep nested property
-	result = jsonpointer.Get(doc, jsonpointer.Path{"users", 1, "profile", "settings", "notifications", "sms"})
+	result = jsonpointer.Get(doc, "users", 1, "profile", "settings", "notifications", "sms")
 	fmt.Printf("Get /users/1/profile/settings/notifications/sms: %v\n", result)
 
 	// Get non-existent property (returns nil)
-	result = jsonpointer.Get(doc, jsonpointer.Path{"nonexistent", "property"})
+	result = jsonpointer.Get(doc, "nonexistent", "property")
 	fmt.Printf("Get non-existent property: %v\n", result)
 
 	fmt.Println()
@@ -102,7 +102,7 @@ func main() {
 	fmt.Println("=== 2. Find Operations (return errors for invalid paths) ===")
 
 	// Find successful
-	ref, err := jsonpointer.Find(doc, jsonpointer.Path{"users", 0, "profile", "email"})
+	ref, err := jsonpointer.Find(doc, "users", 0, "profile", "email")
 	if err != nil {
 		log.Printf("Find error: %v", err)
 	} else {
@@ -110,7 +110,7 @@ func main() {
 	}
 
 	// Find with array end marker (creates reference to append position)
-	ref, err = jsonpointer.Find(doc, jsonpointer.Path{"users", "-"})
+	ref, err = jsonpointer.Find(doc, "users", "-")
 	if err != nil {
 		log.Printf("Find error: %v", err)
 	} else {
@@ -118,13 +118,13 @@ func main() {
 	}
 
 	// Find with invalid array index (returns error)
-	_, err = jsonpointer.Find(doc, jsonpointer.Path{"users", "invalid_index"})
+	_, err = jsonpointer.Find(doc, "users", "invalid_index")
 	if err != nil {
 		fmt.Printf("Find invalid array index error: %v\n", err)
 	}
 
 	// Find non-existent path (returns error)
-	_, err = jsonpointer.Find(doc, jsonpointer.Path{"nonexistent", "deeply", "nested"})
+	_, err = jsonpointer.Find(doc, "nonexistent", "deeply", "nested")
 	if err != nil {
 		fmt.Printf("Find non-existent path error: %v\n", err)
 	}
@@ -135,7 +135,7 @@ func main() {
 	fmt.Println("=== 3. FindByPointer - Optimized string operations ===")
 
 	// FindByPointer successful
-	ref, err = jsonpointer.FindByPointer("/users/0/profile/settings/privacy", doc)
+	ref, err = jsonpointer.FindByPointer(doc, "/users/0/profile/settings/privacy")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
@@ -143,7 +143,7 @@ func main() {
 	}
 
 	// FindByPointer with escaped characters
-	ref, err = jsonpointer.FindByPointer("/special~0chars/foo~1bar", doc)
+	ref, err = jsonpointer.FindByPointer(doc, "/special~0chars/foo~1bar")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
@@ -151,7 +151,7 @@ func main() {
 	}
 
 	// FindByPointer with array end marker
-	ref, err = jsonpointer.FindByPointer("/users/-", doc)
+	ref, err = jsonpointer.FindByPointer(doc, "/users/-")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
@@ -174,8 +174,8 @@ func main() {
 	}
 
 	for _, pointer := range pointers {
-		path := jsonpointer.ParseJsonPointer(pointer)
-		formatted := jsonpointer.FormatJsonPointer(path)
+		path := jsonpointer.Parse(pointer)
+		formatted := jsonpointer.Format(path...)
 		fmt.Printf("Parse '%s' -> %+v -> Format '%s'\n", pointer, path, formatted)
 	}
 
@@ -193,8 +193,8 @@ func main() {
 	}
 
 	for _, component := range components {
-		escaped := jsonpointer.EscapeComponent(component)
-		unescaped := jsonpointer.UnescapeComponent(escaped)
+		escaped := jsonpointer.Escape(component)
+		unescaped := jsonpointer.Unescape(escaped)
 		fmt.Printf("Component '%s' -> Escape '%s' -> Unescape '%s'\n", component, escaped, unescaped)
 	}
 
@@ -250,8 +250,8 @@ func main() {
 	fmt.Println("=== 7. Type Guards and Reference Analysis ===")
 
 	// Get references to different types
-	arrayRef, _ := jsonpointer.Find(doc, jsonpointer.Path{"users", 0})
-	objectRef, _ := jsonpointer.Find(doc, jsonpointer.Path{"metadata", "version"})
+	arrayRef, _ := jsonpointer.Find(doc, "users", 0)
+	objectRef, _ := jsonpointer.Find(doc, "metadata", "version")
 
 	fmt.Printf("Array reference: %+v\n", arrayRef)
 	fmt.Printf("IsArrayReference: %v\n", jsonpointer.IsArrayReference(*arrayRef))
@@ -283,13 +283,13 @@ func main() {
 
 	fmt.Println("Valid pointers:")
 	for _, pointer := range validPointers {
-		err := jsonpointer.ValidateJsonPointer(pointer)
+		err := jsonpointer.Validate(pointer)
 		fmt.Printf("  '%s': %v\n", pointer, err)
 	}
 
 	fmt.Println("Invalid pointers:")
 	for _, pointer := range invalidPointers {
-		err := jsonpointer.ValidateJsonPointer(pointer)
+		err := jsonpointer.Validate(pointer)
 		fmt.Printf("  '%s': %v\n", pointer, err)
 	}
 
@@ -350,33 +350,33 @@ func main() {
 	fmt.Println("--- Get operations with structs ---")
 
 	// Access fields via JSON tags
-	result = jsonpointer.Get(user, jsonpointer.Path{"id"})
+	result = jsonpointer.Get(user, "id")
 	fmt.Printf("Get user id (via JSON tag): %v\n", result)
 
-	result = jsonpointer.Get(user, jsonpointer.Path{"name"})
+	result = jsonpointer.Get(user, "name")
 	fmt.Printf("Get user name (via JSON tag): %v\n", result)
 
 	// Access field via field name (no JSON tag)
-	result = jsonpointer.Get(user, jsonpointer.Path{"Email"})
+	result = jsonpointer.Get(user, "Email")
 	fmt.Printf("Get user Email (via field name): %v\n", result)
 
 	// Access nested struct fields
-	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "bio"})
+	result = jsonpointer.Get(user, "profile", "bio")
 	fmt.Printf("Get nested profile bio: %v\n", result)
 
-	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "location"})
+	result = jsonpointer.Get(user, "profile", "location")
 	fmt.Printf("Get nested profile location: %v\n", result)
 
 	// Access mixed struct + map
-	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "settings", "theme"})
+	result = jsonpointer.Get(user, "profile", "settings", "theme")
 	fmt.Printf("Get settings theme (struct->map): %v\n", result)
 
 	// Try to access private field (returns nil)
-	result = jsonpointer.Get(user, jsonpointer.Path{"private"})
+	result = jsonpointer.Get(user, "private")
 	fmt.Printf("Get private field (should be nil): %v\n", result)
 
 	// Try to access ignored field (returns nil)
-	result = jsonpointer.Get(user, jsonpointer.Path{"Ignored"})
+	result = jsonpointer.Get(user, "Ignored")
 	fmt.Printf("Get ignored field (should be nil): %v\n", result)
 
 	fmt.Println()
@@ -384,28 +384,28 @@ func main() {
 	// FindByPointer operations with structs
 	fmt.Println("--- FindByPointer operations with structs ---")
 
-	ref, err = jsonpointer.FindByPointer("/id", user)
+	ref, err = jsonpointer.FindByPointer(user, "/id")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
 		fmt.Printf("FindByPointer /id: %v\n", ref.Val)
 	}
 
-	ref, err = jsonpointer.FindByPointer("/name", user)
+	ref, err = jsonpointer.FindByPointer(user, "/name")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
 		fmt.Printf("FindByPointer /name: %v\n", ref.Val)
 	}
 
-	ref, err = jsonpointer.FindByPointer("/profile/bio", user)
+	ref, err = jsonpointer.FindByPointer(user, "/profile/bio")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
 		fmt.Printf("FindByPointer /profile/bio: %v\n", ref.Val)
 	}
 
-	ref, err = jsonpointer.FindByPointer("/profile/settings/theme", user)
+	ref, err = jsonpointer.FindByPointer(user, "/profile/settings/theme")
 	if err != nil {
 		log.Printf("FindByPointer error: %v", err)
 	} else {
@@ -430,14 +430,14 @@ func main() {
 	}
 
 	// Access struct through map
-	result = jsonpointer.Get(mixedData, jsonpointer.Path{"user", "name"})
+	result = jsonpointer.Get(mixedData, "user", "name")
 	fmt.Printf("Get user name from mixed data: %v\n", result)
 
-	result = jsonpointer.Get(mixedData, jsonpointer.Path{"user", "profile", "location"})
+	result = jsonpointer.Get(mixedData, "user", "profile", "location")
 	fmt.Printf("Get user location from mixed data: %v\n", result)
 
 	// Regular map access still works
-	result = jsonpointer.Get(mixedData, jsonpointer.Path{"metadata", "version"})
+	result = jsonpointer.Get(mixedData, "metadata", "version")
 	fmt.Printf("Get metadata version: %v\n", result)
 
 	fmt.Println()

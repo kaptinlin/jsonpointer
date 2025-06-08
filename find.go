@@ -55,169 +55,247 @@ func find(val any, path Path) (*Reference, error) {
 		obj = val
 		key = path[i]
 
-		switch {
-		case isArrayValue(obj):
-			// Handle array access - prioritize type assertions for performance
-			var length int
-			var getArrayValue func(int) any
+		if val == nil {
+			return nil, ErrNotFound
+		}
 
-			// Fast type assertion path
-			switch arr := obj.(type) {
-			case []any:
-				length = len(arr)
-				getArrayValue = func(index int) any { return arr[index] }
-			case *[]any:
-				if arr == nil {
-					return nil, ErrNotFound
-				}
-				length = len(*arr)
-				getArrayValue = func(index int) any { return (*arr)[index] }
-			case []string:
-				length = len(arr)
-				getArrayValue = func(index int) any { return arr[index] }
-			case []int:
-				length = len(arr)
-				getArrayValue = func(index int) any { return arr[index] }
-			case []float64:
-				length = len(arr)
-				getArrayValue = func(index int) any { return arr[index] }
-			default:
-				// Fallback to reflection for other array types
-				arrayVal := reflect.ValueOf(obj)
-				length = arrayVal.Len()
-				getArrayValue = func(index int) any { return arrayVal.Index(index).Interface() }
+		switch obj := obj.(type) {
+		// Fast path for []any (most common case)
+		case []any:
+			keyInt, isEndMarker, err := parseArrayKey(key)
+			if err != nil {
+				return nil, err
 			}
-
-			if keyStr, ok := key.(string); ok && keyStr == "-" {
-				// Array end marker: key becomes array length
-				key = length
-				val = nil // undefined in TypeScript
+			if isEndMarker {
+				key = len(obj)
+				val = nil
 			} else {
-				// Convert key to integer
-				var keyInt int
-				switch k := key.(type) {
-				case int:
-					keyInt = k
-				case string:
-					// Parse string to int
-					parsed, err := strconv.Atoi(k)
-					if err != nil {
-						return nil, ErrInvalidIndex
-					}
-					// Check if string representation matches parsed value (~~key behavior)
-					if strconv.Itoa(parsed) != k {
-						return nil, ErrInvalidIndex
-					}
-					keyInt = parsed
-				default:
-					return nil, ErrInvalidIndex
-				}
-
-				// Check for negative index
-				if keyInt < 0 {
-					return nil, ErrInvalidIndex
-				}
-
-				// Update key to the integer value
 				key = keyInt
-
-				// Get array value if index is valid
-				if keyInt < length {
-					val = getArrayValue(keyInt)
+				if keyInt < len(obj) {
+					val = obj[keyInt]
 				} else {
-					val = nil // undefined in TypeScript
+					val = nil
 				}
 			}
-		case isObjectValue(obj) && obj != nil:
-			// Handle object/map access - prioritize type assertions for performance
+
+		// Fast path for map[string]any (most common case)
+		case map[string]any:
 			keyStr, ok := key.(string)
 			if !ok {
 				return nil, ErrNotFound
 			}
+			if result, exists := obj[keyStr]; exists {
+				val = result
+			} else {
+				val = nil
+			}
 
-			// Fast type assertion path
-			switch objMap := obj.(type) {
-			case map[string]any:
-				if result, exists := objMap[keyStr]; exists {
-					val = result
+		// Handle other specific types without conversion
+		case []string:
+			keyInt, isEndMarker, err := parseArrayKey(key)
+			if err != nil {
+				return nil, err
+			}
+			if isEndMarker {
+				key = len(obj)
+				val = nil
+			} else {
+				key = keyInt
+				if keyInt < len(obj) {
+					val = obj[keyInt]
 				} else {
-					val = nil // undefined in TypeScript
-				}
-			case *map[string]any:
-				if objMap == nil {
-					return nil, ErrNotFound
-				}
-				if result, exists := (*objMap)[keyStr]; exists {
-					val = result
-				} else {
-					val = nil // undefined in TypeScript
-				}
-			case map[string]string:
-				if result, exists := objMap[keyStr]; exists {
-					val = result
-				} else {
-					val = nil // undefined in TypeScript
-				}
-			case map[string]int:
-				if result, exists := objMap[keyStr]; exists {
-					val = result
-				} else {
-					val = nil // undefined in TypeScript
-				}
-			case map[string]float64:
-				if result, exists := objMap[keyStr]; exists {
-					val = result
-				} else {
-					val = nil // undefined in TypeScript
-				}
-			default:
-				// Fallback to reflection for other object types
-				objVal := reflect.ValueOf(obj)
-				if objVal.Kind() == reflect.Map {
-					// Handle map
-					mapKey := reflect.ValueOf(keyStr)
-					mapVal := objVal.MapIndex(mapKey)
-					if mapVal.IsValid() {
-						val = mapVal.Interface()
-					} else {
-						val = nil // undefined in TypeScript
-					}
-				} else {
-					// Handle struct using our optimized struct field lookup
-					if structField(keyStr, &objVal) {
-						val = objVal.Interface()
-					} else {
-						val = nil // Field not found
-					}
+					val = nil
 				}
 			}
+
+		case []int:
+			keyInt, isEndMarker, err := parseArrayKey(key)
+			if err != nil {
+				return nil, err
+			}
+			if isEndMarker {
+				key = len(obj)
+				val = nil
+			} else {
+				key = keyInt
+				if keyInt < len(obj) {
+					val = obj[keyInt]
+				} else {
+					val = nil
+				}
+			}
+
+		case []float64:
+			keyInt, isEndMarker, err := parseArrayKey(key)
+			if err != nil {
+				return nil, err
+			}
+			if isEndMarker {
+				key = len(obj)
+				val = nil
+			} else {
+				key = keyInt
+				if keyInt < len(obj) {
+					val = obj[keyInt]
+				} else {
+					val = nil
+				}
+			}
+
+		case map[string]string:
+			keyStr, ok := key.(string)
+			if !ok {
+				return nil, ErrNotFound
+			}
+			if result, exists := obj[keyStr]; exists {
+				val = result
+			} else {
+				val = nil
+			}
+
+		case map[string]int:
+			keyStr, ok := key.(string)
+			if !ok {
+				return nil, ErrNotFound
+			}
+			if result, exists := obj[keyStr]; exists {
+				val = result
+			} else {
+				val = nil
+			}
+
+		case map[string]float64:
+			keyStr, ok := key.(string)
+			if !ok {
+				return nil, ErrNotFound
+			}
+			if result, exists := obj[keyStr]; exists {
+				val = result
+			} else {
+				val = nil
+			}
+
 		default:
-			// Not an array or object, can't traverse further
-			return nil, ErrNotFound
+			// Handle reflection-based access for other types
+			objVal := reflect.ValueOf(obj)
+			switch objVal.Kind() {
+			case reflect.Slice:
+				keyInt, isEndMarker, err := parseArrayKey(key)
+				if err != nil {
+					return nil, err
+				}
+				if isEndMarker {
+					key = objVal.Len()
+					val = nil
+				} else {
+					key = keyInt
+					if keyInt < objVal.Len() {
+						val = objVal.Index(keyInt).Interface()
+					} else {
+						val = nil
+					}
+				}
+
+			case reflect.Map:
+				keyStr, ok := key.(string)
+				if !ok {
+					return nil, ErrNotFound
+				}
+				mapKey := reflect.ValueOf(keyStr)
+				mapVal := objVal.MapIndex(mapKey)
+				if mapVal.IsValid() {
+					val = mapVal.Interface()
+				} else {
+					val = nil
+				}
+
+			case reflect.Struct:
+				keyStr, ok := key.(string)
+				if !ok {
+					return nil, ErrNotFound
+				}
+				if structField(keyStr, &objVal) {
+					val = objVal.Interface()
+				} else {
+					val = nil
+				}
+
+			case reflect.Ptr:
+				if objVal.IsNil() {
+					return nil, ErrNotFound
+				}
+				// Dereference pointer and retry
+				val = objVal.Elem().Interface()
+				i-- // Retry with dereferenced value
+				continue
+
+			case reflect.Array:
+				// Handle arrays similar to slices
+				keyInt, isEndMarker, err := parseArrayKey(key)
+				if err != nil {
+					return nil, err
+				}
+				if isEndMarker {
+					key = objVal.Len()
+					val = nil
+				} else {
+					key = keyInt
+					if keyInt < objVal.Len() {
+						val = objVal.Index(keyInt).Interface()
+					} else {
+						val = nil
+					}
+				}
+
+			case reflect.Interface:
+				// Dereference interface and retry
+				if objVal.IsNil() {
+					return nil, ErrNotFound
+				}
+				val = objVal.Elem().Interface()
+				i-- // Retry with dereferenced value
+				continue
+
+			// All primitive types and non-traversable types
+			case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
+				reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
+				reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32,
+				reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Chan,
+				reflect.Func, reflect.String, reflect.UnsafePointer:
+				return nil, ErrNotFound
+			}
 		}
 	}
 
-	ref := &Reference{
+	return &Reference{
 		Val: val,
 		Obj: obj,
 		Key: key,
-	}
-	return ref, nil
+	}, nil
 }
 
-// isArrayValue checks if value is an array (slice).
-func isArrayValue(val any) bool {
-	if val == nil {
-		return false
+// parseArrayKey converts a key to array index with clear return values
+func parseArrayKey(key any) (index int, isEndMarker bool, err error) {
+	switch k := key.(type) {
+	case int:
+		if k < 0 {
+			return 0, false, ErrInvalidIndex
+		}
+		return k, false, nil
+	case string:
+		if k == "-" {
+			return 0, true, nil
+		}
+		parsed, parseErr := strconv.Atoi(k)
+		if parseErr != nil || parsed < 0 {
+			return 0, false, ErrInvalidIndex
+		}
+		// Check if string representation matches parsed value
+		if strconv.Itoa(parsed) != k {
+			return 0, false, ErrInvalidIndex
+		}
+		return parsed, false, nil
+	default:
+		return 0, false, ErrInvalidIndex
 	}
-	return reflect.TypeOf(val).Kind() == reflect.Slice
-}
-
-// isObjectValue checks if value is an object (map or struct).
-func isObjectValue(val any) bool {
-	if val == nil {
-		return false
-	}
-	kind := reflect.TypeOf(val).Kind()
-	return kind == reflect.Map || kind == reflect.Struct || kind == reflect.Ptr
 }
