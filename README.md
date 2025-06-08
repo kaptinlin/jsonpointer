@@ -193,6 +193,89 @@ func main() {
 }
 ```
 
+### Struct Operations
+
+Working with Go structs and JSON tags:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    
+    "github.com/kaptinlin/jsonpointer"
+)
+
+type User struct {
+    Name    string `json:"name"`
+    Age     int    `json:"age"`
+    Email   string // No JSON tag, uses field name
+    private string // Private field, ignored
+    Ignored string `json:"-"` // Explicitly ignored
+}
+
+type Profile struct {
+    User     *User  `json:"user"` // Pointer to struct
+    Location string `json:"location"`
+}
+
+func main() {
+    profile := Profile{
+        User: &User{ // Pointer to struct
+            Name:    "Alice",
+            Age:     30,
+            Email:   "alice@example.com",
+            private: "secret",
+            Ignored: "ignored",
+        },
+        Location: "New York",
+    }
+
+    // JSON tag access
+    name := jsonpointer.Get(profile, jsonpointer.Path{"user", "name"})
+    fmt.Println(name) // Alice
+
+    // Field name access (no JSON tag)
+    email := jsonpointer.Get(profile, jsonpointer.Path{"user", "Email"})
+    fmt.Println(email) // alice@example.com
+
+    // Private fields are ignored
+    private := jsonpointer.Get(profile, jsonpointer.Path{"user", "private"})
+    fmt.Println(private) // <nil>
+
+    // json:"-" fields are ignored  
+    ignored := jsonpointer.Get(profile, jsonpointer.Path{"user", "Ignored"})
+    fmt.Println(ignored) // <nil>
+
+    // Nested struct navigation
+    age := jsonpointer.Get(profile, jsonpointer.Path{"user", "age"})
+    fmt.Println(age) // 30
+
+    // JSON Pointer syntax
+    ref, err := jsonpointer.FindByPointer("/user/name", profile)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(ref.Val) // Alice
+
+    // Mixed struct and map data
+    data := map[string]any{
+        "profile": profile,
+        "meta":    map[string]any{"version": "1.0"},
+        "users":   []User{{Name: "Bob", Age: 25}},
+    }
+    
+    // Access struct in map
+    location := jsonpointer.Get(data, jsonpointer.Path{"profile", "location"})
+    fmt.Println(location) // New York
+    
+    // Access array of structs
+    userName := jsonpointer.Get(data, jsonpointer.Path{"users", 0, "name"})
+    fmt.Println(userName) // Bob
+}
+```
+
 ### Validation
 
 Validate JSON Pointer strings:

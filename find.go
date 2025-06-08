@@ -183,19 +183,11 @@ func find(val any, path Path) (*Reference, error) {
 						val = nil // undefined in TypeScript
 					}
 				} else {
-					// Handle struct
-					if objVal.Kind() == reflect.Ptr {
-						objVal = objVal.Elem()
-					}
-					if objVal.Kind() == reflect.Struct {
-						fieldVal := objVal.FieldByName(keyStr)
-						if fieldVal.IsValid() && fieldVal.CanInterface() {
-							val = fieldVal.Interface()
-						} else {
-							val = nil // undefined in TypeScript
-						}
+					// Handle struct using our optimized struct field lookup
+					if structField(keyStr, &objVal) {
+						val = objVal.Interface()
 					} else {
-						return nil, ErrNotFound
+						val = nil // Field not found
 					}
 				}
 			}

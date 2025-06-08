@@ -11,6 +11,22 @@ func main() {
 	fmt.Println("=== JSON Pointer Go Implementation Examples ===")
 	fmt.Println()
 
+	// Example structs for struct support demonstration
+	type Profile struct {
+		Bio      string         `json:"bio"`
+		Location string         `json:"location"`
+		Settings map[string]any `json:"settings"`
+	}
+
+	type User struct {
+		ID      int    `json:"id"`
+		Name    string `json:"name"`
+		Email   string
+		private string  // private field, ignored
+		Ignored string  `json:"-"` // explicitly ignored
+		Profile Profile `json:"profile"`
+	}
+
 	// Sample JSON document for demonstrations
 	doc := map[string]any{
 		"users": []any{
@@ -304,6 +320,125 @@ func main() {
 	existingPath := jsonpointer.Path{"metadata", "version"}
 	pathFromPath := jsonpointer.ToPath(existingPath)
 	fmt.Printf("ToPath(%+v): %+v\n", existingPath, pathFromPath)
+
+	fmt.Println()
+
+	// Example 10: Struct Support - NEW FEATURE!
+	fmt.Println("=== 10. Struct Support (NEW FEATURE!) ===")
+
+	// Create sample user with struct
+	user := User{
+		ID:      1,
+		Name:    "John Doe",
+		Email:   "john@example.com",
+		private: "secret",  // This won't be accessible
+		Ignored: "ignored", // This won't be accessible due to json:"-"
+		Profile: Profile{
+			Bio:      "Software Engineer",
+			Location: "San Francisco",
+			Settings: map[string]any{
+				"theme":         "dark",
+				"notifications": true,
+			},
+		},
+	}
+
+	fmt.Printf("Sample user struct: %+v\n", user)
+	fmt.Println()
+
+	// Get operations with structs
+	fmt.Println("--- Get operations with structs ---")
+
+	// Access fields via JSON tags
+	result = jsonpointer.Get(user, jsonpointer.Path{"id"})
+	fmt.Printf("Get user id (via JSON tag): %v\n", result)
+
+	result = jsonpointer.Get(user, jsonpointer.Path{"name"})
+	fmt.Printf("Get user name (via JSON tag): %v\n", result)
+
+	// Access field via field name (no JSON tag)
+	result = jsonpointer.Get(user, jsonpointer.Path{"Email"})
+	fmt.Printf("Get user Email (via field name): %v\n", result)
+
+	// Access nested struct fields
+	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "bio"})
+	fmt.Printf("Get nested profile bio: %v\n", result)
+
+	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "location"})
+	fmt.Printf("Get nested profile location: %v\n", result)
+
+	// Access mixed struct + map
+	result = jsonpointer.Get(user, jsonpointer.Path{"profile", "settings", "theme"})
+	fmt.Printf("Get settings theme (struct->map): %v\n", result)
+
+	// Try to access private field (returns nil)
+	result = jsonpointer.Get(user, jsonpointer.Path{"private"})
+	fmt.Printf("Get private field (should be nil): %v\n", result)
+
+	// Try to access ignored field (returns nil)
+	result = jsonpointer.Get(user, jsonpointer.Path{"Ignored"})
+	fmt.Printf("Get ignored field (should be nil): %v\n", result)
+
+	fmt.Println()
+
+	// FindByPointer operations with structs
+	fmt.Println("--- FindByPointer operations with structs ---")
+
+	ref, err = jsonpointer.FindByPointer("/id", user)
+	if err != nil {
+		log.Printf("FindByPointer error: %v", err)
+	} else {
+		fmt.Printf("FindByPointer /id: %v\n", ref.Val)
+	}
+
+	ref, err = jsonpointer.FindByPointer("/name", user)
+	if err != nil {
+		log.Printf("FindByPointer error: %v", err)
+	} else {
+		fmt.Printf("FindByPointer /name: %v\n", ref.Val)
+	}
+
+	ref, err = jsonpointer.FindByPointer("/profile/bio", user)
+	if err != nil {
+		log.Printf("FindByPointer error: %v", err)
+	} else {
+		fmt.Printf("FindByPointer /profile/bio: %v\n", ref.Val)
+	}
+
+	ref, err = jsonpointer.FindByPointer("/profile/settings/theme", user)
+	if err != nil {
+		log.Printf("FindByPointer error: %v", err)
+	} else {
+		fmt.Printf("FindByPointer /profile/settings/theme: %v\n", ref.Val)
+	}
+
+	fmt.Println()
+
+	// Mixed map and struct usage
+	fmt.Println("--- Mixed map and struct usage ---")
+
+	mixedData := map[string]any{
+		"user": user,
+		"metadata": map[string]any{
+			"version": "2.0",
+			"created": "2024-01-01",
+		},
+		"stats": map[string]any{
+			"users_count": 1000,
+			"active":      true,
+		},
+	}
+
+	// Access struct through map
+	result = jsonpointer.Get(mixedData, jsonpointer.Path{"user", "name"})
+	fmt.Printf("Get user name from mixed data: %v\n", result)
+
+	result = jsonpointer.Get(mixedData, jsonpointer.Path{"user", "profile", "location"})
+	fmt.Printf("Get user location from mixed data: %v\n", result)
+
+	// Regular map access still works
+	result = jsonpointer.Get(mixedData, jsonpointer.Path{"metadata", "version"})
+	fmt.Printf("Get metadata version: %v\n", result)
 
 	fmt.Println()
 	fmt.Println("=== All examples completed successfully! ===")

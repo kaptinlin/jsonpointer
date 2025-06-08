@@ -226,32 +226,34 @@ func tryObjectAccess(current any, token internalToken) (any, bool) {
 
 	default:
 		// Fallback to reflection for other object types
-		if !isObject(current) {
-			return nil, false
+		objVal := reflect.ValueOf(current)
+
+		// Handle pointer dereferencing
+		for objVal.Kind() == reflect.Ptr {
+			if objVal.IsNil() {
+				return nil, false
+			}
+			objVal = objVal.Elem()
 		}
 
-		objVal := reflect.ValueOf(current)
-		if objVal.Kind() == reflect.Map {
+		//nolint:exhaustive // We only care about Map and Struct kinds here
+		switch objVal.Kind() {
+		case reflect.Map:
 			mapKey := reflect.ValueOf(token.key)
 			mapVal := objVal.MapIndex(mapKey)
 			if !mapVal.IsValid() {
 				return nil, true // Key doesn't exist
 			}
 			return mapVal.Interface(), true
-		} else {
-			// Handle struct fields
-			if objVal.Kind() == reflect.Ptr {
-				objVal = objVal.Elem()
+		case reflect.Struct:
+			// Handle struct fields using our optimized struct field lookup
+			if structField(token.key, &objVal) {
+				return objVal.Interface(), true
 			}
-			if objVal.Kind() != reflect.Struct {
-				return nil, false
-			}
-
-			fieldVal := objVal.FieldByName(token.key)
-			if !fieldVal.IsValid() || !fieldVal.CanInterface() {
-				return nil, true
-			}
-			return fieldVal.Interface(), true
+			return nil, true // Field not found
+		default:
+			// Not a map or struct, can't handle
+			return nil, false
 		}
 	}
 }
@@ -317,13 +319,4 @@ func isArray(val any) bool {
 		return false
 	}
 	return reflect.TypeOf(val).Kind() == reflect.Slice
-}
-
-// Helper function to check if value is an object (map or struct)
-func isObject(val any) bool {
-	if val == nil {
-		return false
-	}
-	kind := reflect.TypeOf(val).Kind()
-	return kind == reflect.Map || kind == reflect.Struct || kind == reflect.Ptr
 }

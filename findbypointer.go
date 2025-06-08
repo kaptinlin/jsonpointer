@@ -117,19 +117,11 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 					val = nil // undefined in TypeScript
 				}
 			} else {
-				// Handle struct
-				if objVal.Kind() == reflect.Ptr {
-					objVal = objVal.Elem()
-				}
-				if objVal.Kind() == reflect.Struct {
-					fieldVal := objVal.FieldByName(keyStr)
-					if fieldVal.IsValid() && fieldVal.CanInterface() {
-						val = fieldVal.Interface()
-					} else {
-						val = nil // undefined in TypeScript
-					}
+				// 使用优化的 struct 字段查找处理结构体
+				if structField(keyStr, &objVal) {
+					val = objVal.Interface()
 				} else {
-					return nil, ErrNotFound
+					val = nil // 字段未找到
 				}
 			}
 		default:

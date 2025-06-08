@@ -1,7 +1,0 @@
-
-[submodule ".reference/go-openapi-jsonpointer"]
-	path = .reference/go-openapi-jsonpointer
-	url = https://github.com/go-openapi/jsonpointer.git
-[submodule ".reference/woodsbury-jsonpointer"]
-	path = .reference/woodsbury-jsonpointer
-	url = https://github.com/woodsbury/jsonpointer.git
