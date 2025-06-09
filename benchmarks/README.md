@@ -24,42 +24,42 @@ Performance comparison for Go JSON Pointer libraries.
 | Operation | Library | ns/op | B/op | allocs/op |
 |-----------|---------|-------|------|-----------|
 | **Root (`""`)** | | | | |
-| | this (Get) | 0.31 | 0 | 0 |
-| | woodsbury | 1.11 | 0 | 0 |
-| | BragdonD | 2.46 | 0 | 0 |
-| | dolmen-go | 13.79 | 16 | 1 |
-| | this (Find) | 16.60 | 48 | 1 |
-| | go-openapi | 16.37 | 24 | 1 |
+| | this (Get) | 0.55 | 0 | 0 |
+| | woodsbury | 1.10 | 0 | 0 |
+| | BragdonD | 2.48 | 0 | 0 |
+| | dolmen-go | 13.85 | 16 | 1 |
+| | this (Find) | 15.67 | 48 | 1 |
+| | go-openapi | 15.80 | 24 | 1 |
 | **Shallow (`/name`)** | | | | |
-| | this (Get) | 8.50 | 0 | 0 |
-| | dolmen-go | 26.82 | 16 | 1 |
-| | woodsbury | 29.23 | 16 | 1 |
-| | BragdonD | 50.24 | 32 | 1 |
-| | this (Find) | 63.97 | 80 | 3 |
-| | go-openapi | 116.7 | 124 | 5 |
+| | this (Get) | 9.28 | 0 | 0 |
+| | dolmen-go | 27.44 | 16 | 1 |
+| | woodsbury | 30.49 | 16 | 1 |
+| | BragdonD | 50.66 | 32 | 1 |
+| | this (Find) | 67.06 | 80 | 3 |
+| | go-openapi | 114.7 | 124 | 5 |
 | **Deep (`/profile/settings/theme`)** | | | | |
-| | this (Get) | 30.51 | 0 | 0 |
-| | woodsbury | 50.87 | 0 | 0 |
-| | dolmen-go | 64.33 | 16 | 1 |
-| | BragdonD | 125.5 | 64 | 1 |
-| | go-openapi | 140.7 | 192 | 5 |
-| | this (Find) | 169.9 | 144 | 7 |
+| | this (Get) | 29.54 | 0 | 0 |
+| | woodsbury | 51.58 | 0 | 0 |
+| | dolmen-go | 57.32 | 16 | 1 |
+| | BragdonD | 128.8 | 64 | 1 |
+| | go-openapi | 143.0 | 192 | 5 |
+| | this (Find) | 191.0 | 144 | 7 |
 
 ### Parser Performance
 
 | Library | ns/op | B/op | allocs/op |
 |---------|-------|------|-----------|
-| this | 43.98 | 48 | 1 |
-| BragdonD | 46.18 | 64 | 1 |
-| go-openapi | 66.92 | 112 | 2 |
+| this | 45.11 | 48 | 1 |
+| BragdonD | 46.71 | 64 | 1 |
+| go-openapi | 73.95 | 112 | 2 |
 
 ### Data Structure Access
 
 | Scenario | this (Get) | this (Find) |
 |----------|------------|-------------|
-| **Struct** | 81.45 ns/op, 112 B/op | 66.71 ns/op, 160 B/op |
-| **Map** | 8.20 ns/op, 0 B/op | 63.59 ns/op, 80 B/op |
-| **Not Found** | 25.31 ns/op, 0 B/op | 48.57 ns/op, 64 B/op |
+| **Struct** | 78.43 ns/op, 112 B/op | 66.41 ns/op, 160 B/op |
+| **Map** | 8.54 ns/op, 0 B/op | 65.77 ns/op, 80 B/op |
+| **Not Found** | 48.85 ns/op, 64 B/op | 48.85 ns/op, 64 B/op |
 
 ## API Comparison
 
@@ -69,9 +69,9 @@ This implementation provides two functions:
 
 | Scenario | Get | Find |
 |----------|-----|------|
-| Root | 0.31 ns/op, 0 allocs | 16.60 ns/op, 1 alloc |
-| Shallow | 8.50 ns/op, 0 allocs | 63.97 ns/op, 3 allocs |
-| Deep | 30.51 ns/op, 0 allocs | 169.9 ns/op, 7 allocs |
+| Root | 0.55 ns/op, 0 allocs | 15.67 ns/op, 1 alloc |
+| Shallow | 9.28 ns/op, 0 allocs | 67.06 ns/op, 3 allocs |
+| Deep | 29.54 ns/op, 0 allocs | 191.0 ns/op, 7 allocs |
 
 ## Memory Allocation Patterns
 

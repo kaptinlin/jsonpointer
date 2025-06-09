@@ -168,8 +168,19 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		}
 
 	default:
-		// Fallback to reflection for other array types (like []User)
-		if !isArray(current) {
+		// Fallback to reflection for other array types (like []User, native arrays, and pointers to arrays)
+		arrayVal := reflect.ValueOf(current)
+
+		// Handle pointer dereferencing
+		for arrayVal.Kind() == reflect.Ptr {
+			if arrayVal.IsNil() {
+				return nil, true, ErrNilPointer
+			}
+			arrayVal = arrayVal.Elem()
+		}
+
+		// Check if the dereferenced value is an array/slice
+		if arrayVal.Kind() != reflect.Slice && arrayVal.Kind() != reflect.Array {
 			return nil, false, nil
 		}
 
@@ -180,7 +191,6 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 			return nil, true, ErrInvalidIndex
 		}
 
-		arrayVal := reflect.ValueOf(current)
 		switch {
 		case token.index < arrayVal.Len():
 			return arrayVal.Index(token.index).Interface(), true, nil
@@ -262,6 +272,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 				return field.Interface(), true, nil
 			}
 			return nil, true, nil // Field not found
+
 		case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array,
@@ -390,12 +401,4 @@ func findStructField(structVal reflect.Value, key string) reflect.Value {
 	}
 
 	return reflect.Value{} // Not found
-}
-
-// Helper function to check if value is an array (slice)
-func isArray(val any) bool {
-	if val == nil {
-		return false
-	}
-	return reflect.TypeOf(val).Kind() == reflect.Slice
 }

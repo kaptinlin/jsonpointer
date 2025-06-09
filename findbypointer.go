@@ -68,9 +68,30 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		obj = val
 
 		switch {
-		case isArrayPointer(obj):
+		case func() bool {
+			if obj == nil {
+				return false
+			}
+			objVal := reflect.ValueOf(obj)
+			// Handle pointer dereferencing
+			for objVal.Kind() == reflect.Ptr {
+				if objVal.IsNil() {
+					return false
+				}
+				objVal = objVal.Elem()
+			}
+			kind := objVal.Kind()
+			return kind == reflect.Slice || kind == reflect.Array
+		}():
 			// Handle array access
 			arrayVal := reflect.ValueOf(obj)
+			// Handle pointer dereferencing
+			for arrayVal.Kind() == reflect.Ptr {
+				if arrayVal.IsNil() {
+					return nil, ErrNilPointer
+				}
+				arrayVal = arrayVal.Elem()
+			}
 			length := arrayVal.Len()
 
 			if keyStr == "-" {
@@ -135,14 +156,6 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		Obj: obj,
 		Key: key,
 	}, nil
-}
-
-// Helper function to check if value is an array (slice) for pointer operations
-func isArrayPointer(val any) bool {
-	if val == nil {
-		return false
-	}
-	return reflect.TypeOf(val).Kind() == reflect.Slice
 }
 
 // Helper function to check if value is an object (map or struct) for pointer operations

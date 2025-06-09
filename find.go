@@ -189,7 +189,7 @@ func find(val any, path Path) (*Reference, error) {
 			}
 
 			switch objVal.Kind() {
-			case reflect.Slice:
+			case reflect.Slice, reflect.Array:
 				// Array access using reflection
 				if key == "-" {
 					key = strconv.Itoa(objVal.Len())
@@ -230,7 +230,7 @@ func find(val any, path Path) (*Reference, error) {
 
 			case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-				reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array,
+				reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128,
 				reflect.Chan, reflect.Func, reflect.Interface, reflect.Ptr, reflect.String, reflect.UnsafePointer:
 				// Handle all other reflect.Kind types not supported for JSON Pointer traversal
 				return nil, ErrNotFound
