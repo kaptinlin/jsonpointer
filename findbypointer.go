@@ -135,14 +135,14 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 				if mapVal.IsValid() {
 					val = mapVal.Interface()
 				} else {
-					val = nil // undefined in TypeScript
+					return nil, ErrKeyNotFound // Key not found
 				}
 			} else {
 				// Handle struct with optimized field lookup
 				if structField(keyStr, &objVal) {
 					val = objVal.Interface()
 				} else {
-					val = nil // Field not found
+					return nil, ErrFieldNotFound // Field not found
 				}
 			}
 		default:

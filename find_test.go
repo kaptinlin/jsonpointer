@@ -102,15 +102,12 @@ func TestFind(t *testing.T) {
 		assert.True(t, IsArrayReference(*ref))
 	})
 
-	t.Run("can reference missing object key", func(t *testing.T) {
+	t.Run("throws for missing object key", func(t *testing.T) {
 		doc := map[string]any{"foo": 123}
 		// path := ParseJsonPointer("/bar")
-		ref, err := Find(doc, "bar")
-		assert.NoError(t, err)
-
-		assert.Nil(t, ref.Val) // undefined in TypeScript
-		assert.Equal(t, doc, ref.Obj)
-		assert.Equal(t, "bar", ref.Key)
+		_, err := Find(doc, "bar")
+		assert.Error(t, err)
+		assert.Equal(t, ErrKeyNotFound, err)
 	})
 
 	t.Run("can reference missing array key within bounds", func(t *testing.T) {
@@ -196,10 +193,11 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, "bar", val)
 	})
 
-	t.Run("missing key returns nil", func(t *testing.T) {
+	t.Run("missing key returns error", func(t *testing.T) {
 		doc := map[string]any{"foo": "bar"}
 		val, err := Get(doc, "missing")
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, ErrKeyNotFound, err)
 		assert.Nil(t, val)
 	})
 

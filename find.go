@@ -32,7 +32,7 @@ func find(val any, path Path) (*Reference, error) {
 			if result, exists := v[key]; exists {
 				current = result
 			} else {
-				current = nil
+				return nil, ErrKeyNotFound
 			}
 
 		case *map[string]any:
@@ -43,7 +43,7 @@ func find(val any, path Path) (*Reference, error) {
 			if result, exists := (*v)[key]; exists {
 				current = result
 			} else {
-				current = nil
+				return nil, ErrKeyNotFound
 			}
 
 		case []any:
@@ -159,21 +159,21 @@ func find(val any, path Path) (*Reference, error) {
 			if result, exists := v[key]; exists {
 				current = result
 			} else {
-				current = nil
+				return nil, ErrKeyNotFound
 			}
 
 		case map[string]int:
 			if result, exists := v[key]; exists {
 				current = result
 			} else {
-				current = nil
+				return nil, ErrKeyNotFound
 			}
 
 		case map[string]float64:
 			if result, exists := v[key]; exists {
 				current = result
 			} else {
-				current = nil
+				return nil, ErrKeyNotFound
 			}
 
 		default:
@@ -217,7 +217,7 @@ func find(val any, path Path) (*Reference, error) {
 				if mapVal.IsValid() {
 					current = mapVal.Interface()
 				} else {
-					current = nil
+					return nil, ErrKeyNotFound
 				}
 
 			case reflect.Struct:
@@ -225,7 +225,7 @@ func find(val any, path Path) (*Reference, error) {
 				if structField(key, &objVal) {
 					current = objVal.Interface()
 				} else {
-					current = nil
+					return nil, ErrFieldNotFound
 				}
 
 			case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,

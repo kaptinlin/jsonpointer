@@ -211,7 +211,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 	case map[string]any:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true, nil // Key doesn't exist
+			return nil, true, ErrKeyNotFound // Key doesn't exist
 		}
 		return result, true, nil
 
@@ -221,28 +221,28 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 		}
 		result, exists := (*obj)[token.key]
 		if !exists {
-			return nil, true, nil // Key doesn't exist
+			return nil, true, ErrKeyNotFound // Key doesn't exist
 		}
 		return result, true, nil
 
 	case map[string]string:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true, nil // Key doesn't exist
+			return nil, true, ErrKeyNotFound // Key doesn't exist
 		}
 		return result, true, nil
 
 	case map[string]int:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true, nil // Key doesn't exist
+			return nil, true, ErrKeyNotFound // Key doesn't exist
 		}
 		return result, true, nil
 
 	case map[string]float64:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true, nil // Key doesn't exist
+			return nil, true, ErrKeyNotFound // Key doesn't exist
 		}
 		return result, true, nil
 
@@ -263,7 +263,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 			mapKey := reflect.ValueOf(token.key)
 			mapVal := objVal.MapIndex(mapKey)
 			if !mapVal.IsValid() {
-				return nil, true, nil // Key doesn't exist
+				return nil, true, ErrKeyNotFound // Key doesn't exist
 			}
 			return mapVal.Interface(), true, nil
 		case reflect.Struct:
@@ -271,7 +271,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 			if field := findStructField(objVal, token.key); field.IsValid() {
 				return field.Interface(), true, nil
 			}
-			return nil, true, nil // Field not found
+			return nil, true, ErrFieldNotFound // Field not found in struct
 
 		case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,

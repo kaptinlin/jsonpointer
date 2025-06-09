@@ -49,3 +49,9 @@ var ErrIndexOutOfBounds = errors.New("array index out of bounds")
 
 // ErrNilPointer is returned when trying to access through nil pointer.
 var ErrNilPointer = errors.New("cannot traverse through nil pointer")
+
+// ErrFieldNotFound is returned when trying to access a non-existent struct field.
+var ErrFieldNotFound = errors.New("struct field not found")
+
+// ErrKeyNotFound is returned when trying to access a non-existent map key.
+var ErrKeyNotFound = errors.New("map key not found")

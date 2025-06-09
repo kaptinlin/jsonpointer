@@ -85,20 +85,27 @@ func TestGetWithStruct(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		path     Path
-		expected any
+		name        string
+		path        Path
+		expected    any
+		expectError bool
 	}{
-		{"Get name via JSON tag", Path{"name"}, "Charlie"},
-		{"Get age via JSON tag", Path{"age"}, 35},
-		{"Get email via field name", Path{"Email"}, "charlie@example.com"},
-		{"Get nonexistent field", Path{"nonexistent"}, nil},
+		{"Get name via JSON tag", Path{"name"}, "Charlie", false},
+		{"Get age via JSON tag", Path{"age"}, 35, false},
+		{"Get email via field name", Path{"Email"}, "charlie@example.com", false},
+		{"Get nonexistent field", Path{"nonexistent"}, nil, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, _ := Get(user, tt.path...)
-			if result != tt.expected {
+			result, err := Get(user, tt.path...)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for nonexistent field, got nil")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if !tt.expectError && result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
 		})
@@ -649,22 +656,267 @@ func TestMixedDataEdgeCases(t *testing.T) {
 func TestNilPointerHandling(t *testing.T) {
 	var user *User = nil
 
-	// Should return nil for nil pointer
-	result, _ := Get(user, "name")
+	// Should return error when trying to access field of nil pointer
+	result, err := Get(user, "name")
 	if result != nil {
 		t.Errorf("Get() with nil pointer = %v, want nil", result)
 	}
+	// Now we expect an error when trying to access fields of nil pointer
+	if err == nil {
+		t.Error("Get() with nil pointer should return error")
+	}
 
-	// FindByPointer should return a reference with nil values
-	// This is consistent with how other paths work when they can't be resolved
+	// FindByPointer should also return error for nil pointer field access
 	ref, err := FindByPointer(user, "/name")
-	if err != nil {
-		t.Errorf("FindByPointer() with nil pointer should not return error, got: %v", err)
+	if err == nil {
+		t.Error("FindByPointer() with nil pointer should return error")
 	}
-	if ref == nil {
-		t.Error("FindByPointer() should return a reference even for nil pointer")
+	if ref != nil {
+		t.Error("FindByPointer() should return nil reference for nil pointer")
 	}
-	if ref != nil && ref.Val != nil {
-		t.Errorf("FindByPointer() with nil pointer should have nil Val, got %v", ref.Val)
+}
+
+// Test Get function behavior with missing fields (should return error)
+func TestGetMissingFieldBehavior(t *testing.T) {
+	user := User{
+		Name:  "Alice",
+		Age:   30,
+		Email: "alice@example.com",
+	}
+
+	profile := Profile{
+		User:     user,
+		Location: "New York",
+	}
+
+	tests := []struct {
+		name          string
+		data          any
+		path          []string
+		expectedValue any
+		expectedError bool
+		description   string
+	}{
+		{
+			name:          "Missing field at end of path",
+			data:          user,
+			path:          []string{"nonexistent"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing struct field",
+		},
+		{
+			name:          "Missing field in middle of path",
+			data:          user,
+			path:          []string{"nonexistent", "nested"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error when missing field is in middle of path",
+		},
+		{
+			name:          "Missing field in deeper nesting",
+			data:          user,
+			path:          []string{"nonexistent", "very", "deep", "path"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for deeply nested missing fields",
+		},
+		{
+			name:          "Missing nested field in struct",
+			data:          profile,
+			path:          []string{"user", "nonexistent"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing field in nested struct",
+		},
+		{
+			name:          "Missing field with more path after",
+			data:          profile,
+			path:          []string{"user", "nonexistent", "more", "path"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error when missing field has more path after it",
+		},
+		{
+			name:          "Valid field should still work",
+			data:          user,
+			path:          []string{"name"},
+			expectedValue: "Alice",
+			expectedError: false,
+			description:   "Valid fields should continue to work normally",
+		},
+		{
+			name:          "Valid nested field should still work",
+			data:          profile,
+			path:          []string{"user", "name"},
+			expectedValue: "Alice",
+			expectedError: false,
+			description:   "Valid nested fields should continue to work normally",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Get(tt.data, tt.path...)
+
+			// Check error expectation
+			if tt.expectedError && err == nil {
+				t.Errorf("Expected error but got none. %s", tt.description)
+			}
+			if !tt.expectedError && err != nil {
+				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			}
+
+			// Check result
+			if result != tt.expectedValue {
+				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			}
+		})
+	}
+}
+
+// Test Get function with maps to ensure consistent behavior
+func TestGetMissingMapKeyBehavior(t *testing.T) {
+	data := map[string]any{
+		"user": map[string]any{
+			"name": "Bob",
+			"age":  25,
+		},
+		"config": map[string]any{
+			"debug": true,
+		},
+	}
+
+	tests := []struct {
+		name          string
+		path          []string
+		expectedValue any
+		expectedError bool
+		description   string
+	}{
+		{
+			name:          "Missing top-level key",
+			path:          []string{"missing"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing top-level key",
+		},
+		{
+			name:          "Missing key in middle of path",
+			path:          []string{"missing", "nested"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error when missing key is in middle of path",
+		},
+		{
+			name:          "Missing nested key",
+			path:          []string{"user", "missing"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing nested key",
+		},
+		{
+			name:          "Missing nested key with more path",
+			path:          []string{"user", "missing", "more"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error when missing nested key has more path",
+		},
+		{
+			name:          "Valid nested access should work",
+			path:          []string{"user", "name"},
+			expectedValue: "Bob",
+			expectedError: false,
+			description:   "Valid nested access should continue to work",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Get(data, tt.path...)
+
+			// Check error expectation
+			if tt.expectedError && err == nil {
+				t.Errorf("Expected error but got none. %s", tt.description)
+			}
+			if !tt.expectedError && err != nil {
+				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			}
+
+			// Check result
+			if result != tt.expectedValue {
+				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			}
+		})
+	}
+}
+
+// Test mixed struct and map missing field behavior
+func TestGetMissingFieldMixedData(t *testing.T) {
+	user := User{Name: "Charlie", Age: 35}
+	data := map[string]any{
+		"user":   user,
+		"config": map[string]any{"debug": true},
+	}
+
+	tests := []struct {
+		name          string
+		path          []string
+		expectedValue any
+		expectedError bool
+		description   string
+	}{
+		{
+			name:          "Missing field in struct within map",
+			path:          []string{"user", "missing"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing field in struct within map",
+		},
+		{
+			name:          "Missing field in struct with more path",
+			path:          []string{"user", "missing", "deep"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing field in struct with more path",
+		},
+		{
+			name:          "Missing key in map within map",
+			path:          []string{"config", "missing"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing key in nested map",
+		},
+		{
+			name:          "Missing key in map with more path",
+			path:          []string{"config", "missing", "deep"},
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for missing key in map with more path",
+		},
+		{
+			name:          "Valid access should work",
+			path:          []string{"user", "name"},
+			expectedValue: "Charlie",
+			expectedError: false,
+			description:   "Valid access should continue to work",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := Get(data, tt.path...)
+
+			if tt.expectedError && err == nil {
+				t.Errorf("Expected error but got none. %s", tt.description)
+			}
+			if !tt.expectedError && err != nil {
+				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			}
+
+			if result != tt.expectedValue {
+				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			}
+		})
 	}
 }
