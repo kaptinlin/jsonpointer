@@ -43,3 +43,9 @@ var ErrPathTooLong = errors.New("path too long")
 // TypeScript original code from validate.ts:
 // throw new Error('Invalid path step.');
 var ErrInvalidPathStep = errors.New("invalid path step")
+
+// ErrIndexOutOfBounds is returned when array index is out of bounds.
+var ErrIndexOutOfBounds = errors.New("index out of bounds")
+
+// ErrNilPointer is returned when trying to access through nil pointer.
+var ErrNilPointer = errors.New("nil pointer")

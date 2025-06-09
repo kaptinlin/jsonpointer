@@ -38,7 +38,7 @@ func find(val any, path Path) (*Reference, error) {
 		case *map[string]any:
 			// Pointer to map optimization
 			if v == nil {
-				return nil, ErrNotFound
+				return nil, ErrNilPointer
 			}
 			if result, exists := (*v)[key]; exists {
 				current = result
@@ -60,15 +60,18 @@ func find(val any, path Path) (*Reference, error) {
 				}
 				if index < len(v) {
 					current = v[index]
-				} else {
+				} else if index == len(v) {
+					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
+				} else {
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 
 		case *[]any:
 			// Pointer to slice optimization
 			if v == nil {
-				return nil, ErrNotFound
+				return nil, ErrNilPointer
 			}
 			if key == "-" {
 				key = strconv.Itoa(len(*v))
@@ -80,8 +83,11 @@ func find(val any, path Path) (*Reference, error) {
 				}
 				if index < len(*v) {
 					current = (*v)[index]
-				} else {
+				} else if index == len(*v) {
+					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
+				} else {
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 
@@ -97,8 +103,11 @@ func find(val any, path Path) (*Reference, error) {
 				}
 				if index < len(v) {
 					current = v[index]
-				} else {
+				} else if index == len(v) {
+					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
+				} else {
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 
@@ -113,8 +122,11 @@ func find(val any, path Path) (*Reference, error) {
 				}
 				if index < len(v) {
 					current = v[index]
-				} else {
+				} else if index == len(v) {
+					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
+				} else {
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 
@@ -129,8 +141,11 @@ func find(val any, path Path) (*Reference, error) {
 				}
 				if index < len(v) {
 					current = v[index]
-				} else {
+				} else if index == len(v) {
+					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
+				} else {
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 
@@ -163,7 +178,7 @@ func find(val any, path Path) (*Reference, error) {
 			// Handle pointer dereferencing
 			for objVal.Kind() == reflect.Ptr {
 				if objVal.IsNil() {
-					return nil, ErrNotFound
+					return nil, ErrNilPointer
 				}
 				objVal = objVal.Elem()
 			}
@@ -181,8 +196,11 @@ func find(val any, path Path) (*Reference, error) {
 					}
 					if index < objVal.Len() {
 						current = objVal.Index(index).Interface()
-					} else {
+					} else if index == objVal.Len() {
+						// Allow pointing to one past array end (JSON Pointer spec)
 						current = nil
+					} else {
+						return nil, ErrIndexOutOfBounds
 					}
 				}
 

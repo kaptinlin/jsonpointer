@@ -32,7 +32,7 @@ func validatePointerString(pointer string) error {
 		return ErrPointerInvalid
 	}
 
-	// Check length limit
+	// Check length limit (aligned with TypeScript: > 1024)
 	if len(pointer) > 1024 {
 		return ErrPointerTooLong
 	}
@@ -54,7 +54,7 @@ func validatePointerString(pointer string) error {
 	return nil
 }
 
-// validatePath validates a path array.
+// validatePath validates a path array using reflection.
 // Returns an error if the path contains invalid components.
 func validatePath(path any) error {
 	// Check if path is a string slice
@@ -63,7 +63,7 @@ func validatePath(path any) error {
 		return ErrInvalidPath
 	}
 
-	// Check length
+	// Check length (aligned with TypeScript: > 256)
 	length := val.Len()
 	if length > 256 {
 		return ErrPathTooLong
