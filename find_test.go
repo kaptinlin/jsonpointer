@@ -54,22 +54,16 @@ func TestFind(t *testing.T) {
 		assert.Equal(t, []any{1, 2, 3}, res.Obj)
 	})
 
-	t.Run("can reference end of array", func(t *testing.T) {
+	t.Run("array end marker returns error", func(t *testing.T) {
 		doc := map[string]any{
 			"a": map[string]any{
 				"b": []any{1, 2, 3},
 			},
 		}
 		// path := ParseJsonPointer("/a/b/-")
-		ref, err := Find(doc, "a", "b", "-")
-		assert.NoError(t, err)
-
-		assert.Nil(t, ref.Val) // undefined in TypeScript
-		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, "3", ref.Key) // Array length as string
-
-		// Test type guards
-		assert.True(t, IsArrayReference(*ref))
+		_, err := Find(doc, "a", "b", "-")
+		assert.Error(t, err)
+		assert.Equal(t, ErrIndexOutOfBounds, err)
 	})
 
 	t.Run("throws when pointing past array boundary", func(t *testing.T) {
@@ -84,22 +78,16 @@ func TestFind(t *testing.T) {
 		assert.Equal(t, ErrInvalidIndex, err)
 	})
 
-	t.Run("can point one element past array boundary", func(t *testing.T) {
+	t.Run("index at array length returns error", func(t *testing.T) {
 		doc := map[string]any{
 			"a": map[string]any{
 				"b": []any{1, 2, 3},
 			},
 		}
 		// path := ParseJsonPointer("/a/b/3")
-		ref, err := Find(doc, "a", "b", "3")
-		assert.NoError(t, err)
-
-		assert.Nil(t, ref.Val) // undefined in TypeScript
-		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, "3", ref.Key) // Index as string
-
-		// Test type guards
-		assert.True(t, IsArrayReference(*ref))
+		_, err := Find(doc, "a", "b", "3")
+		assert.Error(t, err)
+		assert.Equal(t, ErrIndexOutOfBounds, err)
 	})
 
 	t.Run("throws for missing object key", func(t *testing.T) {
@@ -110,18 +98,15 @@ func TestFind(t *testing.T) {
 		assert.Equal(t, ErrKeyNotFound, err)
 	})
 
-	t.Run("can reference missing array key within bounds", func(t *testing.T) {
+	t.Run("array index at length returns error", func(t *testing.T) {
 		doc := map[string]any{
 			"foo": 123,
 			"bar": []any{1, 2, 3},
 		}
 		// path := ParseJsonPointer("/bar/3")
-		ref, err := Find(doc, "bar", "3")
-		assert.NoError(t, err)
-
-		assert.Nil(t, ref.Val) // undefined in TypeScript
-		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, "3", ref.Key) // Index as string
+		_, err := Find(doc, "bar", "3")
+		assert.Error(t, err)
+		assert.Equal(t, ErrIndexOutOfBounds, err)
 	})
 }
 
@@ -149,13 +134,11 @@ func TestFindByPointer(t *testing.T) {
 		assert.Equal(t, "name", ref.Key)
 	})
 
-	t.Run("handles array end marker", func(t *testing.T) {
+	t.Run("array end marker returns error", func(t *testing.T) {
 		doc := map[string]any{"arr": []any{1, 2, 3}}
-		ref, err := FindByPointer(doc, "/arr/-")
-		assert.NoError(t, err)
-		assert.Nil(t, ref.Val)
-		assert.Equal(t, "3", ref.Key) // Array length as string
-		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
+		_, err := FindByPointer(doc, "/arr/-")
+		assert.Error(t, err)
+		assert.Equal(t, ErrIndexOutOfBounds, err)
 	})
 
 	t.Run("throws for invalid array index", func(t *testing.T) {
@@ -215,11 +198,11 @@ func TestGet(t *testing.T) {
 		assert.Nil(t, val)
 	})
 
-	t.Run("array end marker returns nil", func(t *testing.T) {
+	t.Run("array end marker returns error", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val, err := Get(doc, "-")
-		assert.NoError(t, err)
-		assert.Nil(t, val)
+		_, err := Get(doc, "-")
+		assert.Error(t, err)
+		assert.Equal(t, ErrIndexOutOfBounds, err)
 	})
 
 	t.Run("nested access", func(t *testing.T) {

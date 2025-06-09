@@ -95,9 +95,8 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 			length := arrayVal.Len()
 
 			if keyStr == "-" {
-				// Array end marker: key becomes array length as string
-				key = strconv.Itoa(length)
-				val = nil // undefined in TypeScript
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				// Convert key to integer (~~key behavior in TypeScript)
 				keyInt, err := strconv.Atoi(keyStr)
@@ -115,10 +114,13 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 				key = keyStr // Keep as string for Reference
 
 				// Get array value if index is valid
-				if keyInt < length {
+				switch {
+				case keyInt < length:
 					val = arrayVal.Index(keyInt).Interface()
-				} else {
-					val = nil // undefined in TypeScript
+				case keyInt == length:
+					return nil, ErrIndexOutOfBounds
+				default:
+					return nil, ErrIndexOutOfBounds
 				}
 			}
 		case isObjectPointer(obj) && obj != nil:

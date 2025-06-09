@@ -49,9 +49,8 @@ func find(val any, path Path) (*Reference, error) {
 		case []any:
 			// Array access - optimized inline parsing
 			if key == "-" {
-				// Array end marker - convert length to string for Reference
-				key = strconv.Itoa(len(v))
-				current = nil
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				index := fastAtoi(key)
 				// Validate array index format (no leading zeros except "0")
@@ -62,8 +61,8 @@ func find(val any, path Path) (*Reference, error) {
 				case index < len(v):
 					current = v[index]
 				case index == len(v):
-					// Allow pointing to one past array end (JSON Pointer spec)
-					current = nil
+					// Array end position is nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				default:
 					return nil, ErrIndexOutOfBounds
 				}
@@ -75,8 +74,8 @@ func find(val any, path Path) (*Reference, error) {
 				return nil, ErrNilPointer
 			}
 			if key == "-" {
-				key = strconv.Itoa(len(*v))
-				current = nil
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				index := fastAtoi(key)
 				if index < 0 || strconv.Itoa(index) != key {
@@ -86,8 +85,8 @@ func find(val any, path Path) (*Reference, error) {
 				case index < len(*v):
 					current = (*v)[index]
 				case index == len(*v):
-					// Allow pointing to one past array end (JSON Pointer spec)
-					current = nil
+					// Array end position is nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				default:
 					return nil, ErrIndexOutOfBounds
 				}
@@ -96,8 +95,8 @@ func find(val any, path Path) (*Reference, error) {
 		// Fast path for other common slice types
 		case []string:
 			if key == "-" {
-				key = strconv.Itoa(len(v))
-				current = nil
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				index := fastAtoi(key)
 				if index < 0 || strconv.Itoa(index) != key {
@@ -107,8 +106,8 @@ func find(val any, path Path) (*Reference, error) {
 				case index < len(v):
 					current = v[index]
 				case index == len(v):
-					// Allow pointing to one past array end (JSON Pointer spec)
-					current = nil
+					// Array end position is nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				default:
 					return nil, ErrIndexOutOfBounds
 				}
@@ -116,8 +115,8 @@ func find(val any, path Path) (*Reference, error) {
 
 		case []int:
 			if key == "-" {
-				key = strconv.Itoa(len(v))
-				current = nil
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				index := fastAtoi(key)
 				if index < 0 || strconv.Itoa(index) != key {
@@ -127,8 +126,8 @@ func find(val any, path Path) (*Reference, error) {
 				case index < len(v):
 					current = v[index]
 				case index == len(v):
-					// Allow pointing to one past array end (JSON Pointer spec)
-					current = nil
+					// Array end position is nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				default:
 					return nil, ErrIndexOutOfBounds
 				}
@@ -136,8 +135,8 @@ func find(val any, path Path) (*Reference, error) {
 
 		case []float64:
 			if key == "-" {
-				key = strconv.Itoa(len(v))
-				current = nil
+				// "-" refers to nonexistent element (JSON Pointer spec)
+				return nil, ErrIndexOutOfBounds
 			} else {
 				index := fastAtoi(key)
 				if index < 0 || strconv.Itoa(index) != key {
@@ -147,8 +146,8 @@ func find(val any, path Path) (*Reference, error) {
 				case index < len(v):
 					current = v[index]
 				case index == len(v):
-					// Allow pointing to one past array end (JSON Pointer spec)
-					current = nil
+					// Array end position is nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				default:
 					return nil, ErrIndexOutOfBounds
 				}
@@ -192,8 +191,8 @@ func find(val any, path Path) (*Reference, error) {
 			case reflect.Slice, reflect.Array:
 				// Array access using reflection
 				if key == "-" {
-					key = strconv.Itoa(objVal.Len())
-					current = nil
+					// "-" refers to nonexistent element (JSON Pointer spec)
+					return nil, ErrIndexOutOfBounds
 				} else {
 					index := fastAtoi(key)
 					if index < 0 || strconv.Itoa(index) != key {
@@ -203,8 +202,8 @@ func find(val any, path Path) (*Reference, error) {
 					case index < objVal.Len():
 						current = objVal.Index(index).Interface()
 					case index == objVal.Len():
-						// Allow pointing to one past array end (JSON Pointer spec)
-						current = nil
+						// Array end position is nonexistent element (JSON Pointer spec)
+						return nil, ErrIndexOutOfBounds
 					default:
 						return nil, ErrIndexOutOfBounds
 					}

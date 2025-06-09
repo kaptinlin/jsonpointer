@@ -81,7 +81,7 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 	switch arr := current.(type) {
 	case []any:
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -90,8 +90,8 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < len(arr):
 			return arr[token.index], true, nil
 		case token.index == len(arr):
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
@@ -101,7 +101,7 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 			return nil, true, ErrNilPointer
 		}
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -110,15 +110,15 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < len(*arr):
 			return (*arr)[token.index], true, nil
 		case token.index == len(*arr):
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
 	case []string:
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -127,15 +127,15 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < len(arr):
 			return arr[token.index], true, nil
 		case token.index == len(arr):
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
 	case []int:
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -144,15 +144,15 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < len(arr):
 			return arr[token.index], true, nil
 		case token.index == len(arr):
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
 	case []float64:
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -161,8 +161,8 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < len(arr):
 			return arr[token.index], true, nil
 		case token.index == len(arr):
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
@@ -185,7 +185,7 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		}
 
 		if token.key == "-" {
-			return nil, true, nil // array end marker
+			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
 		}
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
@@ -195,8 +195,8 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		case token.index < arrayVal.Len():
 			return arrayVal.Index(token.index).Interface(), true, nil
 		case token.index == arrayVal.Len():
-			// Allow pointing to one past array end (JSON Pointer spec)
-			return nil, true, nil
+			// Array end position is nonexistent element (JSON Pointer spec)
+			return nil, true, ErrIndexOutOfBounds
 		default:
 			return nil, true, ErrIndexOutOfBounds
 		}

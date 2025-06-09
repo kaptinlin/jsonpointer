@@ -920,3 +920,106 @@ func TestGetMissingFieldMixedData(t *testing.T) {
 		})
 	}
 }
+
+// Test array bounds checking behavior
+func TestArrayBoundsChecking(t *testing.T) {
+	arr := []any{1, 2, 3} // length = 3
+
+	tests := []struct {
+		name          string
+		index         string
+		expectedValue any
+		expectedError bool
+		description   string
+	}{
+		{
+			name:          "Valid index access",
+			index:         "1",
+			expectedValue: 2,
+			expectedError: false,
+			description:   "Should return value for valid index",
+		},
+		{
+			name:          "Array end marker",
+			index:         "-",
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for array end marker (nonexistent element)",
+		},
+		{
+			name:          "Index at array length",
+			index:         "3",
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for index == length (nonexistent element)",
+		},
+		{
+			name:          "Index beyond array length",
+			index:         "5",
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for index > length",
+		},
+		{
+			name:          "Much larger index",
+			index:         "100",
+			expectedValue: nil,
+			expectedError: true,
+			description:   "Should return error for much larger index",
+		},
+	}
+
+	t.Run("Get function array bounds", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result, err := Get(arr, tt.index)
+
+				if tt.expectedError && err == nil {
+					t.Errorf("Expected error but got none. %s", tt.description)
+				}
+				if !tt.expectedError && err != nil {
+					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				}
+				if result != tt.expectedValue {
+					t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+				}
+			})
+		}
+	})
+
+	t.Run("Find function array bounds", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				ref, err := Find(arr, tt.index)
+
+				if tt.expectedError && err == nil {
+					t.Errorf("Expected error but got none. %s", tt.description)
+				}
+				if !tt.expectedError && err != nil {
+					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				}
+				if !tt.expectedError && ref.Val != tt.expectedValue {
+					t.Errorf("Find().Val = %v, want %v. %s", ref.Val, tt.expectedValue, tt.description)
+				}
+			})
+		}
+	})
+
+	t.Run("FindByPointer function array bounds", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				ref, err := FindByPointer(arr, "/"+tt.index)
+
+				if tt.expectedError && err == nil {
+					t.Errorf("Expected error but got none. %s", tt.description)
+				}
+				if !tt.expectedError && err != nil {
+					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				}
+				if !tt.expectedError && ref.Val != tt.expectedValue {
+					t.Errorf("FindByPointer().Val = %v, want %v. %s", ref.Val, tt.expectedValue, tt.description)
+				}
+			})
+		}
+	})
+}
