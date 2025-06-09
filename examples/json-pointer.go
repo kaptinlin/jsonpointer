@@ -77,23 +77,23 @@ func main() {
 	fmt.Println("=== 1. Get Operations (never fail, returns nil if not found) ===")
 
 	// Get root
-	result := jsonpointer.Get(doc)
+	result, _ := jsonpointer.Get(doc)
 	fmt.Printf("Get root: %+v\n", result)
 
 	// Get simple property
-	result = jsonpointer.Get(doc, "metadata", "version")
+	result, _ = jsonpointer.Get(doc, "metadata", "version")
 	fmt.Printf("Get /metadata/version: %v\n", result)
 
 	// Get array element
-	result = jsonpointer.Get(doc, "users", "0", "name")
+	result, _ = jsonpointer.Get(doc, "users", "0", "name")
 	fmt.Printf("Get /users/0/name: %v\n", result)
 
 	// Get deep nested property
-	result = jsonpointer.Get(doc, "users", "1", "profile", "settings", "notifications", "sms")
+	result, _ = jsonpointer.Get(doc, "users", "1", "profile", "settings", "notifications", "sms")
 	fmt.Printf("Get /users/1/profile/settings/notifications/sms: %v\n", result)
 
 	// Get non-existent property (returns nil)
-	result = jsonpointer.Get(doc, "nonexistent", "property")
+	result, _ = jsonpointer.Get(doc, "nonexistent", "property")
 	fmt.Printf("Get non-existent property: %v\n", result)
 
 	fmt.Println()
@@ -350,33 +350,33 @@ func main() {
 	fmt.Println("--- Get operations with structs ---")
 
 	// Access fields via JSON tags
-	result = jsonpointer.Get(user, "id")
+	result, _ = jsonpointer.Get(user, "id")
 	fmt.Printf("Get user id (via JSON tag): %v\n", result)
 
-	result = jsonpointer.Get(user, "name")
+	result, _ = jsonpointer.Get(user, "name")
 	fmt.Printf("Get user name (via JSON tag): %v\n", result)
 
 	// Access field via field name (no JSON tag)
-	result = jsonpointer.Get(user, "Email")
+	result, _ = jsonpointer.Get(user, "Email")
 	fmt.Printf("Get user Email (via field name): %v\n", result)
 
 	// Access nested struct fields
-	result = jsonpointer.Get(user, "profile", "bio")
+	result, _ = jsonpointer.Get(user, "profile", "bio")
 	fmt.Printf("Get nested profile bio: %v\n", result)
 
-	result = jsonpointer.Get(user, "profile", "location")
+	result, _ = jsonpointer.Get(user, "profile", "location")
 	fmt.Printf("Get nested profile location: %v\n", result)
 
 	// Access mixed struct + map
-	result = jsonpointer.Get(user, "profile", "settings", "theme")
+	result, _ = jsonpointer.Get(user, "profile", "settings", "theme")
 	fmt.Printf("Get settings theme (struct->map): %v\n", result)
 
 	// Try to access private field (returns nil)
-	result = jsonpointer.Get(user, "private")
+	result, _ = jsonpointer.Get(user, "private")
 	fmt.Printf("Get private field (should be nil): %v\n", result)
 
 	// Try to access ignored field (returns nil)
-	result = jsonpointer.Get(user, "Ignored")
+	result, _ = jsonpointer.Get(user, "Ignored")
 	fmt.Printf("Get ignored field (should be nil): %v\n", result)
 
 	fmt.Println()
@@ -430,14 +430,14 @@ func main() {
 	}
 
 	// Access struct through map
-	result = jsonpointer.Get(mixedData, "user", "name")
+	result, _ = jsonpointer.Get(mixedData, "user", "name")
 	fmt.Printf("Get user name from mixed data: %v\n", result)
 
-	result = jsonpointer.Get(mixedData, "user", "profile", "location")
+	result, _ = jsonpointer.Get(mixedData, "user", "profile", "location")
 	fmt.Printf("Get user location from mixed data: %v\n", result)
 
 	// Regular map access still works
-	result = jsonpointer.Get(mixedData, "metadata", "version")
+	result, _ = jsonpointer.Get(mixedData, "metadata", "version")
 	fmt.Printf("Get metadata version: %v\n", result)
 
 	fmt.Println()

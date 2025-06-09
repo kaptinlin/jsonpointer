@@ -191,31 +191,36 @@ func TestFindByPointer(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Run("basic object access", func(t *testing.T) {
 		doc := map[string]any{"foo": "bar"}
-		val := Get(doc, "foo")
+		val, err := Get(doc, "foo")
+		assert.NoError(t, err)
 		assert.Equal(t, "bar", val)
 	})
 
 	t.Run("missing key returns nil", func(t *testing.T) {
 		doc := map[string]any{"foo": "bar"}
-		val := Get(doc, "missing")
+		val, err := Get(doc, "missing")
+		assert.NoError(t, err)
 		assert.Nil(t, val)
 	})
 
 	t.Run("array access", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val := Get(doc, "1")
+		val, err := Get(doc, "1")
+		assert.NoError(t, err)
 		assert.Equal(t, 2, val)
 	})
 
-	t.Run("invalid array index returns nil", func(t *testing.T) {
+	t.Run("invalid array index returns error", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val := Get(doc, "5")
+		val, err := Get(doc, "5")
+		assert.Error(t, err)
 		assert.Nil(t, val)
 	})
 
 	t.Run("array end marker returns nil", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val := Get(doc, "-")
+		val, err := Get(doc, "-")
+		assert.NoError(t, err)
 		assert.Nil(t, val)
 	})
 
@@ -225,7 +230,8 @@ func TestGet(t *testing.T) {
 				map[string]any{"name": "Alice"},
 			},
 		}
-		val := Get(doc, "users", "0", "name")
+		val, err := Get(doc, "users", "0", "name")
+		assert.NoError(t, err)
 		assert.Equal(t, "Alice", val)
 	})
 }

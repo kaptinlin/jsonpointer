@@ -97,7 +97,7 @@ func TestGetWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(user, tt.path...)
+			result, _ := Get(user, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -159,7 +159,7 @@ func TestNestedStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(profile, tt.path...)
+			result, _ := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -192,7 +192,7 @@ func TestMixedMapAndStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path...)
+			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -287,7 +287,7 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(user, tt.path...)
+				result, _ := Get(user, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -371,7 +371,7 @@ func TestNestedPointerToStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(profile, tt.path...)
+			result, _ := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -401,7 +401,7 @@ func TestMultipleLevelsPointers(t *testing.T) {
 	userPtr := &user
 
 	// This should still work by dereferencing all pointers
-	name := Get(userPtr, "name")
+	name, _ := Get(userPtr, "name")
 	if name != "Charlie" {
 		t.Errorf("Get() with double pointer = %v, want %v", name, "Charlie")
 	}
@@ -456,7 +456,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(company, tt.path...)
+				result, _ := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -465,7 +465,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		// Test array access separately (can't compare slices directly)
 		t.Run("Employee array access", func(t *testing.T) {
-			employees := Get(company, "employees")
+			employees, _ := Get(company, "employees")
 			if employees == nil {
 				t.Error("Get() employees should not be nil")
 				return
@@ -500,7 +500,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result := Get(company, tt.path...)
+				result, _ := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -586,7 +586,7 @@ func TestMapContainingStructs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path...)
+			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -637,7 +637,7 @@ func TestMixedDataEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := Get(data, tt.path...)
+			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -650,7 +650,7 @@ func TestNilPointerHandling(t *testing.T) {
 	var user *User = nil
 
 	// Should return nil for nil pointer
-	result := Get(user, "name")
+	result, _ := Get(user, "name")
 	if result != nil {
 		t.Errorf("Get() with nil pointer = %v, want nil", result)
 	}

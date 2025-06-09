@@ -78,13 +78,14 @@ func main() {
 
 ### Safe Get Operations
 
-Get values without error handling (returns nil if path doesn't exist):
+Get values with error handling:
 
 ```go
 package main
 
 import (
     "fmt"
+    "log"
     
     "github.com/kaptinlin/jsonpointer"
 )
@@ -98,15 +99,25 @@ func main() {
     }
 
     // Get existing value using variadic arguments (array indices as strings)
-    name := jsonpointer.Get(doc, "users", "0", "name")
+    name, err := jsonpointer.Get(doc, "users", "0", "name")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(name) // Alice
 
-    // Get non-existing value
-    missing := jsonpointer.Get(doc, "users", "5", "name")
-    fmt.Println(missing) // <nil>
+    // Get non-existing value - returns error
+    missing, err := jsonpointer.Get(doc, "users", "5", "name")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err) // Error: array index out of bounds
+    } else {
+        fmt.Println(missing)
+    }
     
     // Get using JSON Pointer string
-    age := jsonpointer.GetByPointer(doc, "/users/1/age")
+    age, err := jsonpointer.GetByPointer(doc, "/users/1/age")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(age) // 25
 }
 ```
@@ -120,6 +131,7 @@ package main
 
 import (
     "fmt"
+    "log"
     
     "github.com/kaptinlin/jsonpointer"
 )
@@ -141,7 +153,11 @@ func main() {
     
     // Efficient repeated access
     for _, data := range datasets {
-        name := jsonpointer.Get(data, userNamePath...)
+        name, err := jsonpointer.Get(data, userNamePath...)
+        if err != nil {
+            log.Printf("Error accessing user name: %v", err)
+            continue
+        }
         fmt.Println(name)
     }
 }
@@ -204,8 +220,11 @@ func main() {
     }
     fmt.Println(ref.Key) // "3" (next available index as string)
     
-    // Using JSON Pointer string
-    value := jsonpointer.GetByPointer(doc, "/items/0")
+    // Using JSON Pointer string with Get
+    value, err := jsonpointer.GetByPointer(doc, "/items/0")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(value) // 1
 }
 ```
@@ -250,23 +269,36 @@ func main() {
     }
 
     // JSON tag access using variadic arguments
-    name := jsonpointer.Get(profile, "user", "name")
+    name, err := jsonpointer.Get(profile, "user", "name")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(name) // Alice
 
     // Field name access (no JSON tag)
-    email := jsonpointer.Get(profile, "user", "Email")
+    email, err := jsonpointer.Get(profile, "user", "Email")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(email) // alice@example.com
 
-    // Private fields are ignored
-    private := jsonpointer.Get(profile, "user", "private")
-    fmt.Println(private) // <nil>
+    // Private fields are ignored - returns error
+    private, err := jsonpointer.Get(profile, "user", "private")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err) // Error: not found
+    }
 
-    // json:"-" fields are ignored  
-    ignored := jsonpointer.Get(profile, "user", "Ignored")
-    fmt.Println(ignored) // <nil>
+    // json:"-" fields are ignored - returns error
+    ignored, err := jsonpointer.Get(profile, "user", "Ignored")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err) // Error: not found
+    }
 
     // Nested struct navigation
-    age := jsonpointer.Get(profile, "user", "age")
+    age, err := jsonpointer.Get(profile, "user", "age")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(age) // 30
 
     // JSON Pointer syntax
@@ -284,11 +316,17 @@ func main() {
     }
     
     // Access struct in map
-    location := jsonpointer.Get(data, "profile", "location")
+    location, err := jsonpointer.Get(data, "profile", "location")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(location) // New York
     
     // Access array of structs (index as string)
-    userName := jsonpointer.Get(data, "users", "0", "name")
+    userName, err := jsonpointer.Get(data, "users", "0", "name")
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println(userName) // Bob
 }
 ```

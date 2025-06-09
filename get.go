@@ -2,6 +2,7 @@ package jsonpointer
 
 import (
 	"reflect"
+	"strconv"
 )
 
 // fastGet implements ultra-fast path that avoids token allocation entirely.
@@ -75,120 +76,159 @@ func getTokenAtIndex(path Path, index int) internalToken {
 
 // tryArrayAccess attempts array access using type assertions for performance.
 // Enhanced to handle all slice types efficiently.
-func tryArrayAccess(current any, token internalToken) (any, bool) {
+func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 	// Fast type assertion path for common slice types
 	switch arr := current.(type) {
 	case []any:
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 || token.index >= len(arr) {
-			return nil, true // invalid or out of bounds
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
-		return arr[token.index], true
+		if token.index < len(arr) {
+			return arr[token.index], true, nil
+		} else if token.index == len(arr) {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
+		}
 
 	case *[]any:
 		if arr == nil {
-			return nil, true
+			return nil, true, ErrNilPointer
 		}
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 || token.index >= len(*arr) {
-			return nil, true // invalid or out of bounds
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
-		return (*arr)[token.index], true
+		if token.index < len(*arr) {
+			return (*arr)[token.index], true, nil
+		} else if token.index == len(*arr) {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
+		}
 
 	case []string:
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 || token.index >= len(arr) {
-			return nil, true // invalid or out of bounds
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
-		return arr[token.index], true
+		if token.index < len(arr) {
+			return arr[token.index], true, nil
+		} else if token.index == len(arr) {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
+		}
 
 	case []int:
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 || token.index >= len(arr) {
-			return nil, true // invalid or out of bounds
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
-		return arr[token.index], true
+		if token.index < len(arr) {
+			return arr[token.index], true, nil
+		} else if token.index == len(arr) {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
+		}
 
 	case []float64:
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 || token.index >= len(arr) {
-			return nil, true // invalid or out of bounds
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
-		return arr[token.index], true
+		if token.index < len(arr) {
+			return arr[token.index], true, nil
+		} else if token.index == len(arr) {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
+		}
 
 	default:
 		// Fallback to reflection for other array types (like []User)
 		if !isArray(current) {
-			return nil, false
+			return nil, false, nil
 		}
 
 		if token.key == "-" {
-			return nil, true // array end marker
+			return nil, true, nil // array end marker
 		}
-		if token.index < 0 {
-			return nil, true // invalid array index
+		if token.index < 0 || strconv.Itoa(token.index) != token.key {
+			return nil, true, ErrInvalidIndex
 		}
 
 		arrayVal := reflect.ValueOf(current)
-		if token.index >= arrayVal.Len() {
-			return nil, true
+		if token.index < arrayVal.Len() {
+			return arrayVal.Index(token.index).Interface(), true, nil
+		} else if token.index == arrayVal.Len() {
+			// Allow pointing to one past array end (JSON Pointer spec)
+			return nil, true, nil
+		} else {
+			return nil, true, ErrIndexOutOfBounds
 		}
-		return arrayVal.Index(token.index).Interface(), true
 	}
 }
 
 // tryObjectAccess attempts object access using type assertions for performance.
 // Enhanced with proper struct field handling.
-func tryObjectAccess(current any, token internalToken) (any, bool) {
+func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 	// Fast type assertion path for common map types
 	switch obj := current.(type) {
 	case map[string]any:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true // Key doesn't exist
+			return nil, true, nil // Key doesn't exist
 		}
-		return result, true
+		return result, true, nil
 
 	case *map[string]any:
 		if obj == nil {
-			return nil, true
+			return nil, true, ErrNilPointer
 		}
 		result, exists := (*obj)[token.key]
 		if !exists {
-			return nil, true // Key doesn't exist
+			return nil, true, nil // Key doesn't exist
 		}
-		return result, true
+		return result, true, nil
 
 	case map[string]string:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true // Key doesn't exist
+			return nil, true, nil // Key doesn't exist
 		}
-		return result, true
+		return result, true, nil
 
 	case map[string]int:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true // Key doesn't exist
+			return nil, true, nil // Key doesn't exist
 		}
-		return result, true
+		return result, true, nil
 
 	case map[string]float64:
 		result, exists := obj[token.key]
 		if !exists {
-			return nil, true // Key doesn't exist
+			return nil, true, nil // Key doesn't exist
 		}
-		return result, true
+		return result, true, nil
 
 	default:
 		// Fallback to reflection for other object types
@@ -197,7 +237,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool) {
 		// Handle pointer dereferencing
 		for objVal.Kind() == reflect.Ptr {
 			if objVal.IsNil() {
-				return nil, false
+				return nil, false, ErrNilPointer
 			}
 			objVal = objVal.Elem()
 		}
@@ -207,33 +247,33 @@ func tryObjectAccess(current any, token internalToken) (any, bool) {
 			mapKey := reflect.ValueOf(token.key)
 			mapVal := objVal.MapIndex(mapKey)
 			if !mapVal.IsValid() {
-				return nil, true // Key doesn't exist
+				return nil, true, nil // Key doesn't exist
 			}
-			return mapVal.Interface(), true
+			return mapVal.Interface(), true, nil
 		case reflect.Struct:
 			// Handle struct fields using optimized struct field lookup
 			if field := findStructField(objVal, token.key); field.IsValid() {
-				return field.Interface(), true
+				return field.Interface(), true, nil
 			}
-			return nil, true // Field not found
+			return nil, true, nil // Field not found
 		case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
 			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array,
 			reflect.Chan, reflect.Func, reflect.Interface, reflect.Ptr, reflect.Slice, reflect.String, reflect.UnsafePointer:
 			// Handle all other reflect.Kind types not supported for JSON Pointer traversal
-			return nil, false
+			return nil, false, nil
 		}
 		// This should never be reached due to exhaustive case coverage
-		return nil, false
+		return nil, false, nil
 	}
 }
 
-// get retrieves value at JSON pointer path, returns nil if not found.
+// get retrieves value at JSON pointer path, returns error if path cannot be traversed.
 // Optimized for zero-allocation string-only paths with layered fallback strategy.
-func get(val any, path Path) any {
+func get(val any, path Path) (any, error) {
 	pathLength := len(path)
 	if pathLength == 0 {
-		return val
+		return val, nil
 	}
 
 	// Zero-allocation fast path for common cases
@@ -262,27 +302,31 @@ func get(val any, path Path) any {
 			token := getTokenAtIndex(path, i)
 
 			if current == nil {
-				return nil
+				return nil, ErrNotFound
 			}
 
 			// Try optimized array access first
-			if result, handled := tryArrayAccess(current, token); handled {
+			if result, handled, err := tryArrayAccess(current, token); err != nil {
+				return nil, err
+			} else if handled {
 				current = result
 				continue
 			}
 
 			// Try optimized object access
-			if result, handled := tryObjectAccess(current, token); handled {
+			if result, handled, err := tryObjectAccess(current, token); err != nil {
+				return nil, err
+			} else if handled {
 				current = result
 				continue
 			}
 
 			// Neither array nor object, can't traverse further
-			return nil
+			return nil, ErrNotFound
 		}
 	}
 
-	return current
+	return current, nil
 }
 
 // findStructField finds a struct field by JSON tag or field name.

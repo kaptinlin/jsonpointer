@@ -293,7 +293,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"metadata", "version"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path...)
+			result, _ := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
 			}
@@ -304,7 +304,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"users", "0", "profile", "email"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path...)
+			result, _ := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
 			}
@@ -315,7 +315,7 @@ func BenchmarkGet(b *testing.B) {
 		path := jsonpointer.Path{"nonexistent", "property"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Get(doc, path...)
+			result, _ := jsonpointer.Get(doc, path...)
 			if result != nil {
 				b.Fatal("expected nil result")
 			}

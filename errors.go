@@ -7,7 +7,7 @@ import "errors"
 // ErrInvalidIndex is returned when an invalid array index is encountered.
 // TypeScript original code from find.ts:
 // throw new Error('INVALID_INDEX');
-var ErrInvalidIndex = errors.New("invalid index")
+var ErrInvalidIndex = errors.New("invalid array index")
 
 // ErrNotFound is returned when a path cannot be traversed.
 // TypeScript original code from find.ts:
@@ -45,7 +45,7 @@ var ErrPathTooLong = errors.New("path too long")
 var ErrInvalidPathStep = errors.New("invalid path step")
 
 // ErrIndexOutOfBounds is returned when array index is out of bounds.
-var ErrIndexOutOfBounds = errors.New("index out of bounds")
+var ErrIndexOutOfBounds = errors.New("array index out of bounds")
 
 // ErrNilPointer is returned when trying to access through nil pointer.
-var ErrNilPointer = errors.New("nil pointer")
+var ErrNilPointer = errors.New("cannot traverse through nil pointer")

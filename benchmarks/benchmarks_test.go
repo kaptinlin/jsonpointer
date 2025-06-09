@@ -123,7 +123,7 @@ func BenchmarkOur_Find_Root(b *testing.B) {
 func BenchmarkOur_Get_Root(b *testing.B) {
 	path := ourjp.Parse("")
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(smallData, path...)
+		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
@@ -136,7 +136,7 @@ func BenchmarkOur_Find_Shallow(b *testing.B) {
 func BenchmarkOur_Get_Shallow(b *testing.B) {
 	path := ourjp.Parse("/name")
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(smallData, path...)
+		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
@@ -149,7 +149,7 @@ func BenchmarkOur_Find_Deep(b *testing.B) {
 func BenchmarkOur_Get_Deep(b *testing.B) {
 	path := ourjp.Parse("/profile/settings/theme")
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(smallData, path...)
+		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
@@ -353,13 +353,13 @@ func BenchmarkDolmen_NotFound(b *testing.B) {
 // Struct access benchmarks
 func BenchmarkOur_Struct_Get_Shallow(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(structData, "name")
+		_, _ = ourjp.Get(structData, "name")
 	}
 }
 
 func BenchmarkOur_Struct_Get_Deep(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(structData, "profile", "settings", "theme")
+		_, _ = ourjp.Get(structData, "profile", "settings", "theme")
 	}
 }
 
@@ -378,13 +378,13 @@ func BenchmarkOur_Struct_Find_Deep(b *testing.B) {
 // Map access benchmarks (for comparison)
 func BenchmarkOur_Map_Get_Shallow(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(mapData, "name")
+		_, _ = ourjp.Get(mapData, "name")
 	}
 }
 
 func BenchmarkOur_Map_Get_Deep(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(mapData, "profile", "settings", "theme")
+		_, _ = ourjp.Get(mapData, "profile", "settings", "theme")
 	}
 }
 
@@ -407,7 +407,7 @@ func BenchmarkOur_Mixed_StructWithMap(b *testing.B) {
 		"meta": map[string]any{"version": "1.0"},
 	}
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(mixed, "user", "profile", "settings", "theme")
+		_, _ = ourjp.Get(mixed, "user", "profile", "settings", "theme")
 	}
 }
 
@@ -423,7 +423,7 @@ func BenchmarkOur_Struct_FieldCaching(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for j := range users {
-			_ = ourjp.Get(users[j], "name")
+			_, _ = ourjp.Get(users[j], "name")
 		}
 	}
 }
@@ -431,7 +431,7 @@ func BenchmarkOur_Struct_FieldCaching(b *testing.B) {
 // JSON tag vs field name access
 func BenchmarkOur_Struct_JSONTag(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(structData, "name") // Uses JSON tag
+		_, _ = ourjp.Get(structData, "name") // Uses JSON tag
 	}
 }
 
@@ -442,6 +442,6 @@ func BenchmarkOur_Struct_FieldName(b *testing.B) {
 	data := TestStruct{Name: "Alice"}
 
 	for i := 0; i < b.N; i++ {
-		_ = ourjp.Get(data, "Name") // Uses field name
+		_, _ = ourjp.Get(data, "Name") // Uses field name
 	}
 }

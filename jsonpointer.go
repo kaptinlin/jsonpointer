@@ -20,17 +20,21 @@
 //		// Handle error
 //	}
 //
-//	// Get value without errors (returns nil for not found)
-//	value := jsonpointer.Get(data, path...)
+//	// Get value with error handling
+//	value, err := jsonpointer.Get(data, path...)
+//	if err != nil {
+//		// Handle error
+//	}
 //
 //	// Validate JSON Pointer
 //	err = jsonpointer.Validate("/users/0/name")
 package jsonpointer
 
 // Get retrieves a value from document using string path components.
-func Get(doc any, path ...string) any {
+// Returns errors for invalid operations, similar to Find function.
+func Get(doc any, path ...string) (any, error) {
 	if len(path) == 0 {
-		return doc
+		return doc, nil
 	}
 	return get(doc, Path(path))
 }
@@ -45,8 +49,8 @@ func Find(doc any, path ...string) (*Reference, error) {
 }
 
 // GetByPointer retrieves a value from document using JSON Pointer string.
-// Never returns errors, returns nil for not found values.
-func GetByPointer(doc any, pointer string) any {
+// Returns errors for invalid operations.
+func GetByPointer(doc any, pointer string) (any, error) {
 	path := Parse(pointer)
 	return get(doc, path)
 }
