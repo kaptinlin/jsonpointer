@@ -5,35 +5,28 @@ import (
 )
 
 // fastGet implements ultra-fast path that avoids token allocation entirely.
-// direct access without intermediate token creation.
-func fastGet(val any, step any) (any, bool) {
+// Optimized for string-only Path - direct access without intermediate token creation.
+func fastGet(val any, step string) (any, bool) {
 	switch v := val.(type) {
 	case map[string]any:
 		// Most common case: map[string]any - direct string key access
-		if keyStr, ok := step.(string); ok {
-			result, exists := v[keyStr]
-			return result, exists
-		}
-		return nil, false
+		result, exists := v[step]
+		return result, exists
 
 	case *map[string]any:
 		// Pointer to map optimization
 		if v == nil {
 			return nil, false
 		}
-		if keyStr, ok := step.(string); ok {
-			result, exists := (*v)[keyStr]
-			return result, exists
-		}
-		return nil, false
+		result, exists := (*v)[step]
+		return result, exists
 
 	case []any:
-		// Array access - need to compute index
-		keyStr := componentToString(step)
-		if keyStr == "-" {
+		// Array access - parse index from string
+		if step == "-" {
 			return nil, false // array end marker
 		}
-		index := fastAtoi(keyStr)
+		index := fastAtoi(step)
 		if index < 0 || index >= len(v) {
 			return nil, false // invalid or out of bounds
 		}
@@ -44,11 +37,10 @@ func fastGet(val any, step any) (any, bool) {
 		if v == nil {
 			return nil, false
 		}
-		keyStr := componentToString(step)
-		if keyStr == "-" {
+		if step == "-" {
 			return nil, false // array end marker
 		}
-		index := fastAtoi(keyStr)
+		index := fastAtoi(step)
 		if index < 0 || index >= len(*v) {
 			return nil, false // invalid or out of bounds
 		}
@@ -67,50 +59,24 @@ func fastGet(val any, step any) (any, bool) {
 	}
 }
 
-// get retrieves value at JSON pointer path, returns nil if not found.
-// uses precomputed tokens for faster array index access.
-// TypeScript original code:
-//
-//	export const get = (val: unknown, path: Path): unknown | undefined => {
-//	  const pathLength = path.length;
-//	  let key: string | number;
-//	  if (!pathLength) return val;
-//	  for (let i = 0; i < pathLength; i++) {
-//	    key = path[i];
-//	    if (val instanceof Array) {
-//	      if (key === '-') return undefined;
-//	      const key2 = ~~key;
-//	      if ('' + key2 !== key) return undefined;
-//	      key = key2;
-//	      if (key < 0) return undefined;
-//	      val = val[key];
-//	    } else if (typeof val === 'object') {
-//	      if (!val || !has(val as object, key as string)) return undefined;
-//	      val = (val as any)[key];
-//	    } else return undefined;
-//	  }
-//	  return val;
-//	};
-//
 // getTokenAtIndex computes an internalToken for a specific path step without allocating a slice.
-// avoid allocating entire tokens slice, compute on-demand.
+// Optimized for string-only Path - avoid allocating entire tokens slice, compute on-demand.
 func getTokenAtIndex(path Path, index int) internalToken {
 	if index >= len(path) {
 		return internalToken{}
 	}
 
-	step := path[index]
-	keyStr := componentToString(step)
+	step := path[index] // step is already a string
 	return internalToken{
-		key:   keyStr,
-		index: fastAtoi(keyStr),
+		key:   step,
+		index: fastAtoi(step),
 	}
 }
 
 // tryArrayAccess attempts array access using type assertions for performance.
-// It prioritizes fast type assertions over reflection.
+// Enhanced to handle all slice types efficiently.
 func tryArrayAccess(current any, token internalToken) (any, bool) {
-	// Fast type assertion path
+	// Fast type assertion path for common slice types
 	switch arr := current.(type) {
 	case []any:
 		if token.key == "-" {
@@ -161,7 +127,7 @@ func tryArrayAccess(current any, token internalToken) (any, bool) {
 		return arr[token.index], true
 
 	default:
-		// Fallback to reflection for other array types
+		// Fallback to reflection for other array types (like []User)
 		if !isArray(current) {
 			return nil, false
 		}
@@ -182,9 +148,9 @@ func tryArrayAccess(current any, token internalToken) (any, bool) {
 }
 
 // tryObjectAccess attempts object access using type assertions for performance.
-// It prioritizes fast type assertions over reflection.
+// Enhanced with proper struct field handling.
 func tryObjectAccess(current any, token internalToken) (any, bool) {
-	// Fast type assertion path
+	// Fast type assertion path for common map types
 	switch obj := current.(type) {
 	case map[string]any:
 		result, exists := obj[token.key]
@@ -236,7 +202,6 @@ func tryObjectAccess(current any, token internalToken) (any, bool) {
 			objVal = objVal.Elem()
 		}
 
-		//nolint:exhaustive // We only care about Map and Struct kinds here
 		switch objVal.Kind() {
 		case reflect.Map:
 			mapKey := reflect.ValueOf(token.key)
@@ -246,38 +211,45 @@ func tryObjectAccess(current any, token internalToken) (any, bool) {
 			}
 			return mapVal.Interface(), true
 		case reflect.Struct:
-			// Handle struct fields using our optimized struct field lookup
-			if structField(token.key, &objVal) {
-				return objVal.Interface(), true
+			// Handle struct fields using optimized struct field lookup
+			if field := findStructField(objVal, token.key); field.IsValid() {
+				return field.Interface(), true
 			}
 			return nil, true // Field not found
-		default:
-			// Not a map or struct, can't handle
+		case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array,
+			reflect.Chan, reflect.Func, reflect.Interface, reflect.Ptr, reflect.Slice, reflect.String, reflect.UnsafePointer:
+			// Handle all other reflect.Kind types not supported for JSON Pointer traversal
 			return nil, false
 		}
+		// This should never be reached due to exhaustive case coverage
+		return nil, false
 	}
 }
 
+// get retrieves value at JSON pointer path, returns nil if not found.
+// Optimized for zero-allocation string-only paths with layered fallback strategy.
 func get(val any, path Path) any {
 	pathLength := len(path)
 	if pathLength == 0 {
 		return val
 	}
 
-	// zero-allocation fast path for common cases
+	// Zero-allocation fast path for common cases
 	current := val
 	fastPathDepth := 0
 
 	// Ultra-fast path - direct access without token creation
 	for i := 0; i < pathLength; i++ {
-		step := path[i]
+		step := path[i] // step is already a string
 
 		// Try direct fast path first (zero allocations for map[string]any)
 		if result, ok := fastGet(current, step); ok {
 			current = result
 			fastPathDepth = i + 1
 		} else {
-			// Direct fast path failed, break to reflection fallback
+			// Direct fast path failed, break to optimized type assertion fallback
 			break
 		}
 	}
@@ -286,7 +258,7 @@ func get(val any, path Path) any {
 	if fastPathDepth < pathLength {
 		// Use optimized type assertions for the remaining tokens
 		for i := fastPathDepth; i < pathLength; i++ {
-			// compute token on-demand only when needed
+			// Compute token on-demand only when needed
 			token := getTokenAtIndex(path, i)
 
 			if current == nil {
@@ -311,6 +283,63 @@ func get(val any, path Path) any {
 	}
 
 	return current
+}
+
+// findStructField finds a struct field by JSON tag or field name.
+// Returns the field value if found, invalid reflect.Value otherwise.
+func findStructField(structVal reflect.Value, key string) reflect.Value {
+	structType := structVal.Type()
+	numFields := structType.NumField()
+
+	// First pass: look for exact JSON tag match
+	for i := 0; i < numFields; i++ {
+		field := structType.Field(i)
+
+		// Skip unexported fields
+		if !field.IsExported() {
+			continue
+		}
+
+		// Check JSON tag
+		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
+			tagName := jsonTag
+			// Find comma to extract just the field name part
+			for j, r := range jsonTag {
+				if r == ',' {
+					tagName = jsonTag[:j]
+					break
+				}
+			}
+			if tagName == key {
+				return structVal.Field(i)
+			}
+			if tagName == "-" {
+				continue // Explicitly ignored field
+			}
+		}
+	}
+
+	// Second pass: look for field name match (if no JSON tag found)
+	for i := 0; i < numFields; i++ {
+		field := structType.Field(i)
+
+		// Skip unexported fields
+		if !field.IsExported() {
+			continue
+		}
+
+		// Skip if has JSON tag (already checked above)
+		if field.Tag.Get("json") != "" {
+			continue
+		}
+
+		// Match field name
+		if field.Name == key {
+			return structVal.Field(i)
+		}
+	}
+
+	return reflect.Value{} // Not found
 }
 
 // Helper function to check if value is an array (slice)

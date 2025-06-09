@@ -450,8 +450,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 			expected any
 		}{
 			{"Company name", Path{"name"}, "Tech Corp"},
-			{"First employee name", Path{"employees", 0, "name"}, "Alice"},
-			{"Second employee email", Path{"employees", 1, "Email"}, "bob@techcorp.com"},
+			{"First employee name", Path{"employees", "0", "name"}, "Alice"},
+			{"Second employee email", Path{"employees", "1", "Email"}, "bob@techcorp.com"},
 		}
 
 		for _, tt := range tests {
@@ -571,8 +571,8 @@ func TestMapContainingStructs(t *testing.T) {
 		expected any
 	}{
 		// Array of structs in map
-		{"First user name", Path{"users", 0, "name"}, "Charlie"},
-		{"Second user age", Path{"users", 1, "age"}, 40},
+		{"First user name", Path{"users", "0", "name"}, "Charlie"},
+		{"Second user age", Path{"users", "1", "age"}, 40},
 
 		// Map of structs
 		{"Admin profile name", Path{"profiles", "admin", "user", "name"}, "Admin"},
@@ -581,7 +581,7 @@ func TestMapContainingStructs(t *testing.T) {
 		// Deeply nested maps
 		{"Database host", Path{"config", "database", "host"}, "localhost"},
 		{"Database SSL setting", Path{"config", "database", "settings", "ssl"}, true},
-		{"First feature", Path{"config", "features", 0}, "auth"},
+		{"First feature", Path{"config", "features", "0"}, "auth"},
 	}
 
 	for _, tt := range tests {
@@ -629,10 +629,10 @@ func TestMixedDataEdgeCases(t *testing.T) {
 		{"Empty struct", Path{"empty_struct"}, Empty{}},
 		{"Nil value", Path{"nil_value"}, nil},
 		{"Pointer to struct name", Path{"user_ptr", "name"}, "Pointer User"},
-		{"Struct in mixed array", Path{"nested", "array_with_mixed", 0, "name"}, "Struct in array"},
-		{"Map in mixed array", Path{"nested", "array_with_mixed", 1, "type"}, "map"},
-		{"String in mixed array", Path{"nested", "array_with_mixed", 2}, "plain string"},
-		{"Number in mixed array", Path{"nested", "array_with_mixed", 3}, 123},
+		{"Struct in mixed array", Path{"nested", "array_with_mixed", "0", "name"}, "Struct in array"},
+		{"Map in mixed array", Path{"nested", "array_with_mixed", "1", "type"}, "map"},
+		{"String in mixed array", Path{"nested", "array_with_mixed", "2"}, "plain string"},
+		{"Number in mixed array", Path{"nested", "array_with_mixed", "3"}, 123},
 	}
 
 	for _, tt := range tests {

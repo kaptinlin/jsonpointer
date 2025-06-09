@@ -45,7 +45,7 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 	}
 
 	var obj any
-	var key any
+	var key string
 	indexOfSlash := 0
 	indexAfterSlash := 1
 
@@ -74,8 +74,8 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 			length := arrayVal.Len()
 
 			if keyStr == "-" {
-				// Array end marker: key becomes array length
-				key = length
+				// Array end marker: key becomes array length as string
+				key = strconv.Itoa(length)
 				val = nil // undefined in TypeScript
 			} else {
 				// Convert key to integer (~~key behavior in TypeScript)
@@ -91,7 +91,7 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 					return nil, ErrInvalidIndex
 				}
 
-				key = keyInt
+				key = keyStr // Keep as string for Reference
 
 				// Get array value if index is valid
 				if keyInt < length {

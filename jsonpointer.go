@@ -15,35 +15,37 @@
 //	path := jsonpointer.Parse("/users/0/name")
 //
 //	// Find value with error handling
-//	ref, err := jsonpointer.Find(data, path)
+//	ref, err := jsonpointer.Find(data, path...)
 //	if err != nil {
 //		// Handle error
 //	}
 //
 //	// Get value without errors (returns nil for not found)
-//	value := jsonpointer.Get(data, path)
+//	value := jsonpointer.Get(data, path...)
 //
 //	// Validate JSON Pointer
 //	err = jsonpointer.Validate("/users/0/name")
 package jsonpointer
 
-// Get retrieves a value from document using path components (never returns errors, returns nil for not found).
-func Get(doc any, path ...any) any {
+// Get retrieves a value from document using string path components.
+func Get(doc any, path ...string) any {
 	if len(path) == 0 {
 		return doc
 	}
 	return get(doc, Path(path))
 }
 
-// Find locates a reference in document using path components (returns errors for invalid operations).
-func Find(doc any, path ...any) (*Reference, error) {
+// Find locates a reference in document using string path components.
+// Returns errors for invalid operations.
+func Find(doc any, path ...string) (*Reference, error) {
 	if len(path) == 0 {
 		return &Reference{Val: doc}, nil
 	}
 	return find(doc, Path(path))
 }
 
-// GetByPointer retrieves a value from document using JSON Pointer string (never returns errors).
+// GetByPointer retrieves a value from document using JSON Pointer string.
+// Never returns errors, returns nil for not found values.
 func GetByPointer(doc any, pointer string) any {
 	path := Parse(pointer)
 	return get(doc, path)
@@ -59,8 +61,8 @@ func Parse(pointer string) Path {
 	return parseJsonPointer(pointer)
 }
 
-// Format formats path components into a JSON Pointer string.
-func Format(path ...any) string {
+// Format formats string path components into a JSON Pointer string.
+func Format(path ...string) string {
 	return formatJsonPointer(Path(path))
 }
 

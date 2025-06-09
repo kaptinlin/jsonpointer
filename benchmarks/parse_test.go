@@ -134,7 +134,7 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	b.Run("deep_nested_path", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Format("users", 0, "profile", "settings", "notifications", "email", "enabled")
+			result := jsonpointer.Format("users", "0", "profile", "settings", "notifications", "email", "enabled")
 			if result != "/users/0/profile/settings/notifications/email/enabled" {
 				b.Fatal("expected deep nested pointer")
 			}
@@ -154,7 +154,7 @@ func BenchmarkFormatJsonPointer(b *testing.B) {
 	b.Run("array_indices", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			result := jsonpointer.Format(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+			result := jsonpointer.Format("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 			if result != "/0/1/2/3/4/5/6/7/8/9" {
 				b.Fatal("expected array indices pointer")
 			}

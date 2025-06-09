@@ -8,11 +8,8 @@ import (
 	"strconv"
 )
 
-// Path represents a JSON Pointer path as array of steps.
-// TypeScript original code:
-// export type Path = readonly PathStep[];
-// where PathStep = string | number;
-type Path []any
+// Path represents a JSON Pointer path as array of string tokens.
+type Path []string
 
 // internalToken represents a single token in a JSON Pointer path with precomputed data.
 // This is used internally for performance optimization, not exposed in the API.
@@ -22,17 +19,10 @@ type internalToken struct {
 }
 
 // Reference represents a found reference with context.
-// TypeScript original code:
-//
-//	export interface Reference {
-//	  readonly val: unknown;
-//	  readonly obj?: unknown | object | unknown[];
-//	  readonly key?: string | number;
-//	}
 type Reference struct {
-	Val any `json:"val"`
-	Obj any `json:"obj,omitempty"`
-	Key any `json:"key,omitempty"`
+	Val any    `json:"val"`
+	Obj any    `json:"obj,omitempty"`
+	Key string `json:"key,omitempty"`
 }
 
 // ArrayReference represents a reference to an array element.
@@ -47,7 +37,7 @@ type ArrayReference[T any] struct {
 	// Use pointer for undefined | T semantics (nil = undefined)
 	Val *T  `json:"val"`
 	Obj []T `json:"obj"`
-	Key int `json:"key"`
+	Key int `json:"key"` // Numeric index for array access
 }
 
 // ObjectReference represents a reference to an object property.
@@ -70,7 +60,7 @@ type ObjectReference[T any] struct {
 //
 //	isArray(ref.obj) && typeof ref.key === 'number';
 func IsArrayReference(ref Reference) bool {
-	if ref.Obj == nil || ref.Key == nil {
+	if ref.Obj == nil || ref.Key == "" {
 		return false
 	}
 
@@ -80,16 +70,9 @@ func IsArrayReference(ref Reference) bool {
 		return false
 	}
 
-	// Check if key is numeric
-	switch key := ref.Key.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		return true
-	case string:
-		_, err := strconv.Atoi(key)
-		return err == nil
-	default:
-		return false
-	}
+	// Check if key is a valid numeric string
+	_, err := strconv.Atoi(ref.Key)
+	return err == nil
 }
 
 // IsArrayEnd checks if an array reference points to the end of the array.
@@ -105,7 +88,7 @@ func IsArrayEnd[T any](ref ArrayReference[T]) bool {
 //
 //	typeof ref.obj === 'object' && typeof ref.key === 'string';
 func IsObjectReference(ref Reference) bool {
-	if ref.Obj == nil || ref.Key == nil {
+	if ref.Obj == nil || ref.Key == "" {
 		return false
 	}
 
@@ -115,7 +98,5 @@ func IsObjectReference(ref Reference) bool {
 		return false
 	}
 
-	// Check if key is a string
-	_, keyIsString := ref.Key.(string)
-	return keyIsString
+	return true
 }

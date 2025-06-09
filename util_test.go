@@ -191,8 +191,8 @@ func TestToPath(t *testing.T) {
 		assert.True(t, IsPathEqual(res, input))
 	})
 
-	t.Run("converts slice to path", func(t *testing.T) {
-		input := []any{"foo", "bar"}
+	t.Run("converts string slice to path", func(t *testing.T) {
+		input := []string{"foo", "bar"}
 		res := ToPath(input)
 		expected := Path{"foo", "bar"}
 		assert.True(t, IsPathEqual(res, expected))
@@ -201,20 +201,10 @@ func TestToPath(t *testing.T) {
 
 // TestIsValidIndex tests array index validation.
 func TestIsValidIndex(t *testing.T) {
-	t.Run("valid integer indices", func(t *testing.T) {
-		assert.True(t, IsValidIndex(0))
-		assert.True(t, IsValidIndex(5))
-		assert.True(t, IsValidIndex(int64(10)))
-	})
-
-	t.Run("invalid negative indices", func(t *testing.T) {
-		assert.False(t, IsValidIndex(-1))
-		assert.False(t, IsValidIndex(int64(-5)))
-	})
-
 	t.Run("valid string indices", func(t *testing.T) {
 		assert.True(t, IsValidIndex("0"))
 		assert.True(t, IsValidIndex("5"))
+		assert.True(t, IsValidIndex("10"))
 		assert.True(t, IsValidIndex("-")) // Array end marker
 	})
 
@@ -222,6 +212,8 @@ func TestIsValidIndex(t *testing.T) {
 		assert.False(t, IsValidIndex("01")) // Leading zero
 		assert.False(t, IsValidIndex("abc"))
 		assert.False(t, IsValidIndex("1.5"))
+		assert.False(t, IsValidIndex("-1")) // Negative
+		assert.False(t, IsValidIndex("-5")) // Negative
 	})
 }
 
@@ -243,13 +235,13 @@ func TestIsPathEqual(t *testing.T) {
 		assert.True(t, IsPathEqual(Path{}, Path{}))
 		assert.True(t, IsPathEqual(Path{"foo"}, Path{"foo"}))
 		assert.True(t, IsPathEqual(Path{"foo", "bar"}, Path{"foo", "bar"}))
-		assert.True(t, IsPathEqual(Path{"foo", 0}, Path{"foo", 0}))
+		assert.True(t, IsPathEqual(Path{"foo", "0"}, Path{"foo", "0"}))
 	})
 
 	t.Run("unequal paths", func(t *testing.T) {
 		assert.False(t, IsPathEqual(Path{"foo"}, Path{"bar"}))
 		assert.False(t, IsPathEqual(Path{"foo", "bar"}, Path{"foo"}))
-		assert.False(t, IsPathEqual(Path{"foo", 0}, Path{"foo", 1}))
+		assert.False(t, IsPathEqual(Path{"foo", "0"}, Path{"foo", "1"}))
 	})
 }
 

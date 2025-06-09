@@ -72,7 +72,7 @@ func BenchmarkFind(b *testing.B) {
 	})
 
 	b.Run("array_element", func(b *testing.B) {
-		path := jsonpointer.Path{"users", 0, "name"}
+		path := jsonpointer.Path{"users", "0", "name"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, err := jsonpointer.Find(doc, path...)
@@ -83,7 +83,7 @@ func BenchmarkFind(b *testing.B) {
 	})
 
 	b.Run("deep_nested_property", func(b *testing.B) {
-		path := jsonpointer.Path{"users", 0, "profile", "settings", "notifications", "email"}
+		path := jsonpointer.Path{"users", "0", "profile", "settings", "notifications", "email"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, err := jsonpointer.Find(doc, path...)
@@ -251,7 +251,7 @@ func BenchmarkFindVsFindByPointer(b *testing.B) {
 		},
 	}
 
-	path := jsonpointer.Path{"users", 0, "profile", "settings", "notifications", "email"}
+	path := jsonpointer.Path{"users", "0", "profile", "settings", "notifications", "email"}
 	pointer := "/users/0/profile/settings/notifications/email"
 
 	b.Run("Find", func(b *testing.B) {
@@ -301,7 +301,7 @@ func BenchmarkGet(b *testing.B) {
 	})
 
 	b.Run("nested_property", func(b *testing.B) {
-		path := jsonpointer.Path{"users", 0, "profile", "email"}
+		path := jsonpointer.Path{"users", "0", "profile", "email"}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			result := jsonpointer.Get(doc, path...)
@@ -328,7 +328,7 @@ func BenchmarkTypeGuards(b *testing.B) {
 	arrayRef := jsonpointer.Reference{
 		Val: "value",
 		Obj: []any{1, 2, 3},
-		Key: 1,
+		Key: "1",
 	}
 
 	objectRef := jsonpointer.Reference{

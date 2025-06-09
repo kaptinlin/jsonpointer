@@ -85,11 +85,11 @@ func main() {
 	fmt.Printf("Get /metadata/version: %v\n", result)
 
 	// Get array element
-	result = jsonpointer.Get(doc, "users", 0, "name")
+	result = jsonpointer.Get(doc, "users", "0", "name")
 	fmt.Printf("Get /users/0/name: %v\n", result)
 
 	// Get deep nested property
-	result = jsonpointer.Get(doc, "users", 1, "profile", "settings", "notifications", "sms")
+	result = jsonpointer.Get(doc, "users", "1", "profile", "settings", "notifications", "sms")
 	fmt.Printf("Get /users/1/profile/settings/notifications/sms: %v\n", result)
 
 	// Get non-existent property (returns nil)
@@ -102,7 +102,7 @@ func main() {
 	fmt.Println("=== 2. Find Operations (return errors for invalid paths) ===")
 
 	// Find successful
-	ref, err := jsonpointer.Find(doc, "users", 0, "profile", "email")
+	ref, err := jsonpointer.Find(doc, "users", "0", "profile", "email")
 	if err != nil {
 		log.Printf("Find error: %v", err)
 	} else {
@@ -204,8 +204,8 @@ func main() {
 	fmt.Println("=== 6. Utility Functions ===")
 
 	// Path utilities
-	path1 := jsonpointer.Path{"users", 0}
-	path2 := jsonpointer.Path{"users", 0, "profile"}
+	path1 := jsonpointer.Path{"users", "0"}
+	path2 := jsonpointer.Path{"users", "0", "profile"}
 	path3 := jsonpointer.Path{"metadata"}
 
 	fmt.Printf("IsRoot(%+v): %v\n", jsonpointer.Path{}, jsonpointer.IsRoot(jsonpointer.Path{}))
@@ -237,7 +237,7 @@ func main() {
 	fmt.Printf("IsValidIndex('01'): %v\n", jsonpointer.IsValidIndex("01"))   // false - leading zero
 	fmt.Printf("IsValidIndex('-'): %v\n", jsonpointer.IsValidIndex("-"))     // false - special marker
 	fmt.Printf("IsValidIndex('abc'): %v\n", jsonpointer.IsValidIndex("abc")) // false - not a number
-	fmt.Printf("IsValidIndex(42): %v\n", jsonpointer.IsValidIndex(42))       // true - number
+	fmt.Printf("IsValidIndex(\"42\"): %v\n", jsonpointer.IsValidIndex("42")) // true - number as string
 
 	// Integer checking
 	fmt.Printf("IsInteger('123'): %v\n", jsonpointer.IsInteger("123"))
@@ -250,7 +250,7 @@ func main() {
 	fmt.Println("=== 7. Type Guards and Reference Analysis ===")
 
 	// Get references to different types
-	arrayRef, _ := jsonpointer.Find(doc, "users", 0)
+	arrayRef, _ := jsonpointer.Find(doc, "users", "0")
 	objectRef, _ := jsonpointer.Find(doc, "metadata", "version")
 
 	fmt.Printf("Array reference: %+v\n", arrayRef)
@@ -294,7 +294,7 @@ func main() {
 	}
 
 	// Path validation
-	validPath := jsonpointer.Path{"users", 0, "name"}
+	validPath := jsonpointer.Path{"users", "0", "name"}
 	err = jsonpointer.ValidatePath(validPath)
 	fmt.Printf("Valid path %+v: %v\n", validPath, err)
 

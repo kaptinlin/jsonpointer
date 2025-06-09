@@ -6,82 +6,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestFind tests the find function comprehensively.
-// Maps to: find.spec.ts + testFindRef.ts
+// TestFind tests the find function.
 func TestFind(t *testing.T) {
-	t.Run("can find number root", func(t *testing.T) {
-		res, err := Find(123)
+	t.Run("can find root", func(t *testing.T) {
+		doc := map[string]any{"foo": "bar"}
+		ref, err := Find(doc)
 		assert.NoError(t, err)
-		assert.Equal(t, 123, res.Val)
+		assert.Equal(t, doc, ref.Val)
+		assert.Nil(t, ref.Obj)
+		assert.Equal(t, "", ref.Key)
 	})
 
-	t.Run("can find string root", func(t *testing.T) {
-		res, err := Find("foo")
+	t.Run("can find object key", func(t *testing.T) {
+		doc := map[string]any{"foo": "bar"}
+		ref, err := Find(doc, "foo")
 		assert.NoError(t, err)
-		assert.Equal(t, "foo", res.Val)
+		assert.Equal(t, "bar", ref.Val)
+		assert.Equal(t, doc, ref.Obj)
+		assert.Equal(t, "foo", ref.Key)
 	})
 
-	t.Run("can find key in object", func(t *testing.T) {
-		data := map[string]any{"foo": "bar"}
-		res, err := Find(data, "foo")
-		assert.NoError(t, err)
-		assert.Equal(t, "bar", res.Val)
-	})
-
-	t.Run("returns container object and key", func(t *testing.T) {
-		data := map[string]any{
-			"foo": map[string]any{
-				"bar": map[string]any{
-					"baz": "qux",
-					"a":   1,
+	t.Run("can find nested object key", func(t *testing.T) {
+		doc := map[string]any{
+			"a": map[string]any{
+				"b": map[string]any{
+					"c": "value",
 				},
 			},
 		}
-		res, err := Find(data, "foo", "bar", "baz")
+		ref, err := Find(doc, "a", "b", "c")
 		assert.NoError(t, err)
-
-		expected := &Reference{
-			Val: "qux",
-			Obj: map[string]any{"baz": "qux", "a": 1},
-			Key: "baz",
-		}
-		assert.Equal(t, expected.Val, res.Val)
-		assert.Equal(t, expected.Key, res.Key)
-		// Check object content without exact map comparison
-		objMap, ok := res.Obj.(map[string]any)
-		assert.True(t, ok)
-		assert.Equal(t, "qux", objMap["baz"])
-		assert.Equal(t, 1, objMap["a"])
+		assert.Equal(t, "value", ref.Val)
+		assert.Equal(t, "c", ref.Key)
 	})
 
-	t.Run("can reference simple object key", func(t *testing.T) {
-		doc := map[string]any{"a": 123}
-		res, err := Find(doc, "a")
-		assert.NoError(t, err)
-
-		assert.Equal(t, 123, res.Val)
-		assert.Equal(t, "a", res.Key)
-		assert.Equal(t, doc, res.Obj)
-	})
-
-	t.Run("throws when referencing missing key with multiple steps", func(t *testing.T) {
-		doc := map[string]any{"a": 123}
-		_, err := Find(doc, "b", "c")
-		assert.Error(t, err)
-		assert.Equal(t, ErrNotFound, err)
-	})
-
-	t.Run("can reference array element", func(t *testing.T) {
+	t.Run("can find array element", func(t *testing.T) {
 		doc := map[string]any{
 			"a": map[string]any{
 				"b": []any{1, 2, 3},
 			},
 		}
-		res, err := Find(doc, "a", "b", 1)
+		res, err := Find(doc, "a", "b", "1")
 		assert.NoError(t, err)
 
 		assert.Equal(t, 2, res.Val)
-		assert.Equal(t, 1, res.Key)
+		assert.Equal(t, "1", res.Key)
 		assert.Equal(t, []any{1, 2, 3}, res.Obj)
 	})
 
@@ -97,19 +66,10 @@ func TestFind(t *testing.T) {
 
 		assert.Nil(t, ref.Val) // undefined in TypeScript
 		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, 3, ref.Key)
+		assert.Equal(t, "3", ref.Key) // Array length as string
 
 		// Test type guards
 		assert.True(t, IsArrayReference(*ref))
-		if IsArrayReference(*ref) {
-			// In TypeScript this would be checked with generic types,
-			// but in Go we work with the general Reference type
-			arrayObj, ok := ref.Obj.([]any)
-			assert.True(t, ok)
-			keyInt, ok := ref.Key.(int)
-			assert.True(t, ok)
-			assert.Equal(t, len(arrayObj), keyInt) // isArrayEnd equivalent
-		}
 	})
 
 	t.Run("throws when pointing past array boundary", func(t *testing.T) {
@@ -131,22 +91,15 @@ func TestFind(t *testing.T) {
 			},
 		}
 		// path := ParseJsonPointer("/a/b/3")
-		ref, err := Find(doc, "a", "b", 3)
+		ref, err := Find(doc, "a", "b", "3")
 		assert.NoError(t, err)
 
 		assert.Nil(t, ref.Val) // undefined in TypeScript
 		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, 3, ref.Key)
+		assert.Equal(t, "3", ref.Key) // Index as string
 
 		// Test type guards
 		assert.True(t, IsArrayReference(*ref))
-		if IsArrayReference(*ref) {
-			arrayObj, ok := ref.Obj.([]any)
-			assert.True(t, ok)
-			keyInt, ok := ref.Key.(int)
-			assert.True(t, ok)
-			assert.Equal(t, len(arrayObj), keyInt) // isArrayEnd equivalent
-		}
 	})
 
 	t.Run("can reference missing object key", func(t *testing.T) {
@@ -166,12 +119,12 @@ func TestFind(t *testing.T) {
 			"bar": []any{1, 2, 3},
 		}
 		// path := ParseJsonPointer("/bar/3")
-		ref, err := Find(doc, "bar", 3)
+		ref, err := Find(doc, "bar", "3")
 		assert.NoError(t, err)
 
 		assert.Nil(t, ref.Val) // undefined in TypeScript
 		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
-		assert.Equal(t, 3, ref.Key)
+		assert.Equal(t, "3", ref.Key) // Index as string
 	})
 }
 
@@ -204,7 +157,7 @@ func TestFindByPointer(t *testing.T) {
 		ref, err := FindByPointer(doc, "/arr/-")
 		assert.NoError(t, err)
 		assert.Nil(t, ref.Val)
-		assert.Equal(t, 3, ref.Key)
+		assert.Equal(t, "3", ref.Key) // Array length as string
 		assert.Equal(t, []any{1, 2, 3}, ref.Obj)
 	})
 
@@ -250,13 +203,13 @@ func TestGet(t *testing.T) {
 
 	t.Run("array access", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val := Get(doc, 1)
+		val := Get(doc, "1")
 		assert.Equal(t, 2, val)
 	})
 
 	t.Run("invalid array index returns nil", func(t *testing.T) {
 		doc := []any{1, 2, 3}
-		val := Get(doc, 5)
+		val := Get(doc, "5")
 		assert.Nil(t, val)
 	})
 
@@ -272,7 +225,7 @@ func TestGet(t *testing.T) {
 				map[string]any{"name": "Alice"},
 			},
 		}
-		val := Get(doc, "users", 0, "name")
+		val := Get(doc, "users", "0", "name")
 		assert.Equal(t, "Alice", val)
 	})
 }

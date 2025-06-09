@@ -102,8 +102,8 @@ func escapeComponent(component string) string {
 	return string(result)
 }
 
-// ParseJsonPointer converts JSON pointer like "/foo/bar" to path slice like []any{"foo", "bar"},
-// while also un-escaping reserved characters and precomputing array indices for performance.
+// ParseJsonPointer converts JSON pointer like "/foo/bar" to path slice like []string{"foo", "bar"},
+// while also un-escaping reserved characters.
 //
 // TypeScript Original:
 //
@@ -141,7 +141,7 @@ func parseJsonPointer(pointer string) Path {
 	return result
 }
 
-// FormatJsonPointer escapes and formats a path slice like []any{"foo", "bar"}
+// FormatJsonPointer escapes and formats a path slice like []string{"foo", "bar"}
 // to JSON pointer like "/foo/bar".
 //
 // TypeScript Original:
@@ -156,7 +156,7 @@ func formatJsonPointer(path Path) string {
 	}
 	parts := make([]string, len(path))
 	for i, component := range path {
-		parts[i] = escapeComponent(componentToString(component))
+		parts[i] = escapeComponent(component)
 	}
 	return "/" + strings.Join(parts, "/")
 }
@@ -173,7 +173,7 @@ func ToPath(pointer any) Path {
 		return parseJsonPointer(p)
 	case Path:
 		return p
-	case []any:
+	case []string:
 		result := make(Path, len(p))
 		copy(result, p)
 		return result
@@ -197,7 +197,7 @@ func IsChild(parent, child Path) bool {
 		return false
 	}
 	for i := 0; i < len(parent); i++ {
-		if !componentEqual(parent[i], child[i]) {
+		if parent[i] != child[i] {
 			return false
 		}
 	}
@@ -218,7 +218,7 @@ func IsPathEqual(p1, p2 Path) bool {
 		return false
 	}
 	for i := 0; i < len(p1); i++ {
-		if !componentEqual(p1[i], p2[i]) {
+		if p1[i] != p2[i] {
 			return false
 		}
 	}
@@ -233,7 +233,7 @@ func IsRoot(path Path) bool {
 	return len(path) == 0
 }
 
-// Parent returns parent path, e.g. for []any{"foo", "bar", "baz"} returns []any{"foo", "bar"}.
+// Parent returns parent path, e.g. for []string{"foo", "bar", "baz"} returns []string{"foo", "bar"}.
 // Returns ErrNoParent if the path has no parent (empty or root path).
 //
 // TypeScript Original:
@@ -258,28 +258,16 @@ func Parent(path Path) (Path, error) {
 //	  const n = Number.parseInt(index, 10);
 //	  return String(n) === index && n >= 0;
 //	}
-func IsValidIndex(index any) bool {
-	switch idx := index.(type) {
-	case int:
-		return idx >= 0
-	case int64:
-		return idx >= 0
-	case float64:
-		// Check if it's actually an integer
-		return idx >= 0 && idx == float64(int64(idx))
-	case string:
-		if idx == "-" {
-			return true // Special case for array end marker
-		}
-		n, err := strconv.ParseInt(idx, 10, 64)
-		if err != nil {
-			return false
-		}
-		// Check if string representation matches parsed value and is non-negative
-		return strconv.FormatInt(n, 10) == idx && n >= 0
-	default:
+func IsValidIndex(index string) bool {
+	if index == "-" {
+		return true // Special case for array end marker
+	}
+	n, err := strconv.ParseInt(index, 10, 64)
+	if err != nil {
 		return false
 	}
+	// Check if string representation matches parsed value and is non-negative
+	return strconv.FormatInt(n, 10) == index && n >= 0
 }
 
 // IsInteger checks if a string contains only digit characters (0-9).
@@ -310,32 +298,4 @@ func IsInteger(str string) bool {
 		}
 	}
 	return true
-}
-
-// Helper functions
-
-// componentToString converts a path component to string representation
-func componentToString(component any) string {
-	switch c := component.(type) {
-	case string:
-		return c
-	case int:
-		return strconv.Itoa(c)
-	case int64:
-		return strconv.FormatInt(c, 10)
-	case float64:
-		// For JSON numbers that might be floats but represent integers
-		if c == float64(int64(c)) {
-			return strconv.FormatInt(int64(c), 10)
-		}
-		return strconv.FormatFloat(c, 'f', -1, 64)
-	default:
-		return ""
-	}
-}
-
-// componentEqual compares two path components for equality
-func componentEqual(a, b any) bool {
-	// Convert both to strings for comparison (matches TypeScript behavior)
-	return componentToString(a) == componentToString(b)
 }

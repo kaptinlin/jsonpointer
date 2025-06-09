@@ -63,7 +63,7 @@ func TestValidate(t *testing.T) {
 		// Invalid path (not a slice)
 		err = Validate(123)
 		assert.Error(t, err)
-		assert.Equal(t, "invalid path", err.Error())
+		assert.Equal(t, "pointer invalid", err.Error())
 	})
 }
 
@@ -79,31 +79,13 @@ func TestValidatePath(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("valid path with numbers", func(t *testing.T) {
-		err := ValidatePath(Path{0, 1, 2})
+	t.Run("valid path with string numbers", func(t *testing.T) {
+		err := ValidatePath(Path{"0", "1", "2"})
 		assert.NoError(t, err)
 	})
 
-	t.Run("valid path with mixed types", func(t *testing.T) {
-		err := ValidatePath(Path{"foo", 0, "bar", 1})
-		assert.NoError(t, err)
-	})
-
-	t.Run("valid path with different number types", func(t *testing.T) {
-		err := ValidatePath(Path{
-			int(1),
-			int8(2),
-			int16(3),
-			int32(4),
-			int64(5),
-			uint(6),
-			uint8(7),
-			uint16(8),
-			uint32(9),
-			uint64(10),
-			float32(11.0),
-			float64(12.0),
-		})
+	t.Run("valid path with mixed string types", func(t *testing.T) {
+		err := ValidatePath(Path{"foo", "0", "bar", "1"})
 		assert.NoError(t, err)
 	})
 
@@ -147,34 +129,31 @@ func TestValidatePath(t *testing.T) {
 	})
 
 	t.Run("invalid path step - boolean", func(t *testing.T) {
-		err := ValidatePath(Path{"foo", true, "bar"})
+		// Test with []any slice containing non-string
+		err := ValidatePath([]any{"foo", true, "bar"})
 		assert.Error(t, err)
 		assert.Equal(t, "invalid path step", err.Error())
 	})
 
 	t.Run("invalid path step - nil", func(t *testing.T) {
-		err := ValidatePath(Path{"foo", nil, "bar"})
+		// Test with []any slice containing nil
+		err := ValidatePath([]any{"foo", nil, "bar"})
 		assert.Error(t, err)
 		assert.Equal(t, "invalid path step", err.Error())
 	})
 
 	t.Run("invalid path step - slice", func(t *testing.T) {
-		err := ValidatePath(Path{"foo", []string{"nested"}, "bar"})
+		// Test with []any slice containing nested slice
+		err := ValidatePath([]any{"foo", []string{"nested"}, "bar"})
 		assert.Error(t, err)
 		assert.Equal(t, "invalid path step", err.Error())
 	})
 
 	t.Run("invalid path step - map", func(t *testing.T) {
-		err := ValidatePath(Path{"foo", map[string]any{"nested": "value"}, "bar"})
+		// Test with []any slice containing map
+		err := ValidatePath([]any{"foo", map[string]any{"nested": "value"}, "bar"})
 		assert.Error(t, err)
 		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("works with regular slice", func(t *testing.T) {
-		// Test with []any slice
-		regularSlice := []any{"foo", "bar", 0, 1}
-		err := ValidatePath(regularSlice)
-		assert.NoError(t, err)
 	})
 
 	t.Run("works with string slice", func(t *testing.T) {
@@ -184,11 +163,20 @@ func TestValidatePath(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("works with int slice", func(t *testing.T) {
-		// Test with []int slice
+	t.Run("invalid with mixed slice", func(t *testing.T) {
+		// Test with []any slice containing non-strings
+		regularSlice := []any{"foo", "bar", 0, 1}
+		err := ValidatePath(regularSlice)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid path step", err.Error())
+	})
+
+	t.Run("invalid with int slice", func(t *testing.T) {
+		// Test with []int slice - should fail since Path only accepts strings
 		intSlice := []int{0, 1, 2, 3}
 		err := ValidatePath(intSlice)
-		assert.NoError(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid path step", err.Error())
 	})
 }
 
@@ -221,7 +209,7 @@ func TestValidateEdgeCases(t *testing.T) {
 	})
 
 	t.Run("validate equivalent complex path", func(t *testing.T) {
-		complexPath := Path{"users", 0, "profile", "settings", "notifications", "email", "enabled"}
+		complexPath := Path{"users", "0", "profile", "settings", "notifications", "email", "enabled"}
 		err := ValidatePath(complexPath)
 		assert.NoError(t, err)
 	})

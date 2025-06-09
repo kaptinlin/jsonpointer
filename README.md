@@ -97,12 +97,12 @@ func main() {
         },
     }
 
-    // Get existing value using variadic arguments
-    name := jsonpointer.Get(doc, "users", 0, "name")
+    // Get existing value using variadic arguments (array indices as strings)
+    name := jsonpointer.Get(doc, "users", "0", "name")
     fmt.Println(name) // Alice
 
     // Get non-existing value
-    missing := jsonpointer.Get(doc, "users", 5, "name")
+    missing := jsonpointer.Get(doc, "users", "5", "name")
     fmt.Println(missing) // <nil>
     
     // Get using JSON Pointer string
@@ -190,8 +190,8 @@ func main() {
         "items": []any{1, 2, 3},
     }
 
-    // Access array element using variadic arguments
-    ref, err := jsonpointer.Find(doc, "items", 1)
+    // Access array element using variadic arguments (index as string)
+    ref, err := jsonpointer.Find(doc, "items", "1")
     if err != nil {
         log.Fatal(err)
     }
@@ -202,7 +202,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Println(ref.Key) // 3 (next available index)
+    fmt.Println(ref.Key) // "3" (next available index as string)
     
     // Using JSON Pointer string
     value := jsonpointer.GetByPointer(doc, "/items/0")
@@ -287,8 +287,8 @@ func main() {
     location := jsonpointer.Get(data, "profile", "location")
     fmt.Println(location) // New York
     
-    // Access array of structs
-    userName := jsonpointer.Get(data, "users", 0, "name")
+    // Access array of structs (index as string)
+    userName := jsonpointer.Get(data, "users", "0", "name")
     fmt.Println(userName) // Bob
 }
 ```
@@ -325,25 +325,11 @@ func main() {
 }
 ```
 
-### Performance Results
+### Performance
 
-| Operation | Library | ns/op | B/op | allocs/op |
-|-----------|---------|-------|------|-----------|
-| Shallow (`/name`) | dolmen-go | 25.40 | 16 | 1 |
-| | woodsbury | 28.32 | 16 | 1 |
-| | BragdonD | 51.74 | 32 | 1 |
-| | This impl (Find) | 72.77 | 96 | 4 |
-| | This impl (Get) | 8.213 | 0 | 0 |
-| | go-openapi | 111.4 | 124 | 5 |
-| Deep (`/profile/settings/theme`) | dolmen-go | 55.02 | 16 | 1 |
-| | woodsbury | 57.06 | 0 | 0 |
-| | BragdonD | 121.6 | 64 | 1 |
-| | This impl (Get) | 26.43 | 0 | 0 |
-| | go-openapi | 133.4 | 192 | 5 |
-| | This impl (Find) | 194.5 | 192 | 10 |
-| Parse | BragdonD | 43.15 | 64 | 1 |
-| | This impl | 78.95 | 96 | 4 |
-| | go-openapi | 102.0 | 112 | 2 |
+This library offers excellent performance with zero-allocation `Get` operations and competitive `Find` operations. Our `Get` function achieves optimal performance for common use cases, while `Find` provides rich reference objects when needed.
+
+For detailed benchmark results and performance comparisons with other JSON Pointer libraries, see [benchmarks/README.md](benchmarks/README.md).
 
 ## Acknowledgments
 
