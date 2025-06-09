@@ -58,12 +58,13 @@ func find(val any, path Path) (*Reference, error) {
 				if index < 0 || strconv.Itoa(index) != key {
 					return nil, ErrInvalidIndex
 				}
-				if index < len(v) {
+				switch {
+				case index < len(v):
 					current = v[index]
-				} else if index == len(v) {
+				case index == len(v):
 					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
-				} else {
+				default:
 					return nil, ErrIndexOutOfBounds
 				}
 			}
@@ -81,12 +82,13 @@ func find(val any, path Path) (*Reference, error) {
 				if index < 0 || strconv.Itoa(index) != key {
 					return nil, ErrInvalidIndex
 				}
-				if index < len(*v) {
+				switch {
+				case index < len(*v):
 					current = (*v)[index]
-				} else if index == len(*v) {
+				case index == len(*v):
 					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
-				} else {
+				default:
 					return nil, ErrIndexOutOfBounds
 				}
 			}
@@ -101,12 +103,13 @@ func find(val any, path Path) (*Reference, error) {
 				if index < 0 || strconv.Itoa(index) != key {
 					return nil, ErrInvalidIndex
 				}
-				if index < len(v) {
+				switch {
+				case index < len(v):
 					current = v[index]
-				} else if index == len(v) {
+				case index == len(v):
 					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
-				} else {
+				default:
 					return nil, ErrIndexOutOfBounds
 				}
 			}
@@ -120,12 +123,13 @@ func find(val any, path Path) (*Reference, error) {
 				if index < 0 || strconv.Itoa(index) != key {
 					return nil, ErrInvalidIndex
 				}
-				if index < len(v) {
+				switch {
+				case index < len(v):
 					current = v[index]
-				} else if index == len(v) {
+				case index == len(v):
 					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
-				} else {
+				default:
 					return nil, ErrIndexOutOfBounds
 				}
 			}
@@ -139,12 +143,13 @@ func find(val any, path Path) (*Reference, error) {
 				if index < 0 || strconv.Itoa(index) != key {
 					return nil, ErrInvalidIndex
 				}
-				if index < len(v) {
+				switch {
+				case index < len(v):
 					current = v[index]
-				} else if index == len(v) {
+				case index == len(v):
 					// Allow pointing to one past array end (JSON Pointer spec)
 					current = nil
-				} else {
+				default:
 					return nil, ErrIndexOutOfBounds
 				}
 			}
@@ -194,12 +199,13 @@ func find(val any, path Path) (*Reference, error) {
 					if index < 0 || strconv.Itoa(index) != key {
 						return nil, ErrInvalidIndex
 					}
-					if index < objVal.Len() {
+					switch {
+					case index < objVal.Len():
 						current = objVal.Index(index).Interface()
-					} else if index == objVal.Len() {
+					case index == objVal.Len():
 						// Allow pointing to one past array end (JSON Pointer spec)
 						current = nil
-					} else {
+					default:
 						return nil, ErrIndexOutOfBounds
 					}
 				}

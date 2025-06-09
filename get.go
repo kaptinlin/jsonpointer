@@ -86,12 +86,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
 		}
-		if token.index < len(arr) {
+		switch {
+		case token.index < len(arr):
 			return arr[token.index], true, nil
-		} else if token.index == len(arr) {
+		case token.index == len(arr):
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
@@ -105,12 +106,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
 		}
-		if token.index < len(*arr) {
+		switch {
+		case token.index < len(*arr):
 			return (*arr)[token.index], true, nil
-		} else if token.index == len(*arr) {
+		case token.index == len(*arr):
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
@@ -121,12 +123,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
 		}
-		if token.index < len(arr) {
+		switch {
+		case token.index < len(arr):
 			return arr[token.index], true, nil
-		} else if token.index == len(arr) {
+		case token.index == len(arr):
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
@@ -137,12 +140,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
 		}
-		if token.index < len(arr) {
+		switch {
+		case token.index < len(arr):
 			return arr[token.index], true, nil
-		} else if token.index == len(arr) {
+		case token.index == len(arr):
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
@@ -153,12 +157,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if token.index < 0 || strconv.Itoa(token.index) != token.key {
 			return nil, true, ErrInvalidIndex
 		}
-		if token.index < len(arr) {
+		switch {
+		case token.index < len(arr):
 			return arr[token.index], true, nil
-		} else if token.index == len(arr) {
+		case token.index == len(arr):
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 
@@ -176,12 +181,13 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		}
 
 		arrayVal := reflect.ValueOf(current)
-		if token.index < arrayVal.Len() {
+		switch {
+		case token.index < arrayVal.Len():
 			return arrayVal.Index(token.index).Interface(), true, nil
-		} else if token.index == arrayVal.Len() {
+		case token.index == arrayVal.Len():
 			// Allow pointing to one past array end (JSON Pointer spec)
 			return nil, true, nil
-		} else {
+		default:
 			return nil, true, ErrIndexOutOfBounds
 		}
 	}
