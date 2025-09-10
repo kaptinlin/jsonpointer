@@ -10,31 +10,31 @@ import (
 // Maps to: util.parseJsonPointer.spec.ts
 func TestParseJsonPointer(t *testing.T) {
 	t.Run("returns path without escaped characters parsed into array", func(t *testing.T) {
-		res := parseJsonPointer("/foo/bar")
+		res := parseJSONPointer("/foo/bar")
 		expected := Path{"foo", "bar"}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
 
 	t.Run("trailing slashes result into empty string elements", func(t *testing.T) {
-		res := parseJsonPointer("/foo///")
+		res := parseJSONPointer("/foo///")
 		expected := Path{"foo", "", "", ""}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
 
 	t.Run("for root path returns empty array", func(t *testing.T) {
-		res := parseJsonPointer("")
+		res := parseJSONPointer("")
 		expected := Path{}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
 
 	t.Run("slash path \"/\" return single empty string", func(t *testing.T) {
-		res := parseJsonPointer("/")
+		res := parseJSONPointer("/")
 		expected := Path{""}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
 
 	t.Run("un-escapes special characters", func(t *testing.T) {
-		res := parseJsonPointer("/a~0b/c~1d/1")
+		res := parseJSONPointer("/a~0b/c~1d/1")
 		expected := Path{"a~b", "c/d", "1"}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
@@ -44,31 +44,31 @@ func TestParseJsonPointer(t *testing.T) {
 // Maps to: util.formatJsonPointer.spec.ts
 func TestFormatJsonPointer(t *testing.T) {
 	t.Run("returns path without escaped characters parsed into array", func(t *testing.T) {
-		res := formatJsonPointer(Path{"foo", "bar"})
+		res := formatJSONPointer(Path{"foo", "bar"})
 		expected := "/foo/bar"
 		assert.Equal(t, expected, res)
 	})
 
 	t.Run("empty string elements add trailing slashes", func(t *testing.T) {
-		res := formatJsonPointer(Path{"foo", "", "", ""})
+		res := formatJSONPointer(Path{"foo", "", "", ""})
 		expected := "/foo///"
 		assert.Equal(t, expected, res)
 	})
 
 	t.Run("array with single empty string results into root element", func(t *testing.T) {
-		res := formatJsonPointer(Path{})
+		res := formatJSONPointer(Path{})
 		expected := ""
 		assert.Equal(t, expected, res)
 	})
 
 	t.Run("two empty strings result in a single slash \"/\"", func(t *testing.T) {
-		res := formatJsonPointer(Path{""})
+		res := formatJSONPointer(Path{""})
 		expected := "/"
 		assert.Equal(t, expected, res)
 	})
 
 	t.Run("escapes special characters", func(t *testing.T) {
-		res := formatJsonPointer(Path{"a~b", "c/d", "1"})
+		res := formatJSONPointer(Path{"a~b", "c/d", "1"})
 		expected := "/a~0b/c~1d/1"
 		assert.Equal(t, expected, res)
 	})

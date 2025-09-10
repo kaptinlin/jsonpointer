@@ -654,7 +654,7 @@ func TestMixedDataEdgeCases(t *testing.T) {
 
 // Test nil pointer handling
 func TestNilPointerHandling(t *testing.T) {
-	var user *User = nil
+	var user *User
 
 	// Should return error when trying to access field of nil pointer
 	result, err := Get(user, "name")

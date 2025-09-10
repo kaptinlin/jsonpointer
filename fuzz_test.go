@@ -123,9 +123,7 @@ func FuzzValidateJsonPointer(f *testing.F) {
 			hasInvalidEscape := strings.Contains(pointer, "~") &&
 				!strings.Contains(pointer, "~0") && !strings.Contains(pointer, "~1")
 
-			if !hasValidPrefix || hasInvalidEscape {
-				// This is expected for invalid pointers
-			} else {
+			if hasValidPrefix && !hasInvalidEscape {
 				// Might be an edge case where our validation is too strict
 				t.Logf("validation rejected potentially valid pointer: %q (error: %v)", pointer, err)
 			}
@@ -171,9 +169,8 @@ func FuzzEscapeUnescape(f *testing.F) {
 					if i+1 < len(escaped) && (escaped[i+1] == '0' || escaped[i+1] == '1') {
 						// This is a valid escape sequence, skip the next char
 						continue
-					} else {
-						rawTildes++
 					}
+					rawTildes++
 				}
 			}
 

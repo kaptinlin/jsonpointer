@@ -1,3 +1,4 @@
+// Package main demonstrates JSON Pointer usage examples.
 package main
 
 import (

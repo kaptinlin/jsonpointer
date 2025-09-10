@@ -112,7 +112,7 @@ func escapeComponent(component string) string {
 //	  // TODO: Performance of this line can be improved: (1) don't use .split(); (2) don't use .map().
 //	  return pointer.slice(1).split('/').map(unescapeComponent);
 //	}
-func parseJsonPointer(pointer string) Path {
+func parseJSONPointer(pointer string) Path {
 	if pointer == "" {
 		return Path{}
 	}
@@ -150,7 +150,7 @@ func parseJsonPointer(pointer string) Path {
 //	  if (isRoot(path)) return '';
 //	  return '/' + path.map((component) => escapeComponent(String(component))).join('/');
 //	}
-func formatJsonPointer(path Path) string {
+func formatJSONPointer(path Path) string {
 	if IsRoot(path) {
 		return ""
 	}
@@ -170,7 +170,7 @@ func formatJsonPointer(path Path) string {
 func ToPath(pointer any) Path {
 	switch p := pointer.(type) {
 	case string:
-		return parseJsonPointer(p)
+		return parseJSONPointer(p)
 	case Path:
 		return p
 	case []string:

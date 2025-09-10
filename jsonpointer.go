@@ -62,12 +62,12 @@ func FindByPointer(doc any, pointer string) (*Reference, error) {
 
 // Parse parses a JSON Pointer string to a path array.
 func Parse(pointer string) Path {
-	return parseJsonPointer(pointer)
+	return parseJSONPointer(pointer)
 }
 
 // Format formats string path components into a JSON Pointer string.
 func Format(path ...string) string {
-	return formatJsonPointer(Path(path))
+	return formatJSONPointer(Path(path))
 }
 
 // Escape escapes special characters in a path component.
@@ -82,7 +82,7 @@ func Unescape(component string) string {
 
 // Validate validates a JSON Pointer string or Path.
 func Validate(pointer any) error {
-	return validateJsonPointer(pointer)
+	return validateJSONPointer(pointer)
 }
 
 // ValidatePath validates a path array.

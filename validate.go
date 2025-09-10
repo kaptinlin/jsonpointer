@@ -7,7 +7,7 @@ import (
 
 // validateJsonPointer validates a JSON Pointer string or Path.
 // Returns an error if the pointer is invalid according to RFC 6901.
-func validateJsonPointer(pointer any) error {
+func validateJSONPointer(pointer any) error {
 	switch p := pointer.(type) {
 	case string:
 		return validatePointerString(p)
