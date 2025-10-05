@@ -109,9 +109,10 @@ func escapeComponent(component string) string {
 //
 //	export function parseJsonPointer(pointer: string): Path {
 //	  if (!pointer) return [];
-//	  // TODO: Performance of this line can be improved: (1) don't use .split(); (2) don't use .map().
 //	  return pointer.slice(1).split('/').map(unescapeComponent);
 //	}
+//
+// Note: The Go implementation uses optimized string processing without split/map for better performance.
 func parseJSONPointer(pointer string) Path {
 	if pointer == "" {
 		return Path{}
@@ -298,4 +299,23 @@ func IsInteger(str string) bool {
 		}
 	}
 	return true
+}
+
+// validateArrayIndex validates and parses array index from string key.
+// Returns the parsed index and error if validation fails.
+// Preserves RFC 6901 semantics: distinguishes between index == length (array end) and index > length (out of bounds).
+func validateArrayIndex(key string, length int) (int, error) {
+	if key == "-" {
+		return -1, ErrIndexOutOfBounds // "-" refers to nonexistent element
+	}
+	index := fastAtoi(key)
+	if index < 0 || strconv.Itoa(index) != key {
+		return -1, ErrInvalidIndex
+	}
+	// Note: Caller should handle the distinction between index == length and index > length
+	// to maintain RFC 6901 semantics
+	if index > length {
+		return -1, ErrIndexOutOfBounds
+	}
+	return index, nil
 }

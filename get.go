@@ -2,7 +2,6 @@ package jsonpointer
 
 import (
 	"reflect"
-	"strconv"
 )
 
 // fastGet implements ultra-fast path that avoids token allocation entirely.
@@ -80,92 +79,62 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 	// Fast type assertion path for common slice types
 	switch arr := current.(type) {
 	case []any:
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, len(arr))
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-		switch {
-		case token.index < len(arr):
-			return arr[token.index], true, nil
-		case token.index == len(arr):
+		if index == len(arr) {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return arr[index], true, nil
 
 	case *[]any:
 		if arr == nil {
 			return nil, true, ErrNilPointer
 		}
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, len(*arr))
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-		switch {
-		case token.index < len(*arr):
-			return (*arr)[token.index], true, nil
-		case token.index == len(*arr):
+		if index == len(*arr) {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return (*arr)[index], true, nil
 
 	case []string:
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, len(arr))
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-		switch {
-		case token.index < len(arr):
-			return arr[token.index], true, nil
-		case token.index == len(arr):
+		if index == len(arr) {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return arr[index], true, nil
 
 	case []int:
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, len(arr))
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-		switch {
-		case token.index < len(arr):
-			return arr[token.index], true, nil
-		case token.index == len(arr):
+		if index == len(arr) {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return arr[index], true, nil
 
 	case []float64:
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, len(arr))
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-		switch {
-		case token.index < len(arr):
-			return arr[token.index], true, nil
-		case token.index == len(arr):
+		if index == len(arr) {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return arr[index], true, nil
 
 	default:
 		// Fallback to reflection for other array types (like []User, native arrays, and pointers to arrays)
@@ -184,22 +153,15 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 			return nil, false, nil
 		}
 
-		if token.key == "-" {
-			return nil, true, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		index, err := validateArrayIndex(token.key, arrayVal.Len())
+		if err != nil {
+			return nil, true, err
 		}
-		if token.index < 0 || strconv.Itoa(token.index) != token.key {
-			return nil, true, ErrInvalidIndex
-		}
-
-		switch {
-		case token.index < arrayVal.Len():
-			return arrayVal.Index(token.index).Interface(), true, nil
-		case token.index == arrayVal.Len():
+		if index == arrayVal.Len() {
 			// Array end position is nonexistent element (JSON Pointer spec)
 			return nil, true, ErrIndexOutOfBounds
-		default:
-			return nil, true, ErrIndexOutOfBounds
 		}
+		return arrayVal.Index(index).Interface(), true, nil
 	}
 }
 
@@ -346,59 +308,13 @@ func get(val any, path Path) (any, error) {
 	return current, nil
 }
 
-// findStructField finds a struct field by JSON tag or field name.
+// findStructField finds a struct field by JSON tag or field name using cached field mapping.
 // Returns the field value if found, invalid reflect.Value otherwise.
 func findStructField(structVal reflect.Value, key string) reflect.Value {
-	structType := structVal.Type()
-	numFields := structType.NumField()
-
-	// First pass: look for exact JSON tag match
-	for i := 0; i < numFields; i++ {
-		field := structType.Field(i)
-
-		// Skip unexported fields
-		if !field.IsExported() {
-			continue
-		}
-
-		// Check JSON tag
-		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
-			tagName := jsonTag
-			// Find comma to extract just the field name part
-			for j, r := range jsonTag {
-				if r == ',' {
-					tagName = jsonTag[:j]
-					break
-				}
-			}
-			if tagName == key {
-				return structVal.Field(i)
-			}
-			if tagName == "-" {
-				continue // Explicitly ignored field
-			}
-		}
+	// Use cached struct field mapping from struct.go
+	fields := getStructFields(structVal.Type())
+	if fieldIndex, ok := fields[key]; ok {
+		return structVal.Field(fieldIndex)
 	}
-
-	// Second pass: look for field name match (if no JSON tag found)
-	for i := 0; i < numFields; i++ {
-		field := structType.Field(i)
-
-		// Skip unexported fields
-		if !field.IsExported() {
-			continue
-		}
-
-		// Skip if has JSON tag (already checked above)
-		if field.Tag.Get("json") != "" {
-			continue
-		}
-
-		// Match field name
-		if field.Name == key {
-			return structVal.Field(i)
-		}
-	}
-
 	return reflect.Value{} // Not found
 }

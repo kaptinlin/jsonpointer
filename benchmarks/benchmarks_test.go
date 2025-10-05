@@ -1,7 +1,7 @@
 package benchmarks
 
 import (
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 	"testing"
 
 	// Our implementation

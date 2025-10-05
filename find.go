@@ -2,7 +2,6 @@ package jsonpointer
 
 import (
 	"reflect"
-	"strconv"
 )
 
 // find locates a reference in document using string path components.
@@ -48,105 +47,64 @@ func find(val any, path Path) (*Reference, error) {
 
 		case []any:
 			// Array access - optimized inline parsing
-			if key == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
+			index, err := validateArrayIndex(key, len(v))
+			if err != nil {
+				return nil, err
 			}
-			index := fastAtoi(key)
-			// Validate array index format (no leading zeros except "0")
-			if index < 0 || strconv.Itoa(index) != key {
-				return nil, ErrInvalidIndex
-			}
-			switch {
-			case index < len(v):
-				current = v[index]
-			case index == len(v):
+			if index == len(v) {
 				// Array end position is nonexistent element (JSON Pointer spec)
 				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
 			}
+			current = v[index]
 
 		case *[]any:
 			// Pointer to slice optimization
 			if v == nil {
 				return nil, ErrNilPointer
 			}
-			if key == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
+			index, err := validateArrayIndex(key, len(*v))
+			if err != nil {
+				return nil, err
 			}
-			index := fastAtoi(key)
-			if index < 0 || strconv.Itoa(index) != key {
-				return nil, ErrInvalidIndex
-			}
-			switch {
-			case index < len(*v):
-				current = (*v)[index]
-			case index == len(*v):
+			if index == len(*v) {
 				// Array end position is nonexistent element (JSON Pointer spec)
 				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
 			}
+			current = (*v)[index]
 
 		// Fast path for other common slice types
 		case []string:
-			if key == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
+			index, err := validateArrayIndex(key, len(v))
+			if err != nil {
+				return nil, err
 			}
-			index := fastAtoi(key)
-			if index < 0 || strconv.Itoa(index) != key {
-				return nil, ErrInvalidIndex
-			}
-			switch {
-			case index < len(v):
-				current = v[index]
-			case index == len(v):
+			if index == len(v) {
 				// Array end position is nonexistent element (JSON Pointer spec)
 				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
 			}
+			current = v[index]
 
 		case []int:
-			if key == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
+			index, err := validateArrayIndex(key, len(v))
+			if err != nil {
+				return nil, err
 			}
-			index := fastAtoi(key)
-			if index < 0 || strconv.Itoa(index) != key {
-				return nil, ErrInvalidIndex
-			}
-			switch {
-			case index < len(v):
-				current = v[index]
-			case index == len(v):
+			if index == len(v) {
 				// Array end position is nonexistent element (JSON Pointer spec)
 				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
 			}
+			current = v[index]
 
 		case []float64:
-			if key == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
+			index, err := validateArrayIndex(key, len(v))
+			if err != nil {
+				return nil, err
 			}
-			index := fastAtoi(key)
-			if index < 0 || strconv.Itoa(index) != key {
-				return nil, ErrInvalidIndex
-			}
-			switch {
-			case index < len(v):
-				current = v[index]
-			case index == len(v):
+			if index == len(v) {
 				// Array end position is nonexistent element (JSON Pointer spec)
 				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
 			}
+			current = v[index]
 
 		// Fast path for other common map types
 		case map[string]string:
@@ -185,23 +143,15 @@ func find(val any, path Path) (*Reference, error) {
 			switch objVal.Kind() {
 			case reflect.Slice, reflect.Array:
 				// Array access using reflection
-				if key == "-" {
-					// "-" refers to nonexistent element (JSON Pointer spec)
-					return nil, ErrIndexOutOfBounds
+				index, err := validateArrayIndex(key, objVal.Len())
+				if err != nil {
+					return nil, err
 				}
-				index := fastAtoi(key)
-				if index < 0 || strconv.Itoa(index) != key {
-					return nil, ErrInvalidIndex
-				}
-				switch {
-				case index < objVal.Len():
-					current = objVal.Index(index).Interface()
-				case index == objVal.Len():
+				if index == objVal.Len() {
 					// Array end position is nonexistent element (JSON Pointer spec)
 					return nil, ErrIndexOutOfBounds
-				default:
-					return nil, ErrIndexOutOfBounds
 				}
+				current = objVal.Index(index).Interface()
 
 			case reflect.Map:
 				// Map access using reflection

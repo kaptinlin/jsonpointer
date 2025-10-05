@@ -78,10 +78,14 @@ func getFieldName(field reflect.StructField) string {
 	// Check JSON tag
 	tag := field.Tag.Get("json")
 	if tag != "" {
-		// Take the part before comma as field name
-		name := strings.Split(tag, ",")[0]
-		if name != "" {
-			return name
+		// Take the part before comma as field name (zero-allocation optimization)
+		if idx := strings.IndexByte(tag, ','); idx != -1 {
+			name := tag[:idx]
+			if name != "" {
+				return name
+			}
+		} else if tag != "" {
+			return tag
 		}
 	}
 
