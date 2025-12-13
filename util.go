@@ -1,6 +1,8 @@
 package jsonpointer
 
 import (
+	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -34,6 +36,19 @@ func fastAtoi(s string) int {
 		n = t
 	}
 	return n
+}
+
+// derefValue dereferences pointer values until reaching a non-pointer value.
+// Returns an error if any pointer in the chain is nil.
+// This is a helper function to eliminate duplicated pointer dereferencing logic.
+func derefValue(v reflect.Value) (reflect.Value, error) {
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return reflect.Value{}, ErrNilPointer
+		}
+		v = v.Elem()
+	}
+	return v, nil
 }
 
 // UnescapeComponent un-escapes a JSON pointer path component.
@@ -144,6 +159,7 @@ func parseJSONPointer(pointer string) Path {
 
 // FormatJsonPointer escapes and formats a path slice like []string{"foo", "bar"}
 // to JSON pointer like "/foo/bar".
+// Optimized with strings.Builder pre-allocation for zero intermediate allocations.
 //
 // TypeScript Original:
 //
@@ -155,11 +171,22 @@ func formatJSONPointer(path Path) string {
 	if IsRoot(path) {
 		return ""
 	}
-	parts := make([]string, len(path))
-	for i, component := range path {
-		parts[i] = escapeComponent(component)
+
+	// Pre-calculate capacity for single allocation
+	// Each component needs: '/' separator + component length + potential escaping (max 2 chars per original char)
+	capacity := len(path) // '/' separators
+	for _, comp := range path {
+		capacity += len(comp) + 2 // component + max 2 chars for potential escaping
 	}
-	return "/" + strings.Join(parts, "/")
+
+	var b strings.Builder
+	b.Grow(capacity)
+
+	for _, component := range path {
+		b.WriteByte('/')
+		b.WriteString(escapeComponent(component))
+	}
+	return b.String()
 }
 
 // ToPath converts a pointer (string or Path) to Path.
@@ -206,6 +233,7 @@ func IsChild(parent, child Path) bool {
 }
 
 // IsPathEqual returns true if two paths are equal, false otherwise.
+// Optimized with slices.Equal (Go 1.21+) using SIMD instructions.
 //
 // TypeScript Original:
 //
@@ -215,15 +243,7 @@ func IsChild(parent, child Path) bool {
 //	  return true;
 //	}
 func IsPathEqual(p1, p2 Path) bool {
-	if len(p1) != len(p2) {
-		return false
-	}
-	for i := 0; i < len(p1); i++ {
-		if p1[i] != p2[i] {
-			return false
-		}
-	}
-	return true
+	return slices.Equal(p1, p2)
 }
 
 // IsRoot returns true if JSON Pointer points to root value, false otherwise.
@@ -315,6 +335,22 @@ func validateArrayIndex(key string, length int) (int, error) {
 	// Note: Caller should handle the distinction between index == length and index > length
 	// to maintain RFC 6901 semantics
 	if index > length {
+		return -1, ErrIndexOutOfBounds
+	}
+	return index, nil
+}
+
+// validateAndAccessArray validates array index and checks for array end marker.
+// Returns ErrIndexOutOfBounds if index equals array length (array end marker per RFC 6901).
+// Returns the validated index ready for array access.
+// This helper eliminates repeated validation + end-check logic across get.go and find.go.
+func validateAndAccessArray(key string, length int) (int, error) {
+	index, err := validateArrayIndex(key, length)
+	if err != nil {
+		return -1, err
+	}
+	if index == length {
+		// Array end position is nonexistent element (JSON Pointer spec)
 		return -1, ErrIndexOutOfBounds
 	}
 	return index, nil

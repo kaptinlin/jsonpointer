@@ -47,13 +47,9 @@ func find(val any, path Path) (*Reference, error) {
 
 		case []any:
 			// Array access - optimized inline parsing
-			index, err := validateArrayIndex(key, len(v))
+			index, err := validateAndAccessArray(key, len(v))
 			if err != nil {
 				return nil, err
-			}
-			if index == len(v) {
-				// Array end position is nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
 			}
 			current = v[index]
 
@@ -62,94 +58,25 @@ func find(val any, path Path) (*Reference, error) {
 			if v == nil {
 				return nil, ErrNilPointer
 			}
-			index, err := validateArrayIndex(key, len(*v))
+			index, err := validateAndAccessArray(key, len(*v))
 			if err != nil {
 				return nil, err
-			}
-			if index == len(*v) {
-				// Array end position is nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
 			}
 			current = (*v)[index]
 
-		// Fast path for other common slice types
-		case []string:
-			index, err := validateArrayIndex(key, len(v))
-			if err != nil {
-				return nil, err
-			}
-			if index == len(v) {
-				// Array end position is nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
-			}
-			current = v[index]
-
-		case []int:
-			index, err := validateArrayIndex(key, len(v))
-			if err != nil {
-				return nil, err
-			}
-			if index == len(v) {
-				// Array end position is nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
-			}
-			current = v[index]
-
-		case []float64:
-			index, err := validateArrayIndex(key, len(v))
-			if err != nil {
-				return nil, err
-			}
-			if index == len(v) {
-				// Array end position is nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
-			}
-			current = v[index]
-
-		// Fast path for other common map types
-		case map[string]string:
-			if result, exists := v[key]; exists {
-				current = result
-			} else {
-				return nil, ErrKeyNotFound
-			}
-
-		case map[string]int:
-			if result, exists := v[key]; exists {
-				current = result
-			} else {
-				return nil, ErrKeyNotFound
-			}
-
-		case map[string]float64:
-			if result, exists := v[key]; exists {
-				current = result
-			} else {
-				return nil, ErrKeyNotFound
-			}
-
 		default:
 			// Reflection fallback for other types
-			objVal := reflect.ValueOf(current)
-
-			// Handle pointer dereferencing
-			for objVal.Kind() == reflect.Ptr {
-				if objVal.IsNil() {
-					return nil, ErrNilPointer
-				}
-				objVal = objVal.Elem()
+			objVal, err := derefValue(reflect.ValueOf(current))
+			if err != nil {
+				return nil, err
 			}
 
 			switch objVal.Kind() {
 			case reflect.Slice, reflect.Array:
 				// Array access using reflection
-				index, err := validateArrayIndex(key, objVal.Len())
+				index, err := validateAndAccessArray(key, objVal.Len())
 				if err != nil {
 					return nil, err
-				}
-				if index == objVal.Len() {
-					// Array end position is nonexistent element (JSON Pointer spec)
-					return nil, ErrIndexOutOfBounds
 				}
 				current = objVal.Index(index).Interface()
 

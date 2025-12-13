@@ -68,29 +68,11 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		obj = val
 
 		switch {
-		case func() bool {
-			if obj == nil {
-				return false
-			}
-			objVal := reflect.ValueOf(obj)
-			// Handle pointer dereferencing
-			for objVal.Kind() == reflect.Ptr {
-				if objVal.IsNil() {
-					return false
-				}
-				objVal = objVal.Elem()
-			}
-			kind := objVal.Kind()
-			return kind == reflect.Slice || kind == reflect.Array
-		}():
+		case isSliceOrArray(obj):
 			// Handle array access
-			arrayVal := reflect.ValueOf(obj)
-			// Handle pointer dereferencing
-			for arrayVal.Kind() == reflect.Ptr {
-				if arrayVal.IsNil() {
-					return nil, ErrNilPointer
-				}
-				arrayVal = arrayVal.Elem()
+			arrayVal, err := derefValue(reflect.ValueOf(obj))
+			if err != nil {
+				return nil, err
 			}
 			length := arrayVal.Len()
 
@@ -157,6 +139,24 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		Obj: obj,
 		Key: key,
 	}, nil
+}
+
+// isSliceOrArray checks if a value is a slice or array type after dereferencing pointers.
+// Returns false if the value is nil or not a slice/array type.
+func isSliceOrArray(obj any) bool {
+	if obj == nil {
+		return false
+	}
+	objVal := reflect.ValueOf(obj)
+	// Handle pointer dereferencing
+	for objVal.Kind() == reflect.Ptr {
+		if objVal.IsNil() {
+			return false
+		}
+		objVal = objVal.Elem()
+	}
+	kind := objVal.Kind()
+	return kind == reflect.Slice || kind == reflect.Array
 }
 
 // Helper function to check if value is an object (map or struct) for pointer operations

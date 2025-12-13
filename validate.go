@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+// Validation limits aligned with TypeScript implementation
+const (
+	// MaxPointerLength is the maximum allowed length for JSON Pointer strings.
+	// Aligned with TypeScript: > 1024 is invalid
+	MaxPointerLength = 1024
+
+	// MaxPathLength is the maximum allowed length for Path arrays.
+	// Aligned with TypeScript: > 256 is invalid
+	MaxPathLength = 256
+)
+
 // validateJsonPointer validates a JSON Pointer string or Path.
 // Returns an error if the pointer is invalid according to RFC 6901.
 func validateJSONPointer(pointer any) error {
@@ -33,7 +44,7 @@ func validatePointerString(pointer string) error {
 	}
 
 	// Check length limit (aligned with TypeScript: > 1024)
-	if len(pointer) > 1024 {
+	if len(pointer) > MaxPointerLength {
 		return ErrPointerTooLong
 	}
 
@@ -65,12 +76,12 @@ func validatePath(path any) error {
 
 	// Check length (aligned with TypeScript: > 256)
 	length := val.Len()
-	if length > 256 {
+	if length > MaxPathLength {
 		return ErrPathTooLong
 	}
 
-	// Validate each step - all must be strings
-	for i := 0; i < length; i++ {
+	// Validate each step - all must be strings - using range over integer (Go 1.22+)
+	for i := range length {
 		step := val.Index(i).Interface()
 
 		// Check if step is string

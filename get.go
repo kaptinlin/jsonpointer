@@ -79,13 +79,9 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 	// Fast type assertion path for common slice types
 	switch arr := current.(type) {
 	case []any:
-		index, err := validateArrayIndex(token.key, len(arr))
+		index, err := validateAndAccessArray(token.key, len(arr))
 		if err != nil {
 			return nil, true, err
-		}
-		if index == len(arr) {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
 		}
 		return arr[index], true, nil
 
@@ -93,59 +89,17 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		if arr == nil {
 			return nil, true, ErrNilPointer
 		}
-		index, err := validateArrayIndex(token.key, len(*arr))
+		index, err := validateAndAccessArray(token.key, len(*arr))
 		if err != nil {
 			return nil, true, err
-		}
-		if index == len(*arr) {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
 		}
 		return (*arr)[index], true, nil
 
-	case []string:
-		index, err := validateArrayIndex(token.key, len(arr))
-		if err != nil {
-			return nil, true, err
-		}
-		if index == len(arr) {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
-		}
-		return arr[index], true, nil
-
-	case []int:
-		index, err := validateArrayIndex(token.key, len(arr))
-		if err != nil {
-			return nil, true, err
-		}
-		if index == len(arr) {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
-		}
-		return arr[index], true, nil
-
-	case []float64:
-		index, err := validateArrayIndex(token.key, len(arr))
-		if err != nil {
-			return nil, true, err
-		}
-		if index == len(arr) {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
-		}
-		return arr[index], true, nil
-
 	default:
 		// Fallback to reflection for other array types (like []User, native arrays, and pointers to arrays)
-		arrayVal := reflect.ValueOf(current)
-
-		// Handle pointer dereferencing
-		for arrayVal.Kind() == reflect.Ptr {
-			if arrayVal.IsNil() {
-				return nil, true, ErrNilPointer
-			}
-			arrayVal = arrayVal.Elem()
+		arrayVal, err := derefValue(reflect.ValueOf(current))
+		if err != nil {
+			return nil, true, err
 		}
 
 		// Check if the dereferenced value is an array/slice
@@ -153,13 +107,9 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 			return nil, false, nil
 		}
 
-		index, err := validateArrayIndex(token.key, arrayVal.Len())
+		index, err := validateAndAccessArray(token.key, arrayVal.Len())
 		if err != nil {
 			return nil, true, err
-		}
-		if index == arrayVal.Len() {
-			// Array end position is nonexistent element (JSON Pointer spec)
-			return nil, true, ErrIndexOutOfBounds
 		}
 		return arrayVal.Index(index).Interface(), true, nil
 	}
@@ -187,37 +137,11 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 		}
 		return result, true, nil
 
-	case map[string]string:
-		result, exists := obj[token.key]
-		if !exists {
-			return nil, true, ErrKeyNotFound // Key doesn't exist
-		}
-		return result, true, nil
-
-	case map[string]int:
-		result, exists := obj[token.key]
-		if !exists {
-			return nil, true, ErrKeyNotFound // Key doesn't exist
-		}
-		return result, true, nil
-
-	case map[string]float64:
-		result, exists := obj[token.key]
-		if !exists {
-			return nil, true, ErrKeyNotFound // Key doesn't exist
-		}
-		return result, true, nil
-
 	default:
 		// Fallback to reflection for other object types
-		objVal := reflect.ValueOf(current)
-
-		// Handle pointer dereferencing
-		for objVal.Kind() == reflect.Ptr {
-			if objVal.IsNil() {
-				return nil, false, ErrNilPointer
-			}
-			objVal = objVal.Elem()
+		objVal, err := derefValue(reflect.ValueOf(current))
+		if err != nil {
+			return nil, false, err
 		}
 
 		switch objVal.Kind() {

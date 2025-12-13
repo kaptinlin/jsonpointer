@@ -73,22 +73,21 @@ func getStructFields(t reflect.Type) structFields {
 	return fields
 }
 
-// getFieldName gets the JSON name of field, supports basic JSON tags
+// getFieldName gets the JSON name of field, supports basic JSON tags.
+// Optimized with strings.Cut (Go 1.18+) for cleaner parsing.
 func getFieldName(field reflect.StructField) string {
-	// Check JSON tag
 	tag := field.Tag.Get("json")
-	if tag != "" {
-		// Take the part before comma as field name (zero-allocation optimization)
-		if idx := strings.IndexByte(tag, ','); idx != -1 {
-			name := tag[:idx]
-			if name != "" {
-				return name
-			}
-		} else if tag != "" {
-			return tag
-		}
+	if tag == "" {
+		return field.Name
 	}
 
-	// Default to field name
+	// Use strings.Cut for cleaner parsing
+	// Extracts field name before comma: "name,omitempty" → "name"
+	name, _, _ := strings.Cut(tag, ",")
+	if name != "" {
+		return name
+	}
+
+	// If only options (e.g., ",omitempty"), use field name
 	return field.Name
 }

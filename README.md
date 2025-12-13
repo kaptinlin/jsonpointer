@@ -213,19 +213,19 @@ func main() {
     }
     fmt.Println(ref.Val) // 2
 
-    // Array end marker "-" points to next index
-    ref, err = jsonpointer.Find(doc, "items", "-")
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Println(ref.Key) // "3" (next available index as string)
-    
     // Using JSON Pointer string with Get
     value, err := jsonpointer.GetByPointer(doc, "/items/0")
     if err != nil {
         log.Fatal(err)
     }
     fmt.Println(value) // 1
+
+    // Array end marker "-" refers to nonexistent element (returns error)
+    // Per RFC 6901, "-" is used for append operations, not for reading
+    _, err = jsonpointer.Find(doc, "items", "-")
+    if err != nil {
+        fmt.Printf("Array end marker error: %v\n", err) // array index out of bounds
+    }
 }
 ```
 
@@ -285,13 +285,13 @@ func main() {
     // Private fields are ignored - returns error
     private, err := jsonpointer.Get(profile, "user", "private")
     if err != nil {
-        fmt.Printf("Error: %v\n", err) // Error: not found
+        fmt.Printf("Error: %v\n", err) // Error: struct field not found
     }
 
     // json:"-" fields are ignored - returns error
     ignored, err := jsonpointer.Get(profile, "user", "Ignored")
     if err != nil {
-        fmt.Printf("Error: %v\n", err) // Error: not found
+        fmt.Printf("Error: %v\n", err) // Error: struct field not found
     }
 
     // Nested struct navigation
