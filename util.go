@@ -51,7 +51,7 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 	return v, nil
 }
 
-// UnescapeComponent un-escapes a JSON pointer path component.
+// unescapeComponent un-escapes a JSON pointer path component.
 // Returns the unescaped component string.
 //
 // TypeScript Original:
@@ -329,7 +329,7 @@ func validateArrayIndex(key string, length int) (int, error) {
 		return -1, ErrIndexOutOfBounds // "-" refers to nonexistent element
 	}
 	index := fastAtoi(key)
-	if index < 0 || strconv.Itoa(index) != key {
+	if index < 0 {
 		return -1, ErrInvalidIndex
 	}
 	// Note: Caller should handle the distinction between index == length and index > length

@@ -144,7 +144,7 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 			return nil, false, err
 		}
 
-		switch objVal.Kind() {
+		switch objVal.Kind() { //nolint:exhaustive
 		case reflect.Map:
 			mapKey := reflect.ValueOf(token.key)
 			mapVal := objVal.MapIndex(mapKey)
@@ -159,15 +159,10 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 			}
 			return nil, true, ErrFieldNotFound // Field not found in struct
 
-		case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array,
-			reflect.Chan, reflect.Func, reflect.Interface, reflect.Ptr, reflect.Slice, reflect.String, reflect.UnsafePointer:
+		default:
 			// Handle all other reflect.Kind types not supported for JSON Pointer traversal
 			return nil, false, nil
 		}
-		// This should never be reached due to exhaustive case coverage
-		return nil, false, nil
 	}
 }
 

@@ -2,7 +2,6 @@ package jsonpointer
 
 import (
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -76,34 +75,12 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 			}
 			length := arrayVal.Len()
 
-			if keyStr == "-" {
-				// "-" refers to nonexistent element (JSON Pointer spec)
-				return nil, ErrIndexOutOfBounds
-			}
-			// Convert key to integer (~~key behavior in TypeScript)
-			keyInt, err := strconv.Atoi(keyStr)
+			index, err := validateAndAccessArray(keyStr, length)
 			if err != nil {
-				return nil, ErrInvalidIndex
+				return nil, err
 			}
-			// Check if string representation matches parsed value
-			if strconv.Itoa(keyInt) != keyStr {
-				return nil, ErrInvalidIndex
-			}
-			if keyInt < 0 {
-				return nil, ErrInvalidIndex
-			}
-
-			key = keyStr // Keep as string for Reference
-
-			// Get array value if index is valid
-			switch {
-			case keyInt < length:
-				val = arrayVal.Index(keyInt).Interface()
-			case keyInt == length:
-				return nil, ErrIndexOutOfBounds
-			default:
-				return nil, ErrIndexOutOfBounds
-			}
+			val = arrayVal.Index(index).Interface()
+			key = keyStr
 		case isObjectPointer(obj) && obj != nil:
 			// Handle object/map access
 			// Unescape the key component
