@@ -54,17 +54,6 @@ func TestValidate(t *testing.T) {
 		err := Validate(exactPointer)
 		assert.NoError(t, err)
 	})
-
-	t.Run("validates path when not string", func(t *testing.T) {
-		// Valid path
-		err := Validate(Path{"foo", "bar"})
-		assert.NoError(t, err)
-
-		// Invalid path (not a slice)
-		err = Validate(123)
-		assert.Error(t, err)
-		assert.Equal(t, "pointer invalid", err.Error())
-	})
 }
 
 // TestValidatePath tests path array validation.
@@ -89,24 +78,6 @@ func TestValidatePath(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("invalid path - not a slice", func(t *testing.T) {
-		err := ValidatePath("not a slice")
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path", err.Error())
-	})
-
-	t.Run("invalid path - not a slice (number)", func(t *testing.T) {
-		err := ValidatePath(123)
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path", err.Error())
-	})
-
-	t.Run("invalid path - not a slice (map)", func(t *testing.T) {
-		err := ValidatePath(map[string]any{"foo": "bar"})
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path", err.Error())
-	})
-
 	t.Run("invalid path - too long", func(t *testing.T) {
 		// Create a path with more than 256 elements
 		longPath := make(Path, 257)
@@ -126,57 +97,6 @@ func TestValidatePath(t *testing.T) {
 		}
 		err := ValidatePath(exactPath)
 		assert.NoError(t, err)
-	})
-
-	t.Run("invalid path step - boolean", func(t *testing.T) {
-		// Test with []any slice containing non-string
-		err := ValidatePath([]any{"foo", true, "bar"})
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("invalid path step - nil", func(t *testing.T) {
-		// Test with []any slice containing nil
-		err := ValidatePath([]any{"foo", nil, "bar"})
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("invalid path step - slice", func(t *testing.T) {
-		// Test with []any slice containing nested slice
-		err := ValidatePath([]any{"foo", []string{"nested"}, "bar"})
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("invalid path step - map", func(t *testing.T) {
-		// Test with []any slice containing map
-		err := ValidatePath([]any{"foo", map[string]any{"nested": "value"}, "bar"})
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("works with string slice", func(t *testing.T) {
-		// Test with []string slice
-		stringSlice := []string{"foo", "bar", "baz"}
-		err := ValidatePath(stringSlice)
-		assert.NoError(t, err)
-	})
-
-	t.Run("invalid with mixed slice", func(t *testing.T) {
-		// Test with []any slice containing non-strings
-		regularSlice := []any{"foo", "bar", 0, 1}
-		err := ValidatePath(regularSlice)
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
-	})
-
-	t.Run("invalid with int slice", func(t *testing.T) {
-		// Test with []int slice - should fail since Path only accepts strings
-		intSlice := []int{0, 1, 2, 3}
-		err := ValidatePath(intSlice)
-		assert.Error(t, err)
-		assert.Equal(t, "invalid path step", err.Error())
 	})
 }
 

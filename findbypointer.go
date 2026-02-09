@@ -136,7 +136,7 @@ func isSliceOrArray(obj any) bool {
 	return kind == reflect.Slice || kind == reflect.Array
 }
 
-// Helper function to check if value is an object (map or struct) for pointer operations
+// isObjectPointer checks if a value is an object (map or struct) for pointer operations.
 func isObjectPointer(val any) bool {
 	if val == nil {
 		return false

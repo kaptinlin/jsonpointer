@@ -6,14 +6,14 @@ import (
 	"sync"
 )
 
-// structFields caches field mapping for struct types
+// structFields caches field mapping for struct types.
 type structFields map[string]int
 
-// structFieldsCache global cache that stores field mapping for each struct type
+// structFieldsCache is a global cache that stores field mapping for each struct type.
 var structFieldsCache sync.Map
 
-// structField looks up the specified field in struct, updates value to point to that field if found
-// Returns true if field is found, false if not found
+// structField looks up the specified field in a struct and updates value to point to that field if found.
+// It returns true if the field is found, false otherwise.
 func structField(field string, value *reflect.Value) bool {
 	// Dereference pointers
 	for value.Kind() == reflect.Ptr {
@@ -40,7 +40,7 @@ func structField(field string, value *reflect.Value) bool {
 	return true
 }
 
-// getStructFields gets field mapping for struct type with caching
+// getStructFields gets field mapping for struct type with caching.
 func getStructFields(t reflect.Type) structFields {
 	// Try to get from cache
 	if cached, ok := structFieldsCache.Load(t); ok {
@@ -51,7 +51,7 @@ func getStructFields(t reflect.Type) structFields {
 	fields := make(structFields)
 	numField := t.NumField()
 
-	for i := 0; i < numField; i++ {
+	for i := range numField {
 		field := t.Field(i)
 
 		// Skip unexported fields

@@ -16,7 +16,7 @@ func find(val any, path Path) (*Reference, error) {
 	var key string
 	current := val
 
-	for i := 0; i < pathLength; i++ {
+	for i := range pathLength {
 		obj = current
 		key = path[i] // key is already a string
 
@@ -71,7 +71,7 @@ func find(val any, path Path) (*Reference, error) {
 				return nil, err
 			}
 
-			switch objVal.Kind() {
+			switch objVal.Kind() { //nolint:exhaustive
 			case reflect.Slice, reflect.Array:
 				// Array access using reflection
 				index, err := validateAndAccessArray(key, objVal.Len())
@@ -98,11 +98,7 @@ func find(val any, path Path) (*Reference, error) {
 					return nil, ErrFieldNotFound
 				}
 
-			case reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-				reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128,
-				reflect.Chan, reflect.Func, reflect.Interface, reflect.Ptr, reflect.String, reflect.UnsafePointer:
-				// Handle all other reflect.Kind types not supported for JSON Pointer traversal
+			default:
 				return nil, ErrNotFound
 			}
 		}

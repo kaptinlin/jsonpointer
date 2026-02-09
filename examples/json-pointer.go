@@ -309,23 +309,8 @@ func main() {
 
 	fmt.Println()
 
-	// Example 9: ToPath Utility
-	fmt.Println("=== 9. ToPath Utility - Convert string or path to normalized path ===")
-
-	// Convert string pointer to path
-	stringPointer := "/users/0/profile/email"
-	pathFromString := jsonpointer.ToPath(stringPointer)
-	fmt.Printf("ToPath('%s'): %+v\n", stringPointer, pathFromString)
-
-	// Convert existing path (no-op)
-	existingPath := jsonpointer.Path{"metadata", "version"}
-	pathFromPath := jsonpointer.ToPath(existingPath)
-	fmt.Printf("ToPath(%+v): %+v\n", existingPath, pathFromPath)
-
-	fmt.Println()
-
-	// Example 10: Struct Support - NEW FEATURE!
-	fmt.Println("=== 10. Struct Support (NEW FEATURE!) ===")
+	// Example 9: Struct Support
+	fmt.Println("=== 9. Struct Support ===")
 
 	// Create sample user with struct
 	user := User{

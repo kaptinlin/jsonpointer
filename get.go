@@ -96,7 +96,8 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 		return (*arr)[index], true, nil
 
 	default:
-		// Fallback to reflection for other array types (like []User, native arrays, and pointers to arrays)
+		// Fallback to reflection for other array types
+		// (like []User, native arrays, and pointers to arrays)
 		arrayVal, err := derefValue(reflect.ValueOf(current))
 		if err != nil {
 			return nil, true, err
@@ -179,7 +180,7 @@ func get(val any, path Path) (any, error) {
 	fastPathDepth := 0
 
 	// Ultra-fast path - direct access without token creation
-	for i := 0; i < pathLength; i++ {
+	for i := range pathLength {
 		step := path[i] // step is already a string
 
 		// Try direct fast path first (zero allocations for map[string]any)

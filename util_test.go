@@ -177,28 +177,6 @@ func TestParent(t *testing.T) {
 	})
 }
 
-// TestToPath tests path conversion utilities.
-func TestToPath(t *testing.T) {
-	t.Run("converts string pointer to path", func(t *testing.T) {
-		res := ToPath("/foo/bar")
-		expected := Path{"foo", "bar"}
-		assert.True(t, IsPathEqual(res, expected))
-	})
-
-	t.Run("returns path as-is", func(t *testing.T) {
-		input := Path{"foo", "bar"}
-		res := ToPath(input)
-		assert.True(t, IsPathEqual(res, input))
-	})
-
-	t.Run("converts string slice to path", func(t *testing.T) {
-		input := []string{"foo", "bar"}
-		res := ToPath(input)
-		expected := Path{"foo", "bar"}
-		assert.True(t, IsPathEqual(res, expected))
-	})
-}
-
 // TestIsValidIndex tests array index validation.
 func TestIsValidIndex(t *testing.T) {
 	t.Run("valid string indices", func(t *testing.T) {

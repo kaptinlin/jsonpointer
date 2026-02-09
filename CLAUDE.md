@@ -136,8 +136,8 @@ All public functions maintain 1:1 mapping with TypeScript API:
 - **`Unescape(component string) string`** - Unescape encoded characters (~0, ~1)
 
 #### Validation
-- **`Validate(pointer any) error`** - Validate JSON Pointer string or Path
-- **`ValidatePath(path any) error`** - Validate Path array structure
+- **`Validate(pointer string) error`** - Validate JSON Pointer string
+- **`ValidatePath(path Path) error`** - Validate Path array structure
 
 ### Core Operations
 
@@ -182,7 +182,7 @@ This layered approach ensures **optimal performance for common cases** while mai
 #### Operation Files
 - **get.go**: `Get` operation with zero-allocation optimization (fast paths for common types)
 - **find.go**: `Find` operation with context tracking (returns `Reference` with parent)
-- **findbypointer.go**: JSON Pointer string entry points (`GetByPointer`, `FindByPointer`)
+- **findbypointer.go**: JSON Pointer string entry point (`FindByPointer`)
 
 #### Utility Files
 - **util.go**: Parsing, formatting, and escape/unescape utilities
@@ -240,7 +240,6 @@ type internalToken struct {
 
 #### Helper Functions
 - `IsArrayReference(ref Reference) bool` - Check if reference points to array element
-- `IsArrayEnd[T](ref ArrayReference[T]) bool` - Check if reference is array end marker
 - `IsObjectReference(ref Reference) bool` - Check if reference points to object property
 
 ### Error Types
