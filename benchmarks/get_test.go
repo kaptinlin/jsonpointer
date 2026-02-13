@@ -51,8 +51,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("root", func(b *testing.B) {
 		path := jsonpointer.Path{}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -62,8 +61,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("simple_object_property", func(b *testing.B) {
 		path := jsonpointer.Path{"metadata", "version"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -73,8 +71,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("array_element", func(b *testing.B) {
 		path := jsonpointer.Path{"users", "0", "name"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -84,8 +81,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("deep_nested_property", func(b *testing.B) {
 		path := jsonpointer.Path{"users", "0", "profile", "settings", "notifications", "email"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -95,8 +91,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("array_end_marker", func(b *testing.B) {
 		path := jsonpointer.Path{"users", "-"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -106,8 +101,7 @@ func BenchmarkFind(b *testing.B) {
 
 	b.Run("missing_property", func(b *testing.B) {
 		path := jsonpointer.Path{"nonexistent", "property"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err == nil {
 				b.Fatal("expected error")
@@ -155,8 +149,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("root", func(b *testing.B) {
 		pointer := ""
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -166,8 +159,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("simple_object_property", func(b *testing.B) {
 		pointer := "/metadata/version"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -177,8 +169,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("array_element", func(b *testing.B) {
 		pointer := "/users/0/name"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -188,8 +179,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("deep_nested_property", func(b *testing.B) {
 		pointer := "/users/0/profile/settings/notifications/email"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -199,8 +189,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("array_end_marker", func(b *testing.B) {
 		pointer := "/users/-"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -214,8 +203,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 			"foo~bar": "value2",
 		}
 		pointer := "/foo~1bar"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(docWithEscaped, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -225,8 +213,7 @@ func BenchmarkFindByPointer(b *testing.B) {
 
 	b.Run("missing_property", func(b *testing.B) {
 		pointer := "/nonexistent/property"
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err == nil {
 				b.Fatal("expected error")
@@ -255,7 +242,7 @@ func BenchmarkFindVsFindByPointer(b *testing.B) {
 	pointer := "/users/0/profile/settings/notifications/email"
 
 	b.Run("Find", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.Find(doc, path...)
 			if err != nil {
 				b.Fatal(err)
@@ -264,7 +251,7 @@ func BenchmarkFindVsFindByPointer(b *testing.B) {
 	})
 
 	b.Run("FindByPointer", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			_, err := jsonpointer.FindByPointer(doc, pointer)
 			if err != nil {
 				b.Fatal(err)
@@ -291,8 +278,7 @@ func BenchmarkGet(b *testing.B) {
 
 	b.Run("simple_property", func(b *testing.B) {
 		path := jsonpointer.Path{"metadata", "version"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			result, _ := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
@@ -302,8 +288,7 @@ func BenchmarkGet(b *testing.B) {
 
 	b.Run("nested_property", func(b *testing.B) {
 		path := jsonpointer.Path{"users", "0", "profile", "email"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			result, _ := jsonpointer.Get(doc, path...)
 			if result == nil {
 				b.Fatal("expected non-nil result")
@@ -313,8 +298,7 @@ func BenchmarkGet(b *testing.B) {
 
 	b.Run("missing_property", func(b *testing.B) {
 		path := jsonpointer.Path{"nonexistent", "property"}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			result, _ := jsonpointer.Get(doc, path...)
 			if result != nil {
 				b.Fatal("expected nil result")
@@ -338,7 +322,7 @@ func BenchmarkTypeGuards(b *testing.B) {
 	}
 
 	b.Run("IsArrayReference", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			if !jsonpointer.IsArrayReference(arrayRef) {
 				b.Fatal("expected true")
 			}
@@ -346,7 +330,7 @@ func BenchmarkTypeGuards(b *testing.B) {
 	})
 
 	b.Run("IsObjectReference", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			if !jsonpointer.IsObjectReference(objectRef) {
 				b.Fatal("expected true")
 			}

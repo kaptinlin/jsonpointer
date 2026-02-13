@@ -62,8 +62,8 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 //	  return component.replace(r1, '/').replace(r2, '~');
 //	}
 func unescapeComponent(component string) string {
-	// Use strings.IndexByte for fast check if escaping is needed
-	if strings.IndexByte(component, '~') == -1 {
+	// Fast check if unescaping is needed
+	if !strings.Contains(component, "~") {
 		return component
 	}
 
@@ -98,8 +98,8 @@ func unescapeComponent(component string) string {
 //	  return component.replace(r3, '~0').replace(r4, '~1');
 //	}
 func escapeComponent(component string) string {
-	// Use strings.IndexByte for fast check
-	if strings.IndexByte(component, '/') == -1 && strings.IndexByte(component, '~') == -1 {
+	// Fast check if escaping is needed
+	if !strings.Contains(component, "/") && !strings.Contains(component, "~") {
 		return component
 	}
 

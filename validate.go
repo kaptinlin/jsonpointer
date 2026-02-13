@@ -1,9 +1,5 @@
 package jsonpointer
 
-import (
-	"strings"
-)
-
 // Validation limits aligned with TypeScript implementation
 const (
 	// MaxPointerLength is the maximum allowed length for JSON Pointer strings.
@@ -23,7 +19,7 @@ func validatePointerString(pointer string) error {
 	}
 
 	// Must start with "/"
-	if !strings.HasPrefix(pointer, "/") {
+	if pointer[0] != '/' {
 		return ErrPointerInvalid
 	}
 

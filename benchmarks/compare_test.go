@@ -45,7 +45,7 @@ var (
 
 func generateMediumData() map[string]any {
 	users := make([]any, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		users[i] = map[string]any{
 			"id":   i,
 			"name": "User " + string(rune(i)),
@@ -115,65 +115,65 @@ func generateMapData() map[string]any {
 // ===== Our library benchmarks =====
 
 func BenchmarkOur_Find_Root(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(smallData, "")
 	}
 }
 
 func BenchmarkOur_Get_Root(b *testing.B) {
 	path := ourjp.Parse("")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
 func BenchmarkOur_Find_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(smallData, "/name")
 	}
 }
 
 func BenchmarkOur_Get_Shallow(b *testing.B) {
 	path := ourjp.Parse("/name")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
 func BenchmarkOur_Find_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(smallData, "/profile/settings/theme")
 	}
 }
 
 func BenchmarkOur_Get_Deep(b *testing.B) {
 	path := ourjp.Parse("/profile/settings/theme")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(smallData, path...)
 	}
 }
 
 func BenchmarkOur_Parse(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = ourjp.Parse("/profile/settings/theme")
 	}
 }
 
 func BenchmarkOur_Medium_FindUser(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(mediumData, "/users/50/name")
 	}
 }
 
 func BenchmarkOur_NotFound(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(smallData, "/nonexistent")
 	}
 }
 
 func BenchmarkOur_PrecompiledPath(b *testing.B) {
 	path := ourjp.Parse("/profile/settings/theme")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Find(smallData, path...)
 	}
 }
@@ -182,7 +182,7 @@ func BenchmarkOur_PrecompiledPath(b *testing.B) {
 
 func BenchmarkGoOpenAPI_Get_Root(b *testing.B) {
 	jsonData, _ := json.Marshal(smallData)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := gojp.New("")
 		_, _, _ = ptr.Get(jsonData)
 	}
@@ -190,7 +190,7 @@ func BenchmarkGoOpenAPI_Get_Root(b *testing.B) {
 
 func BenchmarkGoOpenAPI_Get_Shallow(b *testing.B) {
 	jsonData, _ := json.Marshal(smallData)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := gojp.New("/name")
 		_, _, _ = ptr.Get(jsonData)
 	}
@@ -198,21 +198,21 @@ func BenchmarkGoOpenAPI_Get_Shallow(b *testing.B) {
 
 func BenchmarkGoOpenAPI_Get_Deep(b *testing.B) {
 	jsonData, _ := json.Marshal(smallData)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := gojp.New("/profile/settings/theme")
 		_, _, _ = ptr.Get(jsonData)
 	}
 }
 
 func BenchmarkGoOpenAPI_Parse(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = gojp.New("/profile/settings/theme")
 	}
 }
 
 func BenchmarkGoOpenAPI_Medium_GetUser(b *testing.B) {
 	jsonData, _ := json.Marshal(mediumData)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := gojp.New("/users/50/name")
 		_, _, _ = ptr.Get(jsonData)
 	}
@@ -220,7 +220,7 @@ func BenchmarkGoOpenAPI_Medium_GetUser(b *testing.B) {
 
 func BenchmarkGoOpenAPI_NotFound(b *testing.B) {
 	jsonData, _ := json.Marshal(smallData)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := gojp.New("/nonexistent")
 		_, _, _ = ptr.Get(jsonData)
 	}
@@ -229,7 +229,7 @@ func BenchmarkGoOpenAPI_NotFound(b *testing.B) {
 func BenchmarkGoOpenAPI_PrecompiledPath(b *testing.B) {
 	jsonData, _ := json.Marshal(smallData)
 	ptr, _ := gojp.New("/profile/settings/theme")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = ptr.Get(jsonData)
 	}
 }
@@ -237,41 +237,41 @@ func BenchmarkGoOpenAPI_PrecompiledPath(b *testing.B) {
 // ===== BragdonD/jsonpointer-go benchmarks =====
 
 func BenchmarkBragdonD_Get_Root(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := bragdonjp.NewJSONPointer("")
 		_, _ = ptr.GetValue(smallData)
 	}
 }
 
 func BenchmarkBragdonD_Get_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := bragdonjp.NewJSONPointer("/name")
 		_, _ = ptr.GetValue(smallData)
 	}
 }
 
 func BenchmarkBragdonD_Get_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := bragdonjp.NewJSONPointer("/profile/settings/theme")
 		_, _ = ptr.GetValue(smallData)
 	}
 }
 
 func BenchmarkBragdonD_Parse(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = bragdonjp.NewJSONPointer("/profile/settings/theme")
 	}
 }
 
 func BenchmarkBragdonD_Medium_GetUser(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := bragdonjp.NewJSONPointer("/users/50/name")
 		_, _ = ptr.GetValue(mediumData)
 	}
 }
 
 func BenchmarkBragdonD_NotFound(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ptr, _ := bragdonjp.NewJSONPointer("/nonexistent")
 		_, _ = ptr.GetValue(smallData)
 	}
@@ -279,7 +279,7 @@ func BenchmarkBragdonD_NotFound(b *testing.B) {
 
 func BenchmarkBragdonD_Precompiled(b *testing.B) {
 	ptr, _ := bragdonjp.NewJSONPointer("/profile/settings/theme")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ptr.GetValue(smallData)
 	}
 }
@@ -287,31 +287,31 @@ func BenchmarkBragdonD_Precompiled(b *testing.B) {
 // ===== woodsbury/jsonpointer benchmarks =====
 
 func BenchmarkWoodsbury_Get_Root(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = woodsjp.Get("", smallData)
 	}
 }
 
 func BenchmarkWoodsbury_Get_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = woodsjp.Get("/name", smallData)
 	}
 }
 
 func BenchmarkWoodsbury_Get_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = woodsjp.Get("/profile/settings/theme", smallData)
 	}
 }
 
 func BenchmarkWoodsbury_Medium_GetUser(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = woodsjp.Get("/users/50/name", mediumData)
 	}
 }
 
 func BenchmarkWoodsbury_NotFound(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = woodsjp.Get("/nonexistent", smallData)
 	}
 }
@@ -319,31 +319,31 @@ func BenchmarkWoodsbury_NotFound(b *testing.B) {
 // ===== dolmen-go/jsonptr benchmarks =====
 
 func BenchmarkDolmen_Get_Root(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = dolmenjp.Get(smallData, "")
 	}
 }
 
 func BenchmarkDolmen_Get_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = dolmenjp.Get(smallData, "/name")
 	}
 }
 
 func BenchmarkDolmen_Get_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = dolmenjp.Get(smallData, "/profile/settings/theme")
 	}
 }
 
 func BenchmarkDolmen_Medium_GetUser(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = dolmenjp.Get(mediumData, "/users/50/name")
 	}
 }
 
 func BenchmarkDolmen_NotFound(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = dolmenjp.Get(smallData, "/nonexistent")
 	}
 }
@@ -352,50 +352,50 @@ func BenchmarkDolmen_NotFound(b *testing.B) {
 
 // Struct access benchmarks
 func BenchmarkOur_Struct_Get_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(structData, "name")
 	}
 }
 
 func BenchmarkOur_Struct_Get_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(structData, "profile", "settings", "theme")
 	}
 }
 
 func BenchmarkOur_Struct_Find_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(structData, "/name")
 	}
 }
 
 func BenchmarkOur_Struct_Find_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(structData, "/profile/settings/theme")
 	}
 }
 
 // Map access benchmarks (for comparison)
 func BenchmarkOur_Map_Get_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(mapData, "name")
 	}
 }
 
 func BenchmarkOur_Map_Get_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(mapData, "profile", "settings", "theme")
 	}
 }
 
 func BenchmarkOur_Map_Find_Shallow(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(mapData, "/name")
 	}
 }
 
 func BenchmarkOur_Map_Find_Deep(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.FindByPointer(mapData, "/profile/settings/theme")
 	}
 }
@@ -406,7 +406,7 @@ func BenchmarkOur_Mixed_StructWithMap(b *testing.B) {
 		"user": structData,
 		"meta": map[string]any{"version": "1.0"},
 	}
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(mixed, "user", "profile", "settings", "theme")
 	}
 }
@@ -421,7 +421,7 @@ func BenchmarkOur_Struct_FieldCaching(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		for j := range users {
 			_, _ = ourjp.Get(users[j], "name")
 		}
@@ -430,7 +430,7 @@ func BenchmarkOur_Struct_FieldCaching(b *testing.B) {
 
 // JSON tag vs field name access
 func BenchmarkOur_Struct_JSONTag(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(structData, "name") // Uses JSON tag
 	}
 }
@@ -441,7 +441,7 @@ func BenchmarkOur_Struct_FieldName(b *testing.B) {
 	}
 	data := TestStruct{Name: "Alice"}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ourjp.Get(data, "Name") // Uses field name
 	}
 }

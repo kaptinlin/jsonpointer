@@ -13,8 +13,7 @@ func BenchmarkStandardJSON(b *testing.B) {
 	var data any
 	json.Unmarshal([]byte(jsonData), &data)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "users", "0", "name")
 	}
 }
@@ -25,8 +24,7 @@ func BenchmarkStandardJSON(b *testing.B) {
 func BenchmarkStringSlice_Specialized(b *testing.B) {
 	data := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -35,8 +33,7 @@ func BenchmarkStringSlice_Specialized(b *testing.B) {
 func BenchmarkStringSlice_Generic(b *testing.B) {
 	data := []any{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -45,8 +42,7 @@ func BenchmarkStringSlice_Generic(b *testing.B) {
 func BenchmarkIntSlice_Specialized(b *testing.B) {
 	data := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -55,8 +51,7 @@ func BenchmarkIntSlice_Specialized(b *testing.B) {
 func BenchmarkIntSlice_Generic(b *testing.B) {
 	data := []any{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -65,8 +60,7 @@ func BenchmarkIntSlice_Generic(b *testing.B) {
 func BenchmarkFloat64Slice_Specialized(b *testing.B) {
 	data := []float64{1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.0}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -75,8 +69,7 @@ func BenchmarkFloat64Slice_Specialized(b *testing.B) {
 func BenchmarkFloat64Slice_Generic(b *testing.B) {
 	data := []any{1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.0}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "5")
 	}
 }
@@ -90,8 +83,7 @@ func BenchmarkMapStringString_Specialized(b *testing.B) {
 		"d": "value4", "e": "value5", "f": "value6",
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -103,8 +95,7 @@ func BenchmarkMapStringString_Generic(b *testing.B) {
 		"d": "value4", "e": "value5", "f": "value6",
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -116,8 +107,7 @@ func BenchmarkMapStringInt_Specialized(b *testing.B) {
 		"d": 4, "e": 5, "f": 6,
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -129,8 +119,7 @@ func BenchmarkMapStringInt_Generic(b *testing.B) {
 		"d": 4, "e": 5, "f": 6,
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -142,8 +131,7 @@ func BenchmarkMapStringFloat64_Specialized(b *testing.B) {
 		"d": 4.4, "e": 5.5, "f": 6.6,
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -155,8 +143,7 @@ func BenchmarkMapStringFloat64_Generic(b *testing.B) {
 		"d": 4.4, "e": 5.5, "f": 6.6,
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "d")
 	}
 }
@@ -169,8 +156,7 @@ func BenchmarkNested_Specialized(b *testing.B) {
 		"users": {"Alice", "Bob", "Charlie", "David", "Eve"},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "users", "2")
 	}
 }
@@ -181,8 +167,7 @@ func BenchmarkNested_Generic(b *testing.B) {
 		"users": []any{"Alice", "Bob", "Charlie", "David", "Eve"},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Get(data, "users", "2")
 	}
 }
@@ -195,8 +180,7 @@ func BenchmarkFind_Specialized(b *testing.B) {
 		"scores": {100, 90, 85, 95, 88},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Find(data, "scores", "3")
 	}
 }
@@ -207,8 +191,7 @@ func BenchmarkFind_Generic(b *testing.B) {
 		"scores": []any{100, 90, 85, 95, 88},
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		jp.Find(data, "scores", "3")
 	}
 }
