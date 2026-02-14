@@ -25,7 +25,7 @@ func fastAtoi(s string) int {
 	}
 
 	var n int
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		c := s[i]
 		if c < '0' || c > '9' {
 			return -1 // non-digit character
@@ -105,7 +105,7 @@ func escapeComponent(component string) string {
 
 	// Pre-allocate result string capacity (worst case: every character needs escaping)
 	result := make([]byte, 0, len(component)*2)
-	for i := 0; i < len(component); i++ {
+	for i := range len(component) {
 		switch component[i] {
 		case '~':
 			result = append(result, '~', '0')
@@ -137,8 +137,8 @@ func parseJSONPointer(pointer string) Path {
 
 	// Pre-calculate number of path segments
 	segmentCount := 1
-	for i := 1; i < len(pointer); i++ {
-		if pointer[i] == '/' {
+	for i := range len(pointer) - 1 {
+		if pointer[i+1] == '/' {
 			segmentCount++
 		}
 	}
