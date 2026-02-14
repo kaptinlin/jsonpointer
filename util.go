@@ -43,7 +43,7 @@ func fastAtoi(s string) int {
 // Returns an error if any pointer in the chain is nil.
 // This is a helper function to eliminate duplicated pointer dereferencing logic.
 func derefValue(v reflect.Value) (reflect.Value, error) {
-	for v.Kind() == reflect.Ptr {
+	for v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return reflect.Value{}, ErrNilPointer
 		}

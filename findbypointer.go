@@ -126,7 +126,7 @@ func isSliceOrArray(obj any) bool {
 	}
 	objVal := reflect.ValueOf(obj)
 	// Handle pointer dereferencing
-	for objVal.Kind() == reflect.Ptr {
+	for objVal.Kind() == reflect.Pointer {
 		if objVal.IsNil() {
 			return false
 		}
@@ -142,5 +142,5 @@ func isObjectPointer(val any) bool {
 		return false
 	}
 	kind := reflect.TypeOf(val).Kind()
-	return kind == reflect.Map || kind == reflect.Struct || kind == reflect.Ptr
+	return kind == reflect.Map || kind == reflect.Struct || kind == reflect.Pointer
 }

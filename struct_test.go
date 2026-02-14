@@ -418,11 +418,11 @@ func TestMultipleLevelsPointers(t *testing.T) {
 func TestMixedStructMapComprehensive(t *testing.T) {
 	// Complex nested structure with mixed types
 	type Company struct {
-		Name      string                 `json:"name"`
-		Founded   int                    `json:"founded"`
-		Employees []User                 `json:"employees"`
-		Metadata  map[string]any         `json:"metadata"`
-		Locations map[string]interface{} `json:"locations"`
+		Name      string         `json:"name"`
+		Founded   int            `json:"founded"`
+		Employees []User         `json:"employees"`
+		Metadata  map[string]any `json:"metadata"`
+		Locations map[string]any `json:"locations"`
 	}
 
 	company := Company{
@@ -437,7 +437,7 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 			"size":     "Medium",
 			"public":   true,
 		},
-		Locations: map[string]interface{}{
+		Locations: map[string]any{
 			"headquarters": map[string]any{
 				"city":    "San Francisco",
 				"country": "USA",

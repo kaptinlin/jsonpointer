@@ -16,7 +16,7 @@ var structFieldsCache sync.Map
 // It returns true if the field is found, false otherwise.
 func structField(field string, value *reflect.Value) bool {
 	// Dereference pointers
-	for value.Kind() == reflect.Ptr {
+	for value.Kind() == reflect.Pointer {
 		if value.IsNil() {
 			return false
 		}
