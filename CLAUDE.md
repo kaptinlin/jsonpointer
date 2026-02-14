@@ -542,7 +542,7 @@ func Parse(pointer string) Path {
 
 ## golangci-lint Configuration
 
-- **Version**: 2.4.0 (specified in `.golangci.version`)
+- **Version**: 2.9.0 (specified in `.golangci.version`)
 - **Timeout**: 10 minutes (for comprehensive linting)
 - **Configuration**: Managed via Makefile with automatic version checking
 - **Installation**: Automatic via `make install-golangci-lint`
