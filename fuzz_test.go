@@ -111,7 +111,7 @@ func FuzzValidateJsonPointer(f *testing.F) {
 			}
 
 			// Valid non-empty pointer should start with "/"
-			if pointer != "" && pointer[0] != '/' && err == nil {
+			if pointer != "" && pointer[0] != '/' {
 				t.Errorf("validator allowed invalid pointer without leading slash: %q", pointer)
 			}
 		}

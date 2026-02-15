@@ -61,13 +61,11 @@ func IsArrayReference(ref Reference) bool {
 		return false
 	}
 
-	// Check if obj is a slice/array
 	objType := reflect.TypeOf(ref.Obj)
 	if objType.Kind() != reflect.Slice {
 		return false
 	}
 
-	// Check if key is a valid numeric string
 	_, err := strconv.Atoi(ref.Key)
 	return err == nil
 }
@@ -82,11 +80,6 @@ func IsObjectReference(ref Reference) bool {
 		return false
 	}
 
-	// Check if obj is a map with string keys
 	objType := reflect.TypeOf(ref.Obj)
-	if objType.Kind() != reflect.Map || objType.Key().Kind() != reflect.String {
-		return false
-	}
-
-	return true
+	return objType.Kind() == reflect.Map && objType.Key().Kind() == reflect.String
 }

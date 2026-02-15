@@ -53,7 +53,6 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 }
 
 // unescapeComponent un-escapes a JSON pointer path component.
-// Returns the unescaped component string.
 //
 // TypeScript Original:
 //
@@ -62,22 +61,20 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 //	  return component.replace(r1, '/').replace(r2, '~');
 //	}
 func unescapeComponent(component string) string {
-	// Fast check if unescaping is needed
 	if !strings.Contains(component, "~") {
 		return component
 	}
 
-	// Pre-allocate result string capacity
 	result := make([]byte, 0, len(component))
 	for i := 0; i < len(component); i++ {
 		if component[i] == '~' && i+1 < len(component) {
 			switch component[i+1] {
 			case '0':
 				result = append(result, '~')
-				i++ // Skip next character
+				i++
 			case '1':
 				result = append(result, '/')
-				i++ // Skip next character
+				i++
 			default:
 				result = append(result, component[i])
 			}
@@ -89,7 +86,6 @@ func unescapeComponent(component string) string {
 }
 
 // escapeComponent escapes a JSON pointer path component.
-// Returns the escaped component string.
 //
 // TypeScript Original:
 //
@@ -98,12 +94,10 @@ func unescapeComponent(component string) string {
 //	  return component.replace(r3, '~0').replace(r4, '~1');
 //	}
 func escapeComponent(component string) string {
-	// Fast check if escaping is needed
 	if !strings.Contains(component, "/") && !strings.Contains(component, "~") {
 		return component
 	}
 
-	// Pre-allocate result string capacity (worst case: every character needs escaping)
 	result := make([]byte, 0, len(component)*2)
 	for i := range len(component) {
 		switch component[i] {
@@ -127,15 +121,11 @@ func escapeComponent(component string) string {
 //	  if (!pointer) return [];
 //	  return pointer.slice(1).split('/').map(unescapeComponent);
 //	}
-//
-// Note: The Go implementation uses optimized string processing without
-// split/map for better performance.
 func parseJSONPointer(pointer string) Path {
 	if pointer == "" {
 		return Path{}
 	}
 
-	// Pre-calculate number of path segments
 	segmentCount := 1
 	for i := range len(pointer) - 1 {
 		if pointer[i+1] == '/' {
@@ -143,13 +133,11 @@ func parseJSONPointer(pointer string) Path {
 		}
 	}
 
-	// Pre-allocate result slice
 	result := make(Path, 0, segmentCount)
-	start := 1 // Skip the first '/'
+	start := 1
 
 	for i := 1; i <= len(pointer); i++ {
 		if i == len(pointer) || pointer[i] == '/' {
-			// Include empty string segments (like empty segments in "/foo///")
 			segment := pointer[start:i]
 			result = append(result, unescapeComponent(segment))
 			start = i + 1
@@ -161,7 +149,6 @@ func parseJSONPointer(pointer string) Path {
 
 // formatJSONPointer escapes and formats a path slice like []string{"foo", "bar"}
 // to JSON pointer like "/foo/bar".
-// Optimized with strings.Builder pre-allocation for zero intermediate allocations.
 //
 // TypeScript Original:
 //
@@ -174,12 +161,9 @@ func formatJSONPointer(path Path) string {
 		return ""
 	}
 
-	// Pre-calculate capacity for single allocation
-	// Each component needs: '/' separator + component length +
-	// potential escaping (max 2 chars per original char)
-	capacity := len(path) // '/' separators
+	capacity := len(path)
 	for _, comp := range path {
-		capacity += len(comp) + 2 // component + max 2 chars for potential escaping
+		capacity += len(comp) + 2
 	}
 
 	var b strings.Builder
@@ -214,7 +198,6 @@ func IsChild(parent, child Path) bool {
 }
 
 // IsPathEqual returns true if two paths are equal, false otherwise.
-// Optimized with slices.Equal (Go 1.21+) using SIMD instructions.
 //
 // TypeScript Original:
 //
@@ -304,19 +287,15 @@ func IsInteger(str string) bool {
 }
 
 // validateArrayIndex validates and parses array index from string key.
-// Returns the parsed index and error if validation fails.
-// Preserves RFC 6901 semantics: distinguishes between index == length
-// (array end) and index > length (out of bounds).
+// Preserves RFC 6901 semantics for array end marker and bounds checking.
 func validateArrayIndex(key string, length int) (int, error) {
 	if key == "-" {
-		return -1, ErrIndexOutOfBounds // "-" refers to nonexistent element
+		return -1, ErrIndexOutOfBounds
 	}
 	index := fastAtoi(key)
 	if index < 0 {
 		return -1, ErrInvalidIndex
 	}
-	// Note: Caller should handle the distinction between index == length and index > length
-	// to maintain RFC 6901 semantics
 	if index > length {
 		return -1, ErrIndexOutOfBounds
 	}
@@ -324,16 +303,13 @@ func validateArrayIndex(key string, length int) (int, error) {
 }
 
 // validateAndAccessArray validates array index and checks for array end marker.
-// Returns ErrIndexOutOfBounds if index equals array length (array end marker per RFC 6901).
-// Returns the validated index ready for array access.
-// This helper eliminates repeated validation + end-check logic across get.go and find.go.
+// Returns ErrIndexOutOfBounds if index equals array length per RFC 6901.
 func validateAndAccessArray(key string, length int) (int, error) {
 	index, err := validateArrayIndex(key, length)
 	if err != nil {
 		return -1, err
 	}
 	if index == length {
-		// Array end position is nonexistent element (JSON Pointer spec)
 		return -1, ErrIndexOutOfBounds
 	}
 	return index, nil
