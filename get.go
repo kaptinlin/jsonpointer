@@ -6,6 +6,7 @@ import (
 
 // fastGet implements ultra-fast path that avoids token allocation entirely.
 // Optimized for string-only Path - direct access without intermediate token creation.
+// Returns the value and a boolean indicating success.
 func fastGet(val any, step string) (any, bool) {
 	switch v := val.(type) {
 	case map[string]any:
@@ -46,7 +47,7 @@ func fastGet(val any, step string) (any, bool) {
 		if v == nil {
 			return nil, false
 		}
-		return fastGet(*v, step)
+		return fastGet(*v, step) // Recursive call for pointer to any
 
 	default:
 		return nil, false
@@ -68,6 +69,7 @@ func getTokenAtIndex(path Path, index int) internalToken {
 
 // tryArrayAccess attempts array access using type assertions for performance.
 // Enhanced to handle all slice types efficiently.
+// Returns (value, handled, error) where handled indicates if this was an array access attempt.
 func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 	switch arr := current.(type) {
 	case []any:
@@ -107,6 +109,7 @@ func tryArrayAccess(current any, token internalToken) (any, bool, error) {
 
 // tryObjectAccess attempts object access using type assertions for performance.
 // Enhanced with proper struct field handling.
+// Returns (value, handled, error) where handled indicates if this was an object access attempt.
 func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 	switch obj := current.(type) {
 	case map[string]any:

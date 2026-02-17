@@ -13,6 +13,7 @@ type structFields map[string]int
 var structFieldsCache sync.Map
 
 // structField looks up the specified field in a struct and updates value to point to that field if found.
+// Returns true if the field exists and is accessible, false otherwise.
 func structField(field string, value *reflect.Value) bool {
 	for value.Kind() == reflect.Pointer {
 		if value.IsNil() {
@@ -35,7 +36,8 @@ func structField(field string, value *reflect.Value) bool {
 	return true
 }
 
-// getStructFields gets field mapping for struct type with caching.
+// getStructFields retrieves field mapping for struct type with caching.
+// Uses sync.Map for thread-safe caching of struct field metadata.
 func getStructFields(t reflect.Type) structFields {
 	if cached, ok := structFieldsCache.Load(t); ok {
 		return cached.(structFields)
@@ -63,7 +65,8 @@ func getStructFields(t reflect.Type) structFields {
 	return fields
 }
 
-// getFieldName gets the JSON name of field, supports basic JSON tags.
+// getFieldName extracts the JSON name from a struct field.
+// Supports basic JSON tags and falls back to the field name.
 func getFieldName(field reflect.StructField) string {
 	tag := field.Tag.Get("json")
 	if tag == "" {

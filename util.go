@@ -7,19 +7,20 @@ import (
 	"strings"
 )
 
-// fastAtoi converts a string to an integer quickly.
+// fastAtoi converts a string to an integer quickly without allocations.
 // Returns -1 if the string is not a valid non-negative integer.
+// This is optimized for JSON Pointer array index parsing.
 func fastAtoi(s string) int {
 	if len(s) == 0 {
 		return -1
 	}
 
-	// Handle special case for "0"
+	// Special case: "0" is valid
 	if s == "0" {
 		return 0
 	}
 
-	// Check for leading zeros (invalid except for "0")
+	// Leading zeros are invalid per RFC 6901
 	if s[0] == '0' {
 		return -1
 	}
@@ -28,11 +29,11 @@ func fastAtoi(s string) int {
 	for i := range len(s) {
 		c := s[i]
 		if c < '0' || c > '9' {
-			return -1 // non-digit character
+			return -1 // Non-digit character
 		}
 		next := n*10 + int(c-'0')
 		if next < n {
-			return -1 // overflow
+			return -1 // Integer overflow detected
 		}
 		n = next
 	}
