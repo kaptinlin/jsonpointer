@@ -189,12 +189,7 @@ func IsChild(parent, child Path) bool {
 	if len(parent) >= len(child) {
 		return false
 	}
-	for i := range len(parent) {
-		if parent[i] != child[i] {
-			return false
-		}
-	}
-	return true
+	return slices.Equal(parent, child[:len(parent)])
 }
 
 // IsPathEqual returns true if two paths are equal, false otherwise.
