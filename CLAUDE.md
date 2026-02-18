@@ -18,34 +18,34 @@ This is a high-performance Go implementation of JSON Pointer (RFC 6901), ported 
 
 ```bash
 # Run all tests with race detection
-make test
+task test
 
 # Run tests with coverage report (generates coverage.html)
-make test-coverage
+task test-coverage
 
 # Run tests with verbose output
-make test-verbose
+task test-verbose
 
 # Run benchmarks
-make bench
+task bench
 
 # Run linters (golangci-lint + go mod tidy check)
-make lint
+task lint
 
 # Format code
-make fmt
+task fmt
 
 # Run go vet
-make vet
+task vet
 
 # Run full verification pipeline (deps, fmt, vet, lint, test)
-make verify
+task verify
 
 # Clean build artifacts and caches
-make clean
+task clean
 
 # Download and tidy dependencies
-make deps
+task deps
 ```
 
 ### Running Individual Tests
@@ -392,7 +392,7 @@ Before submitting changes, verify:
 2. **Add corresponding case** in `find.go` main switch statement
 3. **Add optimized path** in `tryArrayAccess` or `tryObjectAccess` if applicable
 4. **Add test cases** in appropriate test file with edge cases
-5. **Run benchmarks** to verify performance impact: `make bench`
+5. **Run benchmarks** to verify performance impact: `task bench`
 6. **Update documentation** if this is a new public-facing type
 
 #### Optimizing Performance
@@ -437,7 +437,7 @@ Only add new errors if absolutely necessary:
 #### Before Committing
 ```bash
 # Run full verification pipeline
-make verify
+task verify
 
 # This runs: deps, fmt, vet, lint, test
 ```
@@ -454,7 +454,7 @@ benchcmp bench-old.txt bench-new.txt
 #### Test Coverage
 ```bash
 # Generate coverage report
-make test-coverage
+task test-coverage
 
 # Open coverage.html in browser to review
 ```
@@ -546,7 +546,7 @@ func Parse(pointer string) Path {
 - **Timeout**: 10 minutes (for comprehensive linting)
 - **Configuration**: Managed via Makefile with automatic version checking
 - **Installation**: Automatic via `make install-golangci-lint`
-- **Usage**: Run `make lint` for full linting suite (golangci-lint + mod tidy check)
+- **Usage**: Run `task lint` for full linting suite (golangci-lint + mod tidy check)
 
 ## Additional Resources
 
