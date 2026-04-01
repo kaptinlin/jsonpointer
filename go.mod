@@ -1,6 +1,6 @@
 module github.com/kaptinlin/jsonpointer
 
-go 1.26
+go 1.26.1
 
 require github.com/stretchr/testify v1.11.1
 
