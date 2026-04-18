@@ -1,6 +1,6 @@
 module jsonpointer-compare
 
-go 1.26
+go 1.26.2
 
 // 本地库
 replace github.com/kaptinlin/jsonpointer => ../

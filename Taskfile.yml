@@ -111,7 +111,7 @@ tasks:
     cmds:
       - '{{.GOLANGCI_LINT_BINARY}} version'
       - echo "Running golangci-lint..."
-      - '{{.GOLANGCI_LINT_BINARY}} run --timeout=10m --path-prefix .'
+      - '{{.GOLANGCI_LINT_BINARY}} run --allow-parallel-runners --timeout=10m --path-prefix .'
 
   tidy-lint:
     desc: Check if go.mod and go.sum are tidy
