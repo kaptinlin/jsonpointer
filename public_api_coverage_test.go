@@ -201,3 +201,41 @@ func TestCollectionTraversalCoverage(t *testing.T) {
 		assert.ErrorIs(t, err, ErrFieldNotFound)
 	})
 }
+
+type ignoredFieldCoverageContainer struct {
+	Visible string `json:"visible"`
+	Hidden  string `json:"-"`
+}
+
+func TestIgnoredStructFieldCoverage(t *testing.T) {
+	t.Parallel()
+
+	doc := ignoredFieldCoverageContainer{Visible: "ok", Hidden: "secret"}
+
+	t.Run("get returns field not found for ignored struct field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "Hidden")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrFieldNotFound)
+		assert.Nil(t, val)
+	})
+
+	t.Run("find returns field not found for ignored struct field", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find(doc, "Hidden")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrFieldNotFound)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("find by pointer returns field not found for ignored struct field", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := FindByPointer(doc, "/Hidden")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrFieldNotFound)
+		assert.Nil(t, ref)
+	})
+}
