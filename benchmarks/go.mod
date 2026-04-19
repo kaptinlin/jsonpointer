@@ -10,7 +10,7 @@ require (
 	github.com/dolmen-go/jsonptr v0.0.0-20240328010033-38530b85cd9c
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e
 	github.com/go-openapi/jsonpointer v0.22.4
-	github.com/kaptinlin/jsonpointer v0.0.0-00010101000000-000000000000
+	github.com/kaptinlin/jsonpointer v0.4.18
 	github.com/woodsbury/jsonpointer v0.7.1
 )
 
