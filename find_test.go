@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestFind tests the find function.
@@ -209,5 +210,46 @@ func TestGet(t *testing.T) {
 		val, err := Get(doc, "users", "0", "name")
 		assert.NoError(t, err)
 		assert.Equal(t, "Alice", val)
+	})
+}
+
+func TestReflectiveMapKeyHandling(t *testing.T) {
+	t.Run("get returns error for non-string map keys instead of panicking", func(t *testing.T) {
+		val, err := Get(map[int]string{1: "one"}, "1")
+		require.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
+		assert.Nil(t, val)
+	})
+
+	t.Run("find returns error for non-string map keys instead of panicking", func(t *testing.T) {
+		ref, err := Find(map[int]string{1: "one"}, "1")
+		require.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("find by pointer returns error for non-string map keys instead of panicking", func(t *testing.T) {
+		ref, err := FindByPointer(map[int]string{1: "one"}, "/1")
+		require.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("string alias map keys remain accessible", func(t *testing.T) {
+		type alias string
+
+		doc := map[alias]string{"name": "Alice"}
+
+		val, err := Get(doc, "name")
+		require.NoError(t, err)
+		assert.Equal(t, "Alice", val)
+
+		ref, err := Find(doc, "name")
+		require.NoError(t, err)
+		assert.Equal(t, "Alice", ref.Val)
+
+		ref, err = FindByPointer(doc, "/name")
+		require.NoError(t, err)
+		assert.Equal(t, "Alice", ref.Val)
 	})
 }

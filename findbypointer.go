@@ -84,12 +84,11 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 
 			objVal := reflect.ValueOf(obj)
 			if objVal.Kind() == reflect.Map {
-				mapKey := reflect.ValueOf(keyStr)
-				mapVal := objVal.MapIndex(mapKey)
-				if !mapVal.IsValid() {
-					return nil, ErrKeyNotFound
+				mapEntry, err := mapValueByPathKey(objVal, keyStr)
+				if err != nil {
+					return nil, err
 				}
-				val = mapVal.Interface()
+				val = mapEntry.Interface()
 			} else {
 				if !structField(keyStr, &objVal) {
 					return nil, ErrFieldNotFound

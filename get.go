@@ -137,12 +137,11 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 
 		switch objVal.Kind() {
 		case reflect.Map:
-			mapKey := reflect.ValueOf(token.key)
-			mapVal := objVal.MapIndex(mapKey)
-			if !mapVal.IsValid() {
-				return nil, true, ErrKeyNotFound
+			mapEntry, err := mapValueByPathKey(objVal, token.key)
+			if err != nil {
+				return nil, true, err
 			}
-			return mapVal.Interface(), true, nil
+			return mapEntry.Interface(), true, nil
 
 		case reflect.Struct:
 			if field := findStructField(objVal, token.key); field.IsValid() {
