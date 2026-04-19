@@ -125,6 +125,22 @@ tasks:
     cmds:
       - markdownlint-cli2 "**/*.md"
 
+  specs-check:
+    desc: Ensure design and spec docs live under SPECS
+    cmds:
+      - |
+        matches=$(git ls-files '*.md' \
+          | grep -E '(^|/)(DESIGN|SPEC|ARCH|ARCHITECTURE|RFC)[^/]*\.md$' \
+          | grep -Ev '(^|/)(README|CHANGELOG|LICENSE|CONTRIBUTING|CODE_OF_CONDUCT)' \
+          | grep -Ev '^\.research/' || true)
+        if [ -n "$matches" ]; then
+          printf '%s\n' "$matches"
+          echo "move design/spec docs into SPECS/"
+          exit 1
+        fi
+        echo "spec docs are consolidated under SPECS/"
+
+
   yamllint:
     desc: Run yamllint
     cmds:

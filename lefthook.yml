@@ -31,8 +31,11 @@ pre-commit:
       glob: "*.md"
       exclude:
         - ".research/**/*.md"
-        - "SPECS/**/*.md"
       run: markdownlint-cli2 {staged_files}
+
+    - name: specs-layout
+      glob: "*.md"
+      run: task specs-check
 
     - name: yamllint
       glob: "*.{yml,yaml}"
