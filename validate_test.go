@@ -36,16 +36,14 @@ func TestValidate(t *testing.T) {
 
 	t.Run("invalid pointer without leading slash", func(t *testing.T) {
 		err := Validate("foo/bar")
-		assert.Error(t, err)
-		assert.Equal(t, "pointer invalid", err.Error())
+		assert.ErrorIs(t, err, ErrPointerInvalid)
 	})
 
 	t.Run("invalid pointer too long", func(t *testing.T) {
 		// Create a pointer longer than 1024 characters
 		longPointer := "/" + strings.Repeat("a", 1024)
 		err := Validate(longPointer)
-		assert.Error(t, err)
-		assert.Equal(t, "pointer too long", err.Error())
+		assert.ErrorIs(t, err, ErrPointerTooLong)
 	})
 
 	t.Run("valid pointer exactly 1024 characters", func(t *testing.T) {
@@ -85,8 +83,7 @@ func TestValidatePath(t *testing.T) {
 			longPath[i] = "step"
 		}
 		err := ValidatePath(longPath)
-		assert.Error(t, err)
-		assert.Equal(t, "path too long", err.Error())
+		assert.ErrorIs(t, err, ErrPathTooLong)
 	})
 
 	t.Run("valid path - exactly 256 elements", func(t *testing.T) {
