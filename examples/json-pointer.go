@@ -1,4 +1,4 @@
-// Package main demonstrates JSON Pointer usage examples.
+// Package main demonstrates the jsonpointer API.
 package main
 
 import (
@@ -8,424 +8,45 @@ import (
 	"github.com/kaptinlin/jsonpointer"
 )
 
+type user struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 func main() {
-	fmt.Println("=== JSON Pointer Go Implementation Examples ===")
-	fmt.Println()
-
-	// Example structs for struct support demonstration
-	type Profile struct {
-		Bio      string         `json:"bio"`
-		Location string         `json:"location"`
-		Settings map[string]any `json:"settings"`
-	}
-
-	type User struct {
-		ID      int    `json:"id"`
-		Name    string `json:"name"`
-		Email   string
-		private string  // private field, ignored
-		Ignored string  `json:"-"` // explicitly ignored
-		Profile Profile `json:"profile"`
-	}
-
-	// Sample JSON document for demonstrations
 	doc := map[string]any{
 		"users": []any{
 			map[string]any{
-				"id":   1,
-				"name": "Alice Smith",
-				"profile": map[string]any{
-					"email": "alice@example.com",
-					"settings": map[string]any{
-						"notifications": map[string]any{
-							"email": true,
-							"sms":   false,
-						},
-						"privacy": "public",
-					},
-				},
-			},
-			map[string]any{
-				"id":   2,
-				"name": "Bob Johnson",
-				"profile": map[string]any{
-					"email": "bob@example.com",
-					"settings": map[string]any{
-						"notifications": map[string]any{
-							"email": false,
-							"sms":   true,
-						},
-						"privacy": "private",
-					},
-				},
+				"name":  "Alice",
+				"email": "alice@example.com",
 			},
 		},
-		"metadata": map[string]any{
-			"version":     "1.0.0",
-			"created":     "2023-01-01",
-			"description": "User management system",
-		},
-		"special~chars": map[string]any{
-			"foo/bar": "value with special characters",
-			"tilde~":  "tilde value",
+		"foo/bar": map[string]any{
+			"tilde~key": "ready",
 		},
 	}
 
-	fmt.Printf("Sample document: %+v\n", doc)
-	fmt.Println()
-
-	// Example 1: Basic Get Operations (never fail)
-	fmt.Println("=== 1. Get Operations (never fail, returns nil if not found) ===")
-
-	// Get root
-	result, _ := jsonpointer.Get(doc)
-	fmt.Printf("Get root: %+v\n", result)
-
-	// Get simple property
-	result, _ = jsonpointer.Get(doc, "metadata", "version")
-	fmt.Printf("Get /metadata/version: %v\n", result)
-
-	// Get array element
-	result, _ = jsonpointer.Get(doc, "users", "0", "name")
-	fmt.Printf("Get /users/0/name: %v\n", result)
-
-	// Get deep nested property
-	result, _ = jsonpointer.Get(doc, "users", "1", "profile", "settings", "notifications", "sms")
-	fmt.Printf("Get /users/1/profile/settings/notifications/sms: %v\n", result)
-
-	// Get non-existent property (returns nil)
-	result, _ = jsonpointer.Get(doc, "nonexistent", "property")
-	fmt.Printf("Get non-existent property: %v\n", result)
-
-	fmt.Println()
-
-	// Example 2: Find Operations (return errors for invalid paths)
-	fmt.Println("=== 2. Find Operations (return errors for invalid paths) ===")
-
-	// Find successful
-	ref, err := jsonpointer.Find(doc, "users", "0", "profile", "email")
+	name, err := jsonpointer.GetByPointer(doc, "/users/0/name")
 	if err != nil {
-		log.Printf("Find error: %v", err)
-	} else {
-		fmt.Printf("Find result - Val: %v, Key: %v\n", ref.Val, ref.Key)
+		log.Fatal(err)
 	}
+	fmt.Println("name:", name)
 
-	// Find with array end marker (creates reference to append position)
-	ref, err = jsonpointer.Find(doc, "users", "-")
+	ref, err := jsonpointer.FindByPointer(doc, "/foo~1bar/tilde~0key")
 	if err != nil {
-		log.Printf("Find error: %v", err)
-	} else {
-		fmt.Printf("Find array end - Val: %v, Key: %v\n", ref.Val, ref.Key)
+		log.Fatal(err)
 	}
+	fmt.Println("escaped value:", ref.Val)
+	fmt.Println("escaped key:", ref.Key)
 
-	// Find with invalid array index (returns error)
-	_, err = jsonpointer.Find(doc, "users", "invalid_index")
+	email, err := jsonpointer.Get(&user{Name: "Bob", Email: "bob@example.com"}, "email")
 	if err != nil {
-		fmt.Printf("Find invalid array index error: %v\n", err)
+		log.Fatal(err)
 	}
+	fmt.Println("struct email:", email)
 
-	// Find non-existent path (returns error)
-	_, err = jsonpointer.Find(doc, "nonexistent", "deeply", "nested")
-	if err != nil {
-		fmt.Printf("Find non-existent path error: %v\n", err)
-	}
-
-	fmt.Println()
-
-	// Example 3: FindByPointer - Optimized string-based operations
-	fmt.Println("=== 3. FindByPointer - Optimized string operations ===")
-
-	// FindByPointer successful
-	ref, err = jsonpointer.FindByPointer(doc, "/users/0/profile/settings/privacy")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer result - Val: %v, Key: %v\n", ref.Val, ref.Key)
-	}
-
-	// FindByPointer with escaped characters
-	ref, err = jsonpointer.FindByPointer(doc, "/special~0chars/foo~1bar")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer escaped chars - Val: %v, Key: %v\n", ref.Val, ref.Key)
-	}
-
-	// FindByPointer with array end marker
-	ref, err = jsonpointer.FindByPointer(doc, "/users/-")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer array end - Val: %v, Key: %v\n", ref.Val, ref.Key)
-	}
-
-	fmt.Println()
-
-	// Example 4: JSON Pointer Parsing and Formatting
-	fmt.Println("=== 4. JSON Pointer Parsing and Formatting ===")
-
-	// Parse JSON pointers to paths
-	pointers := []string{
-		"",
-		"/users",
-		"/users/0/name",
-		"/metadata/version",
-		"/special~0chars/foo~1bar",
-		"/users/-",
-	}
-
-	for _, pointer := range pointers {
-		path := jsonpointer.Parse(pointer)
-		formatted := jsonpointer.Format(path...)
-		fmt.Printf("Parse '%s' -> %+v -> Format '%s'\n", pointer, path, formatted)
-	}
-
-	fmt.Println()
-
-	// Example 5: Component Escaping and Unescaping
-	fmt.Println("=== 5. Component Escaping and Unescaping ===")
-
-	components := []string{
-		"simple",
-		"foo/bar",
-		"foo~bar",
-		"foo~bar/baz",
-		"~tilde~/slash/",
-	}
-
-	for _, component := range components {
-		escaped := jsonpointer.Escape(component)
-		unescaped := jsonpointer.Unescape(escaped)
-		fmt.Printf("Component '%s' -> Escape '%s' -> Unescape '%s'\n", component, escaped, unescaped)
-	}
-
-	fmt.Println()
-
-	// Example 6: Utility Functions
-	fmt.Println("=== 6. Utility Functions ===")
-
-	// Path utilities
-	path1 := jsonpointer.Path{"users", "0"}
-	path2 := jsonpointer.Path{"users", "0", "profile"}
-	path3 := jsonpointer.Path{"metadata"}
-
-	fmt.Printf("IsRoot(%+v): %v\n", jsonpointer.Path{}, jsonpointer.IsRoot(jsonpointer.Path{}))
-	fmt.Printf("IsRoot(%+v): %v\n", path1, jsonpointer.IsRoot(path1))
-
-	fmt.Printf("IsChild(%+v, %+v): %v\n", path1, path2, jsonpointer.IsChild(path1, path2))
-	fmt.Printf("IsChild(%+v, %+v): %v\n", path2, path1, jsonpointer.IsChild(path2, path1))
-
-	fmt.Printf("IsPathEqual(%+v, %+v): %v\n", path1, path1, jsonpointer.IsPathEqual(path1, path1))
-	fmt.Printf("IsPathEqual(%+v, %+v): %v\n", path1, path3, jsonpointer.IsPathEqual(path1, path3))
-
-	// Parent operations
-	parent, err := jsonpointer.Parent(path2)
-	if err != nil {
-		log.Printf("Parent error: %v", err)
-	} else {
-		fmt.Printf("Parent of %+v: %+v\n", path2, parent)
-	}
-
-	// Parent of root (error)
-	_, err = jsonpointer.Parent(jsonpointer.Path{})
-	if err != nil {
-		fmt.Printf("Parent of root error: %v\n", err)
-	}
-
-	// Array index validation
-	fmt.Printf("IsValidIndex('0'): %v\n", jsonpointer.IsValidIndex("0"))
-	fmt.Printf("IsValidIndex('123'): %v\n", jsonpointer.IsValidIndex("123"))
-	fmt.Printf("IsValidIndex('01'): %v\n", jsonpointer.IsValidIndex("01"))   // false - leading zero
-	fmt.Printf("IsValidIndex('-'): %v\n", jsonpointer.IsValidIndex("-"))     // false - special marker
-	fmt.Printf("IsValidIndex('abc'): %v\n", jsonpointer.IsValidIndex("abc")) // false - not a number
-	fmt.Printf("IsValidIndex(\"42\"): %v\n", jsonpointer.IsValidIndex("42")) // true - number as string
-
-	// Integer checking
-	fmt.Printf("IsInteger('123'): %v\n", jsonpointer.IsInteger("123"))
-	fmt.Printf("IsInteger('01'): %v\n", jsonpointer.IsInteger("01")) // true - has digits
-	fmt.Printf("IsInteger('abc'): %v\n", jsonpointer.IsInteger("abc"))
-
-	fmt.Println()
-
-	// Example 7: Type Guards and Reference Types
-	fmt.Println("=== 7. Type Guards and Reference Analysis ===")
-
-	// Get references to different types
-	arrayRef, _ := jsonpointer.Find(doc, "users", "0")
-	objectRef, _ := jsonpointer.Find(doc, "metadata", "version")
-
-	fmt.Printf("Array reference: %+v\n", arrayRef)
-	fmt.Printf("IsArrayReference: %v\n", jsonpointer.IsArrayReference(*arrayRef))
-	fmt.Printf("IsObjectReference: %v\n", jsonpointer.IsObjectReference(*arrayRef))
-
-	fmt.Printf("Object reference: %+v\n", objectRef)
-	fmt.Printf("IsArrayReference: %v\n", jsonpointer.IsArrayReference(*objectRef))
-	fmt.Printf("IsObjectReference: %v\n", jsonpointer.IsObjectReference(*objectRef))
-
-	fmt.Println()
-
-	// Example 8: Validation
-	fmt.Println("=== 8. Validation ===")
-
-	// Valid pointers
-	validPointers := []string{
-		"",
-		"/users",
-		"/users/0/name",
-		"/special~0chars/foo~1bar",
-	}
-
-	// Invalid pointers
-	invalidPointers := []string{
-		"users",           // missing leading slash
-		"/users/",         // trailing slash
-		"/invalid~escape", // invalid escape sequence
-	}
-
-	fmt.Println("Valid pointers:")
-	for _, pointer := range validPointers {
-		err := jsonpointer.Validate(pointer)
-		fmt.Printf("  '%s': %v\n", pointer, err)
-	}
-
-	fmt.Println("Invalid pointers:")
-	for _, pointer := range invalidPointers {
-		err := jsonpointer.Validate(pointer)
-		fmt.Printf("  '%s': %v\n", pointer, err)
-	}
-
-	// Path validation
-	validPath := jsonpointer.Path{"users", "0", "name"}
-	err = jsonpointer.ValidatePath(validPath)
-	fmt.Printf("Valid path %+v: %v\n", validPath, err)
-
-	// Create a very long path (over limit)
-	longPath := make(jsonpointer.Path, 300) // Over 256 limit
-	for i := range longPath {
-		longPath[i] = fmt.Sprintf("step%d", i)
-	}
-	err = jsonpointer.ValidatePath(longPath)
-	fmt.Printf("Long path (300 steps): %v\n", err)
-
-	fmt.Println()
-
-	// Example 9: Struct Support
-	fmt.Println("=== 9. Struct Support ===")
-
-	// Create sample user with struct
-	user := User{
-		ID:      1,
-		Name:    "John Doe",
-		Email:   "john@example.com",
-		private: "secret",  // This won't be accessible
-		Ignored: "ignored", // This won't be accessible due to json:"-"
-		Profile: Profile{
-			Bio:      "Software Engineer",
-			Location: "San Francisco",
-			Settings: map[string]any{
-				"theme":         "dark",
-				"notifications": true,
-			},
-		},
-	}
-
-	fmt.Printf("Sample user struct: %+v\n", user)
-	fmt.Println()
-
-	// Get operations with structs
-	fmt.Println("--- Get operations with structs ---")
-
-	// Access fields via JSON tags
-	result, _ = jsonpointer.Get(user, "id")
-	fmt.Printf("Get user id (via JSON tag): %v\n", result)
-
-	result, _ = jsonpointer.Get(user, "name")
-	fmt.Printf("Get user name (via JSON tag): %v\n", result)
-
-	// Access field via field name (no JSON tag)
-	result, _ = jsonpointer.Get(user, "Email")
-	fmt.Printf("Get user Email (via field name): %v\n", result)
-
-	// Access nested struct fields
-	result, _ = jsonpointer.Get(user, "profile", "bio")
-	fmt.Printf("Get nested profile bio: %v\n", result)
-
-	result, _ = jsonpointer.Get(user, "profile", "location")
-	fmt.Printf("Get nested profile location: %v\n", result)
-
-	// Access mixed struct + map
-	result, _ = jsonpointer.Get(user, "profile", "settings", "theme")
-	fmt.Printf("Get settings theme (struct->map): %v\n", result)
-
-	// Try to access private field (returns nil)
-	result, _ = jsonpointer.Get(user, "private")
-	fmt.Printf("Get private field (should be nil): %v\n", result)
-
-	// Try to access ignored field (returns nil)
-	result, _ = jsonpointer.Get(user, "Ignored")
-	fmt.Printf("Get ignored field (should be nil): %v\n", result)
-
-	fmt.Println()
-
-	// FindByPointer operations with structs
-	fmt.Println("--- FindByPointer operations with structs ---")
-
-	ref, err = jsonpointer.FindByPointer(user, "/id")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer /id: %v\n", ref.Val)
-	}
-
-	ref, err = jsonpointer.FindByPointer(user, "/name")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer /name: %v\n", ref.Val)
-	}
-
-	ref, err = jsonpointer.FindByPointer(user, "/profile/bio")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer /profile/bio: %v\n", ref.Val)
-	}
-
-	ref, err = jsonpointer.FindByPointer(user, "/profile/settings/theme")
-	if err != nil {
-		log.Printf("FindByPointer error: %v", err)
-	} else {
-		fmt.Printf("FindByPointer /profile/settings/theme: %v\n", ref.Val)
-	}
-
-	fmt.Println()
-
-	// Mixed map and struct usage
-	fmt.Println("--- Mixed map and struct usage ---")
-
-	mixedData := map[string]any{
-		"user": user,
-		"metadata": map[string]any{
-			"version": "2.0",
-			"created": "2024-01-01",
-		},
-		"stats": map[string]any{
-			"users_count": 1000,
-			"active":      true,
-		},
-	}
-
-	// Access struct through map
-	result, _ = jsonpointer.Get(mixedData, "user", "name")
-	fmt.Printf("Get user name from mixed data: %v\n", result)
-
-	result, _ = jsonpointer.Get(mixedData, "user", "profile", "location")
-	fmt.Printf("Get user location from mixed data: %v\n", result)
-
-	// Regular map access still works
-	result, _ = jsonpointer.Get(mixedData, "metadata", "version")
-	fmt.Printf("Get metadata version: %v\n", result)
-
-	fmt.Println()
-	fmt.Println("=== All examples completed successfully! ===")
+	path := jsonpointer.Parse("/users/0/name")
+	fmt.Println("path:", path)
+	fmt.Println("pointer:", jsonpointer.Format(path...))
+	fmt.Println("valid pointer:", jsonpointer.Validate("/users/0/name") == nil)
 }

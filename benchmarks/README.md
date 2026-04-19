@@ -64,6 +64,7 @@ Performance comparison for Go JSON Pointer libraries.
 ## API Comparison
 
 This implementation provides two functions:
+
 - **Get**: Direct value retrieval (zero allocations)
 - **Find**: Returns reference object with metadata
 
@@ -76,16 +77,19 @@ This implementation provides two functions:
 ## Memory Allocation Patterns
 
 ### Zero Allocation
+
 - **this (Get)**: All operations (0 allocs)
 - **woodsbury**: Root and deep access (0 allocs)
 - **BragdonD**: Root access only (0 allocs)
 
 ### Single Allocation
+
 - **dolmen-go**: 16B consistent (1 alloc)
 - **BragdonD**: 32-64B variable allocation (1 alloc)
 - **this (Find)**: 48B minimum (1 alloc for root)
 
 ### Multi Allocation
+
 - **go-openapi**: 1-10 allocations, 24-288B
 - **this (Find)**: 1-7 allocations for complex operations (48-144B)
 
@@ -106,6 +110,7 @@ Benchmark testing reveals that **generic types (`[]any`, `map[string]any`) are s
 | Nested structures | 104.3 ns/op, 0B | 1035 ns/op, 56B | **893% faster, zero allocs** |
 
 **Why generic types are faster:**
+
 - Generic types (`map[string]any`, `[]any`) hit the **ultra-fast path** with direct type assertions
 - Specialized types require additional reflection overhead for type conversion
 - Generic types dominate real-world JSON parsing (99%+ of use cases)
