@@ -65,7 +65,6 @@ func find(val any, path Path) (*Reference, error) {
 				return nil, err
 			}
 
-			//nolint:exhaustive // Only handling traversable types
 			switch objVal.Kind() {
 			case reflect.Slice, reflect.Array:
 				index, err := validateAndAccessArray(key, objVal.Len())

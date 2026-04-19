@@ -60,7 +60,6 @@ func TestFind(t *testing.T) {
 				"b": []any{1, 2, 3},
 			},
 		}
-		// path := ParseJsonPointer("/a/b/-")
 		_, err := Find(doc, "a", "b", "-")
 		assert.Error(t, err)
 		assert.Equal(t, ErrIndexOutOfBounds, err)
@@ -72,7 +71,6 @@ func TestFind(t *testing.T) {
 				"b": []any{1, 2, 3},
 			},
 		}
-		// path := ParseJsonPointer("/a/b/-1")
 		_, err := Find(doc, "a", "b", "-1")
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidIndex, err)
@@ -84,7 +82,6 @@ func TestFind(t *testing.T) {
 				"b": []any{1, 2, 3},
 			},
 		}
-		// path := ParseJsonPointer("/a/b/3")
 		_, err := Find(doc, "a", "b", "3")
 		assert.Error(t, err)
 		assert.Equal(t, ErrIndexOutOfBounds, err)
@@ -92,7 +89,6 @@ func TestFind(t *testing.T) {
 
 	t.Run("throws for missing object key", func(t *testing.T) {
 		doc := map[string]any{"foo": 123}
-		// path := ParseJsonPointer("/bar")
 		_, err := Find(doc, "bar")
 		assert.Error(t, err)
 		assert.Equal(t, ErrKeyNotFound, err)
@@ -103,7 +99,6 @@ func TestFind(t *testing.T) {
 			"foo": 123,
 			"bar": []any{1, 2, 3},
 		}
-		// path := ParseJsonPointer("/bar/3")
 		_, err := Find(doc, "bar", "3")
 		assert.Error(t, err)
 		assert.Equal(t, ErrIndexOutOfBounds, err)

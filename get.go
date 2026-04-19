@@ -135,7 +135,6 @@ func tryObjectAccess(current any, token internalToken) (any, bool, error) {
 			return nil, false, err
 		}
 
-		//nolint:exhaustive // Only handling traversable types
 		switch objVal.Kind() {
 		case reflect.Map:
 			mapKey := reflect.ValueOf(token.key)
