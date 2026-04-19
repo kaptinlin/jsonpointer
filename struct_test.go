@@ -19,6 +19,10 @@ type Profile struct {
 	Location string `json:"location"`
 }
 
+type EmptyTagName struct {
+	Name string `json:",omitempty"`
+}
+
 func TestStructField(t *testing.T) {
 	user := User{
 		Name:    "Alice",
@@ -74,6 +78,19 @@ func TestStructFieldWithPointer(t *testing.T) {
 
 	if value.Interface() != "Bob" {
 		t.Errorf("structField() value = %v, want %v", value.Interface(), "Bob")
+	}
+}
+
+func TestStructFieldWithEmptyJSONTagName(t *testing.T) {
+	value := reflect.ValueOf(EmptyTagName{Name: "fallback"})
+	found := structField("Name", &value)
+
+	if !found {
+		t.Fatal("structField() should fall back to the field name when the JSON tag name is empty")
+	}
+
+	if value.Interface() != "fallback" {
+		t.Errorf("structField() value = %v, want %v", value.Interface(), "fallback")
 	}
 }
 
