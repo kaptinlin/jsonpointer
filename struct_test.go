@@ -94,6 +94,17 @@ func TestStructFieldWithEmptyJSONTagName(t *testing.T) {
 	}
 }
 
+func TestGetWithEmptyJSONTagName(t *testing.T) {
+	result, err := Get(EmptyTagName{Name: "fallback"}, "Name")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+
+	if result != "fallback" {
+		t.Errorf("Get() = %v, want %v", result, "fallback")
+	}
+}
+
 func TestGetWithStruct(t *testing.T) {
 	user := User{
 		Name:  "Charlie",
