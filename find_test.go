@@ -239,6 +239,24 @@ func TestFindByPointer(t *testing.T) {
 		require.NotNil(t, ref2)
 		assert.Equal(t, "value2", ref2.Val)
 	})
+
+	t.Run("handles trailing empty pointer segments", func(t *testing.T) {
+		t.Parallel()
+
+		doc := map[string]any{
+			"foo": map[string]any{
+				"": map[string]any{
+					"": "value",
+				},
+			},
+		}
+
+		ref, err := FindByPointer(doc, "/foo//")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "value", ref.Val)
+		assert.Equal(t, "", ref.Key)
+	})
 }
 
 func TestGet(t *testing.T) {

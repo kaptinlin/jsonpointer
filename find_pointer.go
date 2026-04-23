@@ -42,23 +42,8 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 
 	var obj any
 	var key string
-	indexOfSlash := 0
-	indexAfterSlash := 1
 
-	for indexOfSlash > -1 {
-		indexOfSlash = strings.Index(pointer[indexAfterSlash:], "/")
-		if indexOfSlash > -1 {
-			indexOfSlash += indexAfterSlash
-		}
-
-		var keyStr string
-		if indexOfSlash > -1 {
-			keyStr = pointer[indexAfterSlash:indexOfSlash]
-		} else {
-			keyStr = pointer[indexAfterSlash:]
-		}
-
-		indexAfterSlash = indexOfSlash + 1
+	for keyStr := range strings.SplitSeq(pointer[1:], "/") {
 		obj = val
 
 		if obj == nil {
