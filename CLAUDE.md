@@ -126,4 +126,4 @@ When you encounter a bug, limitation, or unexpected behavior in a dependency lib
 
 ## Agent Skills
 
-No project-local skills are currently available from `.agents/skills/` or `.claude/skills/` in this checkout.
+Shared workflow skills are available from `.agents/skills/` and `.claude/skills/` in this checkout.

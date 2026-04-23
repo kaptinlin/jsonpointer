@@ -1,6 +1,6 @@
 # JSON Pointer
 
-[![Go Version](https://img.shields.io/badge/go-%3E%3D1.26-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.26.2-blue.svg)](https://golang.org/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/kaptinlin/jsonpointer.svg)](https://pkg.go.dev/github.com/kaptinlin/jsonpointer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -21,7 +21,7 @@ A read-only JSON Pointer (RFC 6901) library for Go that traverses maps, slices, 
 go get github.com/kaptinlin/jsonpointer
 ```
 
-Requires **Go 1.26+**.
+Requires **Go 1.26.2**.
 
 ## Quick Start
 

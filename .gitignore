@@ -50,6 +50,7 @@ TODO*.md
 # Project-specific
 .reference/
 .vscode/
+.claude/
 
 # Scratch/planning docs
 .plans/
