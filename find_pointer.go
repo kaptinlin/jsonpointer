@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// findByPointer optimized string-based find operation.
-// Direct string parsing without path array allocation for better performance.
-//
 // TypeScript original code from findByPointer/v5.ts:
 //
 //	export const findByPointer = (pointer: string, val: unknown): Reference => {
@@ -64,44 +61,40 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		indexAfterSlash = indexOfSlash + 1
 		obj = val
 
-		switch {
-		case isSliceOrArray(obj):
-			arrayVal, err := derefValue(reflect.ValueOf(obj))
-			if err != nil {
-				return nil, err
-			}
+		if obj == nil {
+			return nil, ErrNotFound
+		}
 
-			index, err := validateAndAccessArray(keyStr, arrayVal.Len())
+		objVal, err := derefValue(reflect.ValueOf(obj))
+		if err != nil {
+			return nil, err
+		}
+
+		switch objVal.Kind() {
+		case reflect.Slice, reflect.Array:
+			index, err := validateAndAccessArray(keyStr, objVal.Len())
 			if err != nil {
 				return nil, err
 			}
-			val = arrayVal.Index(index).Interface()
+			val = objVal.Index(index).Interface()
 			key = keyStr
 
-		case isObjectPointer(obj) && obj != nil:
+		case reflect.Map:
 			keyStr = unescapeComponent(keyStr)
 			key = keyStr
-
-			objVal, err := derefValue(reflect.ValueOf(obj))
+			mapEntry, err := mapValueByPathKey(objVal, keyStr)
 			if err != nil {
 				return nil, err
 			}
+			val = mapEntry.Interface()
 
-			switch objVal.Kind() {
-			case reflect.Map:
-				mapEntry, err := mapValueByPathKey(objVal, keyStr)
-				if err != nil {
-					return nil, err
-				}
-				val = mapEntry.Interface()
-			case reflect.Struct:
-				if !structField(keyStr, &objVal) {
-					return nil, ErrFieldNotFound
-				}
-				val = objVal.Interface()
-			default:
-				return nil, ErrNotFound
+		case reflect.Struct:
+			keyStr = unescapeComponent(keyStr)
+			key = keyStr
+			if !structField(keyStr, &objVal) {
+				return nil, ErrFieldNotFound
 			}
+			val = objVal.Interface()
 
 		default:
 			return nil, ErrNotFound
@@ -113,29 +106,4 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		Obj: obj,
 		Key: key,
 	}, nil
-}
-
-// isSliceOrArray checks if a value is a slice or array type after dereferencing pointers.
-func isSliceOrArray(obj any) bool {
-	if obj == nil {
-		return false
-	}
-	objVal := reflect.ValueOf(obj)
-	for objVal.Kind() == reflect.Pointer {
-		if objVal.IsNil() {
-			return false
-		}
-		objVal = objVal.Elem()
-	}
-	kind := objVal.Kind()
-	return kind == reflect.Slice || kind == reflect.Array
-}
-
-// isObjectPointer checks if a value is an object (map or struct) for pointer operations.
-func isObjectPointer(val any) bool {
-	if val == nil {
-		return false
-	}
-	kind := reflect.TypeOf(val).Kind()
-	return kind == reflect.Map || kind == reflect.Struct || kind == reflect.Pointer
 }

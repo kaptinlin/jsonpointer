@@ -4,8 +4,7 @@ import (
 	"reflect"
 )
 
-// find locates a reference in document using string path components.
-// Optimized with inline fast paths and minimal allocations.
+// find locates a reference in a document using string path components.
 func find(val any, path Path) (*Reference, error) {
 	pathLength := len(path)
 	if pathLength == 0 {

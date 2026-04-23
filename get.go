@@ -4,9 +4,7 @@ import (
 	"reflect"
 )
 
-// fastGet implements ultra-fast path that avoids token allocation entirely.
-// Optimized for string-only Path - direct access without intermediate token creation.
-// Returns the value and a boolean indicating success.
+// fastGet implements direct access without intermediate token creation.
 func fastGet(val any, step string) (any, bool) {
 	switch v := val.(type) {
 	case map[string]any:
