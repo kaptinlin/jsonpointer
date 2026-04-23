@@ -38,6 +38,12 @@ func TestParseJsonPointer(t *testing.T) {
 		expected := Path{"a~b", "c/d", "1"}
 		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
 	})
+
+	t.Run("keeps permissive parsing for non-valid escape sequences", func(t *testing.T) {
+		res := parseJSONPointer("/~2/foo~")
+		expected := Path{"~2", "foo~"}
+		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
+	})
 }
 
 // TestFormatJsonPointer tests path array formatting to JSON Pointer string.

@@ -23,6 +23,15 @@ type EmptyTagName struct {
 	Name string `json:",omitempty"`
 }
 
+type EmbeddedName struct {
+	EmbeddedName string `json:"embedded_name"`
+}
+
+type EmbeddedUser struct {
+	EmbeddedName
+	Name string `json:"name"`
+}
+
 func TestStructField(t *testing.T) {
 	user := User{
 		Name:    "Alice",
@@ -91,6 +100,22 @@ func TestStructFieldWithEmptyJSONTagName(t *testing.T) {
 
 	if value.Interface() != "fallback" {
 		t.Errorf("structField() value = %v, want %v", value.Interface(), "fallback")
+	}
+}
+
+func TestStructFieldWithEmbeddedFieldOrder(t *testing.T) {
+	value := reflect.ValueOf(EmbeddedUser{
+		EmbeddedName: EmbeddedName{EmbeddedName: "embedded"},
+		Name:         "top-level",
+	})
+	found := structField("name", &value)
+
+	if !found {
+		t.Fatal("structField() should find the top-level tagged field")
+	}
+
+	if value.Interface() != "top-level" {
+		t.Errorf("structField() value = %v, want %v", value.Interface(), "top-level")
 	}
 }
 

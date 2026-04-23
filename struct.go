@@ -44,11 +44,7 @@ func getStructFields(t reflect.Type) structFields {
 	}
 
 	fields := make(structFields)
-	numField := t.NumField()
-
-	for i := range numField {
-		field := t.Field(i)
-
+	for field := range t.Fields() {
 		if !field.IsExported() {
 			continue
 		}
@@ -58,7 +54,7 @@ func getStructFields(t reflect.Type) structFields {
 			continue
 		}
 
-		fields[name] = i
+		fields[name] = field.Index[0]
 	}
 
 	structFieldsCache.Store(t, fields)
