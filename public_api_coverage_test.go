@@ -381,6 +381,23 @@ type nestedPointerCoverageContainer struct {
 	Child **publicAPICoverageContainer `json:"child"`
 }
 
+func TestFindByPointerUsesReflectiveMapFallback(t *testing.T) {
+	t.Parallel()
+
+	doc := map[string]string{"foo": "bar"}
+
+	ref, err := FindByPointer(doc, "/foo")
+	require.NoError(t, err)
+	require.NotNil(t, ref)
+	assert.Equal(t, "bar", ref.Val)
+	assert.Equal(t, "foo", ref.Key)
+
+	missing, err := FindByPointer(doc, "/missing")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrKeyNotFound)
+	assert.Nil(t, missing)
+}
+
 func TestNilPointerChainTraversal(t *testing.T) {
 	t.Parallel()
 
