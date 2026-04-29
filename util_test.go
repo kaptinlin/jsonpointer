@@ -3,294 +3,327 @@ package jsonpointer
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
-// TestParseJsonPointer tests JSON Pointer string parsing.
-// Maps to: util.parseJsonPointer.spec.ts
 func TestParseJsonPointer(t *testing.T) {
-	t.Run("returns path without escaped characters parsed into array", func(t *testing.T) {
-		res := parseJSONPointer("/foo/bar")
-		expected := Path{"foo", "bar"}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
+	t.Parallel()
 
-	t.Run("trailing slashes result into empty string elements", func(t *testing.T) {
-		res := parseJSONPointer("/foo///")
-		expected := Path{"foo", "", "", ""}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
+	tests := []struct {
+		name    string
+		pointer string
+		want    Path
+	}{
+		{name: "returns path without escaped characters parsed into array", pointer: "/foo/bar", want: Path{"foo", "bar"}},
+		{name: "trailing slashes result into empty string elements", pointer: "/foo///", want: Path{"foo", "", "", ""}},
+		{name: "for root path returns empty array", pointer: "", want: Path{}},
+		{name: "slash path returns single empty string", pointer: "/", want: Path{""}},
+		{name: "un-escapes special characters", pointer: "/a~0b/c~1d/1", want: Path{"a~b", "c/d", "1"}},
+		{name: "keeps permissive parsing for non-valid escape sequences", pointer: "/~2/foo~", want: Path{"~2", "foo~"}},
+	}
 
-	t.Run("for root path returns empty array", func(t *testing.T) {
-		res := parseJSONPointer("")
-		expected := Path{}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("slash path \"/\" return single empty string", func(t *testing.T) {
-		res := parseJSONPointer("/")
-		expected := Path{""}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
-
-	t.Run("un-escapes special characters", func(t *testing.T) {
-		res := parseJSONPointer("/a~0b/c~1d/1")
-		expected := Path{"a~b", "c/d", "1"}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
-
-	t.Run("keeps permissive parsing for non-valid escape sequences", func(t *testing.T) {
-		res := parseJSONPointer("/~2/foo~")
-		expected := Path{"~2", "foo~"}
-		assert.True(t, IsPathEqual(res, expected), "Expected %v, got %v", expected, res)
-	})
+			got := parseJSONPointer(tc.pointer)
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("parseJSONPointer() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
-// TestFormatJsonPointer tests path array formatting to JSON Pointer string.
-// Maps to: util.formatJsonPointer.spec.ts
 func TestFormatJsonPointer(t *testing.T) {
-	t.Run("returns path without escaped characters parsed into array", func(t *testing.T) {
-		res := formatJSONPointer(Path{"foo", "bar"})
-		expected := "/foo/bar"
-		assert.Equal(t, expected, res)
-	})
+	t.Parallel()
 
-	t.Run("empty string elements add trailing slashes", func(t *testing.T) {
-		res := formatJSONPointer(Path{"foo", "", "", ""})
-		expected := "/foo///"
-		assert.Equal(t, expected, res)
-	})
+	tests := []struct {
+		name string
+		path Path
+		want string
+	}{
+		{name: "returns path without escaped characters parsed into array", path: Path{"foo", "bar"}, want: "/foo/bar"},
+		{name: "empty string elements add trailing slashes", path: Path{"foo", "", "", ""}, want: "/foo///"},
+		{name: "array with single empty string results into root element", path: Path{}, want: ""},
+		{name: "two empty strings result in a single slash", path: Path{""}, want: "/"},
+		{name: "escapes special characters", path: Path{"a~b", "c/d", "1"}, want: "/a~0b/c~1d/1"},
+	}
 
-	t.Run("array with single empty string results into root element", func(t *testing.T) {
-		res := formatJSONPointer(Path{})
-		expected := ""
-		assert.Equal(t, expected, res)
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("two empty strings result in a single slash \"/\"", func(t *testing.T) {
-		res := formatJSONPointer(Path{""})
-		expected := "/"
-		assert.Equal(t, expected, res)
-	})
-
-	t.Run("escapes special characters", func(t *testing.T) {
-		res := formatJSONPointer(Path{"a~b", "c/d", "1"})
-		expected := "/a~0b/c~1d/1"
-		assert.Equal(t, expected, res)
-	})
+			got := formatJSONPointer(tc.path)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestEscapeComponent tests path component escaping.
-// Maps to: util.escapeComponent.spec.ts
 func TestEscapeComponent(t *testing.T) {
-	t.Run("string without escaped characters as is", func(t *testing.T) {
-		res := escapeComponent("foobar")
-		expected := "foobar"
-		assert.Equal(t, expected, res)
-	})
+	t.Parallel()
 
-	t.Run("replaces special characters", func(t *testing.T) {
-		res := escapeComponent("foo~/")
-		expected := "foo~0~1"
-		assert.Equal(t, expected, res)
-	})
+	tests := []struct {
+		name      string
+		component string
+		want      string
+	}{
+		{name: "string without escaped characters as is", component: "foobar", want: "foobar"},
+		{name: "replaces special characters", component: "foo~/", want: "foo~0~1"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := escapeComponent(tc.component)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestUnescapeComponent tests path component unescaping.
-// Maps to: util.unescapeComponent.spec.ts
 func TestUnescapeComponent(t *testing.T) {
-	t.Run("string without escaped characters as is", func(t *testing.T) {
-		res := unescapeComponent("foobar")
-		expected := "foobar"
-		assert.Equal(t, expected, res)
-	})
+	t.Parallel()
 
-	t.Run("replaces special characters", func(t *testing.T) {
-		tests := []struct {
-			input    string
-			expected string
-		}{
-			{"foo~0~1", "foo~/"},
-			{"fo~1o", "fo/o"},
-			{"fo~0o", "fo~o"},
-		}
+	tests := []struct {
+		name      string
+		component string
+		want      string
+	}{
+		{name: "string without escaped characters as is", component: "foobar", want: "foobar"},
+		{name: "unescapes slash and tilde", component: "foo~0~1", want: "foo~/"},
+		{name: "unescapes slash inside component", component: "fo~1o", want: "fo/o"},
+		{name: "unescapes tilde inside component", component: "fo~0o", want: "fo~o"},
+	}
 
-		for _, test := range tests {
-			res := unescapeComponent(test.input)
-			assert.Equal(t, test.expected, res, "unescapeComponent(%s)", test.input)
-		}
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := unescapeComponent(tc.component)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestIsChild tests parent-child path relationship checking.
-// Maps to: util.isChild.spec.ts
 func TestIsChild(t *testing.T) {
-	t.Run("returns false if parent path is longer than child path", func(t *testing.T) {
-		res := IsChild(Path{"", "foo", "bar", "baz"}, Path{"", "foo"})
-		assert.False(t, res)
-	})
+	t.Parallel()
 
-	t.Run("returns true for real child", func(t *testing.T) {
-		res := IsChild(Path{"", "foo"}, Path{"", "foo", "bar", "baz"})
-		assert.True(t, res)
-	})
+	tests := []struct {
+		name   string
+		parent Path
+		child  Path
+		want   bool
+	}{
+		{name: "returns false if parent path is longer than child path", parent: Path{"", "foo", "bar", "baz"}, child: Path{"", "foo"}, want: false},
+		{name: "returns true for real child", parent: Path{"", "foo"}, child: Path{"", "foo", "bar", "baz"}, want: true},
+		{name: "returns false for different root steps", parent: Path{"", "foo"}, child: Path{"", "foo2", "bar", "baz"}, want: false},
+		{name: "returns false for adjacent paths", parent: Path{"", "foo", "baz"}, child: Path{"", "foo", "bar"}, want: false},
+		{name: "returns false for two roots", parent: Path{""}, child: Path{""}, want: false},
+		{name: "always returns true when parent is root and child is not", parent: Path{""}, child: Path{"", "a", "b", "c", "1", "2", "3"}, want: true},
+	}
 
-	t.Run("returns false for different root steps", func(t *testing.T) {
-		res := IsChild(Path{"", "foo"}, Path{"", "foo2", "bar", "baz"})
-		assert.False(t, res)
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("returns false for adjacent paths", func(t *testing.T) {
-		res := IsChild(Path{"", "foo", "baz"}, Path{"", "foo", "bar"})
-		assert.False(t, res)
-	})
-
-	t.Run("returns false for two roots", func(t *testing.T) {
-		res := IsChild(Path{""}, Path{""})
-		assert.False(t, res)
-	})
-
-	t.Run("always returns true when parent is root and child is not", func(t *testing.T) {
-		res := IsChild(Path{""}, Path{"", "a", "b", "c", "1", "2", "3"})
-		assert.True(t, res)
-	})
+			got := IsChild(tc.parent, tc.child)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestParent tests parent path extraction.
-// Maps to: util.parent.spec.ts
 func TestParent(t *testing.T) {
+	t.Parallel()
+
 	t.Run("returns parent path", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
-			input    Path
-			expected Path
+			name string
+			path Path
+			want Path
 		}{
-			{Path{"foo", "bar", "baz"}, Path{"foo", "bar"}},
-			{Path{"foo", "bar"}, Path{"foo"}},
-			{Path{"foo"}, Path{}},
+			{name: "three components", path: Path{"foo", "bar", "baz"}, want: Path{"foo", "bar"}},
+			{name: "two components", path: Path{"foo", "bar"}, want: Path{"foo"}},
+			{name: "one component", path: Path{"foo"}, want: Path{}},
 		}
 
-		for _, test := range tests {
-			res, err := Parent(test.input)
-			assert.NoError(t, err, "Parent(%v)", test.input)
-			assert.True(t, IsPathEqual(res, test.expected), "Parent(%v): expected %v, got %v", test.input, test.expected, res)
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				got, err := Parent(tc.path)
+				assert.NoError(t, err)
+				if diff := cmp.Diff(tc.want, got); diff != "" {
+					t.Errorf("Parent() mismatch (-want +got):\n%s", diff)
+				}
+			})
 		}
 	})
 
-	t.Run("throws when path has no parent", func(t *testing.T) {
+	t.Run("returns no parent error when path has no parent", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := Parent(Path{})
-		assert.Error(t, err)
-		assert.Equal(t, ErrNoParent, err)
+		assert.ErrorIs(t, err, ErrNoParent)
 	})
 }
 
-// TestIsValidIndex tests array index validation.
 func TestIsValidIndex(t *testing.T) {
-	t.Run("valid string indices", func(t *testing.T) {
-		assert.True(t, IsValidIndex("0"))
-		assert.True(t, IsValidIndex("5"))
-		assert.True(t, IsValidIndex("10"))
-		assert.True(t, IsValidIndex("-")) // Array end marker
-	})
+	t.Parallel()
 
-	t.Run("invalid string indices", func(t *testing.T) {
-		assert.False(t, IsValidIndex("01")) // Leading zero
-		assert.False(t, IsValidIndex("abc"))
-		assert.False(t, IsValidIndex("1.5"))
-		assert.False(t, IsValidIndex("-1")) // Negative
-		assert.False(t, IsValidIndex("-5")) // Negative
-	})
+	tests := []struct {
+		name  string
+		index string
+		want  bool
+	}{
+		{name: "zero", index: "0", want: true},
+		{name: "single digit", index: "5", want: true},
+		{name: "multiple digits", index: "10", want: true},
+		{name: "array end marker", index: "-", want: true},
+		{name: "leading zero", index: "01", want: false},
+		{name: "letters", index: "abc", want: false},
+		{name: "decimal", index: "1.5", want: false},
+		{name: "negative one", index: "-1", want: false},
+		{name: "negative many", index: "-5", want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := IsValidIndex(tc.index)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestIsRoot tests root path detection.
 func TestIsRoot(t *testing.T) {
-	t.Run("empty path is root", func(t *testing.T) {
-		assert.True(t, IsRoot(Path{}))
-	})
+	t.Parallel()
 
-	t.Run("non-empty path is not root", func(t *testing.T) {
-		assert.False(t, IsRoot(Path{"foo"}))
-		assert.False(t, IsRoot(Path{"foo", "bar"}))
-	})
+	tests := []struct {
+		name string
+		path Path
+		want bool
+	}{
+		{name: "empty path is root", path: Path{}, want: true},
+		{name: "single component path is not root", path: Path{"foo"}, want: false},
+		{name: "multi component path is not root", path: Path{"foo", "bar"}, want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := IsRoot(tc.path)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestIsPathEqual tests path equality checking.
 func TestIsPathEqual(t *testing.T) {
-	t.Run("equal paths", func(t *testing.T) {
-		assert.True(t, IsPathEqual(Path{}, Path{}))
-		assert.True(t, IsPathEqual(Path{"foo"}, Path{"foo"}))
-		assert.True(t, IsPathEqual(Path{"foo", "bar"}, Path{"foo", "bar"}))
-		assert.True(t, IsPathEqual(Path{"foo", "0"}, Path{"foo", "0"}))
-	})
+	t.Parallel()
 
-	t.Run("unequal paths", func(t *testing.T) {
-		assert.False(t, IsPathEqual(Path{"foo"}, Path{"bar"}))
-		assert.False(t, IsPathEqual(Path{"foo", "bar"}, Path{"foo"}))
-		assert.False(t, IsPathEqual(Path{"foo", "0"}, Path{"foo", "1"}))
-	})
+	tests := []struct {
+		name  string
+		left  Path
+		right Path
+		want  bool
+	}{
+		{name: "empty paths", left: Path{}, right: Path{}, want: true},
+		{name: "single component paths", left: Path{"foo"}, right: Path{"foo"}, want: true},
+		{name: "multi component paths", left: Path{"foo", "bar"}, right: Path{"foo", "bar"}, want: true},
+		{name: "numeric component paths", left: Path{"foo", "0"}, right: Path{"foo", "0"}, want: true},
+		{name: "different components", left: Path{"foo"}, right: Path{"bar"}, want: false},
+		{name: "different lengths", left: Path{"foo", "bar"}, right: Path{"foo"}, want: false},
+		{name: "different numeric components", left: Path{"foo", "0"}, right: Path{"foo", "1"}, want: false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := IsPathEqual(tc.left, tc.right)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestIsInteger tests integer string validation.
 func TestIsInteger(t *testing.T) {
-	t.Run("valid integers", func(t *testing.T) {
-		assert.True(t, IsInteger("0"))
-		assert.True(t, IsInteger("123"))
-		assert.True(t, IsInteger("999"))
-	})
+	t.Parallel()
 
-	t.Run("invalid integers", func(t *testing.T) {
-		assert.False(t, IsInteger("abc"))
-		assert.False(t, IsInteger("1.5"))
-		assert.False(t, IsInteger("-1")) // Negative
-		assert.False(t, IsInteger(""))   // Empty
-		// Note: "01" is valid for IsInteger (it only checks digits),
-		// but invalid for IsValidIndex (which checks format)
-		assert.True(t, IsInteger("01")) // Valid digits, but not valid index format
-	})
+	tests := []struct {
+		name  string
+		value string
+		want  bool
+	}{
+		{name: "zero", value: "0", want: true},
+		{name: "digits", value: "123", want: true},
+		{name: "many digits", value: "999", want: true},
+		{name: "letters", value: "abc", want: false},
+		{name: "decimal", value: "1.5", want: false},
+		{name: "negative", value: "-1", want: false},
+		{name: "empty", value: "", want: false},
+		{name: "leading zero", value: "01", want: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := IsInteger(tc.value)
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }
 
-// TestFastAtoi tests the fastAtoi function for array index optimization.
 func TestFastAtoi(t *testing.T) {
+	t.Parallel()
+
 	t.Run("valid non-negative integers", func(t *testing.T) {
-		testCases := []struct {
-			input    string
-			expected int
+		t.Parallel()
+
+		tests := []struct {
+			name  string
+			input string
+			want  int
 		}{
-			{"0", 0},
-			{"1", 1},
-			{"123", 123},
-			{"999", 999},
-			{"1000", 1000},
+			{name: "zero", input: "0", want: 0},
+			{name: "one", input: "1", want: 1},
+			{name: "hundreds", input: "123", want: 123},
+			{name: "nines", input: "999", want: 999},
+			{name: "thousand", input: "1000", want: 1000},
 		}
 
-		for _, tc := range testCases {
-			result := fastAtoi(tc.input)
-			assert.Equal(t, tc.expected, result, "fastAtoi(%q) should return %d, got %d", tc.input, tc.expected, result)
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				got := fastAtoi(tc.input)
+				assert.Equal(t, tc.want, got)
+			})
 		}
 	})
 
 	t.Run("invalid inputs return -1", func(t *testing.T) {
-		testCases := []string{
-			"",       // empty string
-			"abc",    // non-numeric
-			"-1",     // negative
-			"01",     // leading zero
-			"00",     // multiple leading zeros
-			"123abc", // mixed
-			"12.34",  // decimal
-			" 123",   // leading space
-			"123 ",   // trailing space
-		}
+		t.Parallel()
 
-		for _, input := range testCases {
-			result := fastAtoi(input)
-			assert.Equal(t, -1, result, "fastAtoi(%q) should return -1, got %d", input, result)
+		tests := []string{"", "abc", "-1", "01", "00", "123abc", "12.34", " 123", "123 "}
+		for _, input := range tests {
+			t.Run(input, func(t *testing.T) {
+				t.Parallel()
+
+				got := fastAtoi(input)
+				assert.Equal(t, -1, got)
+			})
 		}
 	})
 
 	t.Run("overflow detection", func(t *testing.T) {
-		// Test a very large number that would cause overflow
-		largeNumber := "99999999999999999999999999999999"
-		result := fastAtoi(largeNumber)
-		assert.Equal(t, -1, result, "fastAtoi should detect overflow and return -1")
+		t.Parallel()
+
+		got := fastAtoi("99999999999999999999999999999999")
+		assert.Equal(t, -1, got)
 	})
 }

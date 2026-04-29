@@ -1,6 +1,7 @@
 package jsonpointer
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -33,6 +34,8 @@ type EmbeddedUser struct {
 }
 
 func TestStructField(t *testing.T) {
+	t.Parallel()
+
 	user := User{
 		Name:    "Alice",
 		Age:     30,
@@ -57,6 +60,8 @@ func TestStructField(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			value := reflect.ValueOf(user)
 			found := structField(tt.field, &value)
 
@@ -72,6 +77,8 @@ func TestStructField(t *testing.T) {
 }
 
 func TestStructFieldWithPointer(t *testing.T) {
+	t.Parallel()
+
 	user := &User{
 		Name:  "Bob",
 		Age:   25,
@@ -91,6 +98,8 @@ func TestStructFieldWithPointer(t *testing.T) {
 }
 
 func TestStructFieldWithEmptyJSONTagName(t *testing.T) {
+	t.Parallel()
+
 	value := reflect.ValueOf(EmptyTagName{Name: "fallback"})
 	found := structField("Name", &value)
 
@@ -104,6 +113,8 @@ func TestStructFieldWithEmptyJSONTagName(t *testing.T) {
 }
 
 func TestStructFieldWithEmbeddedFieldOrder(t *testing.T) {
+	t.Parallel()
+
 	value := reflect.ValueOf(EmbeddedUser{
 		EmbeddedName: EmbeddedName{EmbeddedName: "embedded"},
 		Name:         "top-level",
@@ -120,6 +131,8 @@ func TestStructFieldWithEmbeddedFieldOrder(t *testing.T) {
 }
 
 func TestGetWithEmptyJSONTagName(t *testing.T) {
+	t.Parallel()
+
 	result, err := Get(EmptyTagName{Name: "fallback"}, "Name")
 	if err != nil {
 		t.Fatalf("Get() error = %v", err)
@@ -131,6 +144,8 @@ func TestGetWithEmptyJSONTagName(t *testing.T) {
 }
 
 func TestGetWithStruct(t *testing.T) {
+	t.Parallel()
+
 	user := User{
 		Name:  "Charlie",
 		Age:   35,
@@ -138,34 +153,41 @@ func TestGetWithStruct(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		path        Path
-		expected    any
-		expectError bool
+		name    string
+		path    Path
+		want    any
+		wantErr error
 	}{
-		{"Get name via JSON tag", Path{"name"}, "Charlie", false},
-		{"Get age via JSON tag", Path{"age"}, 35, false},
-		{"Get email via field name", Path{"Email"}, "charlie@example.com", false},
-		{"Get nonexistent field", Path{"nonexistent"}, nil, true},
+		{name: "Get name via JSON tag", path: Path{"name"}, want: "Charlie"},
+		{name: "Get age via JSON tag", path: Path{"age"}, want: 35},
+		{name: "Get email via field name", path: Path{"Email"}, want: "charlie@example.com"},
+		{name: "Get nonexistent field", path: Path{"nonexistent"}, wantErr: ErrFieldNotFound},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := Get(user, tt.path...)
-			if tt.expectError && err == nil {
-				t.Errorf("Expected error for nonexistent field, got nil")
+			t.Parallel()
+
+			got, err := Get(user, tt.path...)
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("Get() error = %v, want %v", err, tt.wantErr)
+				}
+				return
 			}
-			if !tt.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
 			}
-			if !tt.expectError && result != tt.expected {
-				t.Errorf("Get() = %v, want %v", result, tt.expected)
+			if got != tt.want {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestFindWithStruct(t *testing.T) {
+	t.Parallel()
+
 	user := User{
 		Name:  "David",
 		Age:   40,
@@ -184,6 +206,8 @@ func TestFindWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ref, err := Find(user, tt.path...)
 			if err != nil {
 				t.Errorf("Find() error = %v", err)
@@ -197,6 +221,8 @@ func TestFindWithStruct(t *testing.T) {
 }
 
 func TestNestedStruct(t *testing.T) {
+	t.Parallel()
+
 	profile := Profile{
 		User: User{
 			Name:  "Eve",
@@ -219,6 +245,8 @@ func TestNestedStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, _ := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -228,6 +256,8 @@ func TestNestedStruct(t *testing.T) {
 }
 
 func TestMixedMapAndStruct(t *testing.T) {
+	t.Parallel()
+
 	// Test mixed usage of map and struct
 	data := map[string]any{
 		"user": User{
@@ -252,6 +282,8 @@ func TestMixedMapAndStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -261,6 +293,8 @@ func TestMixedMapAndStruct(t *testing.T) {
 }
 
 func TestFindByPointerWithStruct(t *testing.T) {
+	t.Parallel()
+
 	user := User{
 		Name:  "Grace",
 		Age:   32,
@@ -279,6 +313,8 @@ func TestFindByPointerWithStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ref, err := FindByPointer(user, tt.pointer)
 			if err != nil {
 				t.Errorf("FindByPointer() error = %v", err)
@@ -292,6 +328,8 @@ func TestFindByPointerWithStruct(t *testing.T) {
 }
 
 func TestFindByPointerNestedStruct(t *testing.T) {
+	t.Parallel()
+
 	profile := Profile{
 		User: User{
 			Name:  "Henry",
@@ -313,6 +351,8 @@ func TestFindByPointerNestedStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ref, err := FindByPointer(profile, tt.pointer)
 			if err != nil {
 				t.Errorf("FindByPointer() error = %v", err)
@@ -327,6 +367,8 @@ func TestFindByPointerNestedStruct(t *testing.T) {
 
 // Test pointer to struct support across all API functions
 func TestPointerToStruct(t *testing.T) {
+	t.Parallel()
+
 	user := &User{
 		Name:  "Alice",
 		Age:   30,
@@ -335,6 +377,8 @@ func TestPointerToStruct(t *testing.T) {
 
 	// Test Get with pointer to struct
 	t.Run("Get with pointer to struct", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			path     Path
@@ -347,6 +391,8 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				result, _ := Get(user, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -357,6 +403,8 @@ func TestPointerToStruct(t *testing.T) {
 
 	// Test Find with pointer to struct
 	t.Run("Find with pointer to struct", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			path     Path
@@ -369,6 +417,8 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				ref, err := Find(user, tt.path...)
 				if err != nil {
 					t.Errorf("Find() error = %v", err)
@@ -383,6 +433,8 @@ func TestPointerToStruct(t *testing.T) {
 
 	// Test FindByPointer with pointer to struct
 	t.Run("FindByPointer with pointer to struct", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			pointer  string
@@ -395,6 +447,8 @@ func TestPointerToStruct(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				ref, err := FindByPointer(user, tt.pointer)
 				if err != nil {
 					t.Errorf("FindByPointer() error = %v", err)
@@ -410,6 +464,8 @@ func TestPointerToStruct(t *testing.T) {
 
 // Test nested pointer to struct
 func TestNestedPointerToStruct(t *testing.T) {
+	t.Parallel()
+
 	profile := &Profile{
 		User: User{
 			Name:  "Bob",
@@ -431,6 +487,8 @@ func TestNestedPointerToStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, _ := Get(profile, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -451,6 +509,8 @@ func TestNestedPointerToStruct(t *testing.T) {
 
 // Test multiple levels of pointers
 func TestMultipleLevelsPointers(t *testing.T) {
+	t.Parallel()
+
 	user := &User{
 		Name:  "Charlie",
 		Age:   35,
@@ -469,6 +529,8 @@ func TestMultipleLevelsPointers(t *testing.T) {
 
 // Test comprehensive mixed struct and map data scenarios
 func TestMixedStructMapComprehensive(t *testing.T) {
+	t.Parallel()
+
 	// Complex nested structure with mixed types
 	type Company struct {
 		Name      string         `json:"name"`
@@ -504,6 +566,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 	// Test struct containing arrays of structs
 	t.Run("Struct containing arrays of structs", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			path     Path
@@ -516,6 +580,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				result, _ := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -525,6 +591,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		// Test array access separately (can't compare slices directly)
 		t.Run("Employee array access", func(t *testing.T) {
+			t.Parallel()
+
 			employees, _ := Get(company, "employees")
 			if employees == nil {
 				t.Error("Get() employees should not be nil")
@@ -547,6 +615,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 	// Test struct containing maps
 	t.Run("Struct containing maps", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			path     Path
@@ -560,6 +630,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				result, _ := Get(company, tt.path...)
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -570,6 +642,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 	// Test with FindByPointer
 	t.Run("FindByPointer with complex mixed data", func(t *testing.T) {
+		t.Parallel()
+
 		tests := []struct {
 			name     string
 			pointer  string
@@ -582,6 +656,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				ref, err := FindByPointer(company, tt.pointer)
 				if err != nil {
 					t.Errorf("FindByPointer() error = %v", err)
@@ -597,6 +673,8 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 
 // Test maps containing structs and complex nesting
 func TestMapContainingStructs(t *testing.T) {
+	t.Parallel()
+
 	data := map[string]any{
 		"users": []User{
 			{Name: "Charlie", Age: 35, Email: "charlie@example.com"},
@@ -646,6 +724,8 @@ func TestMapContainingStructs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -664,6 +744,8 @@ func TestMapContainingStructs(t *testing.T) {
 
 // Test edge cases with mixed data
 func TestMixedDataEdgeCases(t *testing.T) {
+	t.Parallel()
+
 	// Empty struct in map
 	type Empty struct{}
 
@@ -697,6 +779,8 @@ func TestMixedDataEdgeCases(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, _ := Get(data, tt.path...)
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
@@ -707,22 +791,21 @@ func TestMixedDataEdgeCases(t *testing.T) {
 
 // Test nil pointer handling
 func TestNilPointerHandling(t *testing.T) {
+	t.Parallel()
+
 	var user *User
 
-	// Should return error when trying to access field of nil pointer
 	result, err := Get(user, "name")
+	if !errors.Is(err, ErrNilPointer) {
+		t.Fatalf("Get() error = %v, want %v", err, ErrNilPointer)
+	}
 	if result != nil {
 		t.Errorf("Get() with nil pointer = %v, want nil", result)
 	}
-	// Now we expect an error when trying to access fields of nil pointer
-	if err == nil {
-		t.Error("Get() with nil pointer should return error")
-	}
 
-	// FindByPointer should also return error for nil pointer field access
 	ref, err := FindByPointer(user, "/name")
-	if err == nil {
-		t.Error("FindByPointer() with nil pointer should return error")
+	if !errors.Is(err, ErrNilPointer) {
+		t.Fatalf("FindByPointer() error = %v, want %v", err, ErrNilPointer)
 	}
 	if ref != nil {
 		t.Error("FindByPointer() should return nil reference for nil pointer")
@@ -731,6 +814,8 @@ func TestNilPointerHandling(t *testing.T) {
 
 // Test Get function behavior with missing fields (should return error)
 func TestGetMissingFieldBehavior(t *testing.T) {
+	t.Parallel()
+
 	user := User{
 		Name:  "Alice",
 		Age:   30,
@@ -743,86 +828,37 @@ func TestGetMissingFieldBehavior(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		data          any
-		path          []string
-		expectedValue any
-		expectedError bool
-		description   string
+		name    string
+		data    any
+		path    []string
+		want    any
+		wantErr error
 	}{
-		{
-			name:          "Missing field at end of path",
-			data:          user,
-			path:          []string{"nonexistent"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing struct field",
-		},
-		{
-			name:          "Missing field in middle of path",
-			data:          user,
-			path:          []string{"nonexistent", "nested"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error when missing field is in middle of path",
-		},
-		{
-			name:          "Missing field in deeper nesting",
-			data:          user,
-			path:          []string{"nonexistent", "very", "deep", "path"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for deeply nested missing fields",
-		},
-		{
-			name:          "Missing nested field in struct",
-			data:          profile,
-			path:          []string{"user", "nonexistent"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing field in nested struct",
-		},
-		{
-			name:          "Missing field with more path after",
-			data:          profile,
-			path:          []string{"user", "nonexistent", "more", "path"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error when missing field has more path after it",
-		},
-		{
-			name:          "Valid field should still work",
-			data:          user,
-			path:          []string{"name"},
-			expectedValue: "Alice",
-			expectedError: false,
-			description:   "Valid fields should continue to work normally",
-		},
-		{
-			name:          "Valid nested field should still work",
-			data:          profile,
-			path:          []string{"user", "name"},
-			expectedValue: "Alice",
-			expectedError: false,
-			description:   "Valid nested fields should continue to work normally",
-		},
+		{name: "Missing field at end of path", data: user, path: []string{"nonexistent"}, wantErr: ErrFieldNotFound},
+		{name: "Missing field in middle of path", data: user, path: []string{"nonexistent", "nested"}, wantErr: ErrFieldNotFound},
+		{name: "Missing field in deeper nesting", data: user, path: []string{"nonexistent", "very", "deep", "path"}, wantErr: ErrFieldNotFound},
+		{name: "Missing nested field in struct", data: profile, path: []string{"user", "nonexistent"}, wantErr: ErrFieldNotFound},
+		{name: "Missing field with more path after", data: profile, path: []string{"user", "nonexistent", "more", "path"}, wantErr: ErrFieldNotFound},
+		{name: "Valid field should still work", data: user, path: []string{"name"}, want: "Alice"},
+		{name: "Valid nested field should still work", data: profile, path: []string{"user", "name"}, want: "Alice"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := Get(tt.data, tt.path...)
+			t.Parallel()
 
-			// Check error expectation
-			if tt.expectedError && err == nil {
-				t.Errorf("Expected error but got none. %s", tt.description)
+			got, err := Get(tt.data, tt.path...)
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("Get() error = %v, want %v", err, tt.wantErr)
+				}
+				return
 			}
-			if !tt.expectedError && err != nil {
-				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
 			}
-
-			// Check result
-			if result != tt.expectedValue {
-				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			if got != tt.want {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -830,6 +866,8 @@ func TestGetMissingFieldBehavior(t *testing.T) {
 
 // Test Get function with maps to ensure consistent behavior
 func TestGetMissingMapKeyBehavior(t *testing.T) {
+	t.Parallel()
+
 	data := map[string]any{
 		"user": map[string]any{
 			"name": "Bob",
@@ -841,64 +879,34 @@ func TestGetMissingMapKeyBehavior(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		path          []string
-		expectedValue any
-		expectedError bool
-		description   string
+		name    string
+		path    []string
+		want    any
+		wantErr error
 	}{
-		{
-			name:          "Missing top-level key",
-			path:          []string{"missing"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing top-level key",
-		},
-		{
-			name:          "Missing key in middle of path",
-			path:          []string{"missing", "nested"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error when missing key is in middle of path",
-		},
-		{
-			name:          "Missing nested key",
-			path:          []string{"user", "missing"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing nested key",
-		},
-		{
-			name:          "Missing nested key with more path",
-			path:          []string{"user", "missing", "more"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error when missing nested key has more path",
-		},
-		{
-			name:          "Valid nested access should work",
-			path:          []string{"user", "name"},
-			expectedValue: "Bob",
-			expectedError: false,
-			description:   "Valid nested access should continue to work",
-		},
+		{name: "Missing top-level key", path: []string{"missing"}, wantErr: ErrKeyNotFound},
+		{name: "Missing key in middle of path", path: []string{"missing", "nested"}, wantErr: ErrKeyNotFound},
+		{name: "Missing nested key", path: []string{"user", "missing"}, wantErr: ErrKeyNotFound},
+		{name: "Missing nested key with more path", path: []string{"user", "missing", "more"}, wantErr: ErrKeyNotFound},
+		{name: "Valid nested access should work", path: []string{"user", "name"}, want: "Bob"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := Get(data, tt.path...)
+			t.Parallel()
 
-			// Check error expectation
-			if tt.expectedError && err == nil {
-				t.Errorf("Expected error but got none. %s", tt.description)
+			got, err := Get(data, tt.path...)
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("Get() error = %v, want %v", err, tt.wantErr)
+				}
+				return
 			}
-			if !tt.expectedError && err != nil {
-				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
 			}
-
-			// Check result
-			if result != tt.expectedValue {
-				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			if got != tt.want {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -906,6 +914,8 @@ func TestGetMissingMapKeyBehavior(t *testing.T) {
 
 // Test mixed struct and map missing field behavior
 func TestGetMissingFieldMixedData(t *testing.T) {
+	t.Parallel()
+
 	user := User{Name: "Charlie", Age: 35}
 	data := map[string]any{
 		"user":   user,
@@ -913,62 +923,34 @@ func TestGetMissingFieldMixedData(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		path          []string
-		expectedValue any
-		expectedError bool
-		description   string
+		name    string
+		path    []string
+		want    any
+		wantErr error
 	}{
-		{
-			name:          "Missing field in struct within map",
-			path:          []string{"user", "missing"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing field in struct within map",
-		},
-		{
-			name:          "Missing field in struct with more path",
-			path:          []string{"user", "missing", "deep"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing field in struct with more path",
-		},
-		{
-			name:          "Missing key in map within map",
-			path:          []string{"config", "missing"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing key in nested map",
-		},
-		{
-			name:          "Missing key in map with more path",
-			path:          []string{"config", "missing", "deep"},
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for missing key in map with more path",
-		},
-		{
-			name:          "Valid access should work",
-			path:          []string{"user", "name"},
-			expectedValue: "Charlie",
-			expectedError: false,
-			description:   "Valid access should continue to work",
-		},
+		{name: "Missing field in struct within map", path: []string{"user", "missing"}, wantErr: ErrFieldNotFound},
+		{name: "Missing field in struct with more path", path: []string{"user", "missing", "deep"}, wantErr: ErrFieldNotFound},
+		{name: "Missing key in map within map", path: []string{"config", "missing"}, wantErr: ErrKeyNotFound},
+		{name: "Missing key in map with more path", path: []string{"config", "missing", "deep"}, wantErr: ErrKeyNotFound},
+		{name: "Valid access should work", path: []string{"user", "name"}, want: "Charlie"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := Get(data, tt.path...)
+			t.Parallel()
 
-			if tt.expectedError && err == nil {
-				t.Errorf("Expected error but got none. %s", tt.description)
+			got, err := Get(data, tt.path...)
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Fatalf("Get() error = %v, want %v", err, tt.wantErr)
+				}
+				return
 			}
-			if !tt.expectedError && err != nil {
-				t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
 			}
-
-			if result != tt.expectedValue {
-				t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+			if got != tt.want {
+				t.Errorf("Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -976,101 +958,90 @@ func TestGetMissingFieldMixedData(t *testing.T) {
 
 // Test array bounds checking behavior
 func TestArrayBoundsChecking(t *testing.T) {
+	t.Parallel()
+
 	arr := []any{1, 2, 3} // length = 3
 
 	tests := []struct {
-		name          string
-		index         string
-		expectedValue any
-		expectedError bool
-		description   string
+		name    string
+		index   string
+		want    any
+		wantErr error
 	}{
-		{
-			name:          "Valid index access",
-			index:         "1",
-			expectedValue: 2,
-			expectedError: false,
-			description:   "Should return value for valid index",
-		},
-		{
-			name:          "Array end marker",
-			index:         "-",
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for array end marker (nonexistent element)",
-		},
-		{
-			name:          "Index at array length",
-			index:         "3",
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for index == length (nonexistent element)",
-		},
-		{
-			name:          "Index beyond array length",
-			index:         "5",
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for index > length",
-		},
-		{
-			name:          "Much larger index",
-			index:         "100",
-			expectedValue: nil,
-			expectedError: true,
-			description:   "Should return error for much larger index",
-		},
+		{name: "Valid index access", index: "1", want: 2},
+		{name: "Array end marker", index: "-", wantErr: ErrIndexOutOfBounds},
+		{name: "Index at array length", index: "3", wantErr: ErrIndexOutOfBounds},
+		{name: "Index beyond array length", index: "5", wantErr: ErrIndexOutOfBounds},
+		{name: "Much larger index", index: "100", wantErr: ErrIndexOutOfBounds},
 	}
 
 	t.Run("Get function array bounds", func(t *testing.T) {
+		t.Parallel()
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				result, err := Get(arr, tt.index)
+				t.Parallel()
 
-				if tt.expectedError && err == nil {
-					t.Errorf("Expected error but got none. %s", tt.description)
+				got, err := Get(arr, tt.index)
+				if tt.wantErr != nil {
+					if !errors.Is(err, tt.wantErr) {
+						t.Fatalf("Get() error = %v, want %v", err, tt.wantErr)
+					}
+					return
 				}
-				if !tt.expectedError && err != nil {
-					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				if err != nil {
+					t.Fatalf("Get() error = %v", err)
 				}
-				if result != tt.expectedValue {
-					t.Errorf("Get() = %v, want %v. %s", result, tt.expectedValue, tt.description)
+				if got != tt.want {
+					t.Errorf("Get() = %v, want %v", got, tt.want)
 				}
 			})
 		}
 	})
 
 	t.Run("Find function array bounds", func(t *testing.T) {
+		t.Parallel()
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ref, err := Find(arr, tt.index)
+				t.Parallel()
 
-				if tt.expectedError && err == nil {
-					t.Errorf("Expected error but got none. %s", tt.description)
+				ref, err := Find(arr, tt.index)
+				if tt.wantErr != nil {
+					if !errors.Is(err, tt.wantErr) {
+						t.Fatalf("Find() error = %v, want %v", err, tt.wantErr)
+					}
+					return
 				}
-				if !tt.expectedError && err != nil {
-					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				if err != nil {
+					t.Fatalf("Find() error = %v", err)
 				}
-				if !tt.expectedError && ref.Val != tt.expectedValue {
-					t.Errorf("Find().Val = %v, want %v. %s", ref.Val, tt.expectedValue, tt.description)
+				if ref.Val != tt.want {
+					t.Errorf("Find().Val = %v, want %v", ref.Val, tt.want)
 				}
 			})
 		}
 	})
 
 	t.Run("FindByPointer function array bounds", func(t *testing.T) {
+		t.Parallel()
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				ref, err := FindByPointer(arr, "/"+tt.index)
+				t.Parallel()
 
-				if tt.expectedError && err == nil {
-					t.Errorf("Expected error but got none. %s", tt.description)
+				ref, err := FindByPointer(arr, "/"+tt.index)
+				if tt.wantErr != nil {
+					if !errors.Is(err, tt.wantErr) {
+						t.Fatalf("FindByPointer() error = %v, want %v", err, tt.wantErr)
+					}
+					return
 				}
-				if !tt.expectedError && err != nil {
-					t.Errorf("Expected no error but got: %v. %s", err, tt.description)
+				if err != nil {
+					t.Fatalf("FindByPointer() error = %v", err)
 				}
-				if !tt.expectedError && ref.Val != tt.expectedValue {
-					t.Errorf("FindByPointer().Val = %v, want %v. %s", ref.Val, tt.expectedValue, tt.description)
+				if ref.Val != tt.want {
+					t.Errorf("FindByPointer().Val = %v, want %v", ref.Val, tt.want)
 				}
 			})
 		}
