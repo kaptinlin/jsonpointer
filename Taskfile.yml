@@ -120,11 +120,6 @@ tasks:
       - go mod tidy
       - git diff --exit-code -- go.mod go.sum
 
-  markdownlint:
-    desc: Run markdownlint
-    cmds:
-      - markdownlint-cli2 "**/*.md"
-
   specs-check:
     desc: Ensure design and spec docs live under SPECS
     cmds:

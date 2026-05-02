@@ -174,7 +174,6 @@ task bench
 ```bash
 task test          # Run package tests with the race detector
 task lint          # Run golangci-lint and tidy checks
-task markdownlint  # Lint Markdown files
 task yamllint      # Lint YAML files
 task bench         # Run benchmarks
 ```

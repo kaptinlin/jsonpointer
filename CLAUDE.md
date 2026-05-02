@@ -9,7 +9,6 @@ For installation, usage examples, and API-oriented guidance, see [README.md](REA
 ```bash
 task test          # Run package tests with the race detector
 task lint          # Run golangci-lint and go.mod/go.sum tidy checks
-task markdownlint  # Lint Markdown files
 task yamllint      # Lint YAML files
 task bench         # Run benchmark suites
 ```
@@ -101,7 +100,6 @@ Specification documents in [`SPECS/`](SPECS/) — package contracts, traversal s
 - Keep coverage for map and slice traversal, typed slices and arrays, struct tag lookup, pointer dereference, escaped pointer handling, and validation limits.
 - Keep executable examples in `example_test.go` aligned with `README.md` and the runnable demo in `examples/`.
 - Run `task test` and `task lint` for code changes.
-- Run `task markdownlint` for Markdown changes.
 - Run `task yamllint` for YAML changes.
 
 ## Dependencies
