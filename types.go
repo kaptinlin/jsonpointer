@@ -24,10 +24,9 @@ type Reference struct {
 //	  readonly key: number;
 //	}
 type ArrayReference[T any] struct {
-	// Use pointer for undefined | T semantics (nil = undefined)
 	Val *T  `json:"val"`
 	Obj []T `json:"obj"`
-	Key int `json:"key"` // Numeric index for array access
+	Key int `json:"key"`
 }
 
 // ObjectReference represents a reference to an object property.

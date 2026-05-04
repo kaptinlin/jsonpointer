@@ -19,27 +19,13 @@ func fastGet(val any, step string) (any, bool) {
 		return result, exists
 
 	case []any:
-		if step == "-" {
-			return nil, false
-		}
-		index := fastAtoi(step)
-		if index < 0 || index >= len(v) {
-			return nil, false
-		}
-		return v[index], true
+		return fastSliceGet(v, step)
 
 	case *[]any:
 		if v == nil {
 			return nil, false
 		}
-		if step == "-" {
-			return nil, false
-		}
-		index := fastAtoi(step)
-		if index < 0 || index >= len(*v) {
-			return nil, false
-		}
-		return (*v)[index], true
+		return fastSliceGet(*v, step)
 
 	case *any:
 		if v == nil {
@@ -50,6 +36,17 @@ func fastGet(val any, step string) (any, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func fastSliceGet(values []any, step string) (any, bool) {
+	if step == "-" {
+		return nil, false
+	}
+	index := fastAtoi(step)
+	if index < 0 || index >= len(values) {
+		return nil, false
+	}
+	return values[index], true
 }
 
 func tryArrayAccess(current any, key string) (any, bool, error) {
@@ -161,16 +158,20 @@ func get(val any, path Path) (any, error) {
 			return nil, ErrNotFound
 		}
 
-		if result, handled, err := tryArrayAccess(current, step); err != nil {
+		result, handled, err := tryArrayAccess(current, step)
+		if err != nil {
 			return nil, err
-		} else if handled {
+		}
+		if handled {
 			current = result
 			continue
 		}
 
-		if result, handled, err := tryObjectAccess(current, step); err != nil {
+		result, handled, err = tryObjectAccess(current, step)
+		if err != nil {
 			return nil, err
-		} else if handled {
+		}
+		if handled {
 			current = result
 			continue
 		}

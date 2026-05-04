@@ -25,21 +25,21 @@ func find(val any, path Path) (*Reference, error) {
 
 		switch v := current.(type) {
 		case map[string]any:
-			if result, exists := v[key]; exists {
-				current = result
-			} else {
+			result, exists := v[key]
+			if !exists {
 				return nil, ErrKeyNotFound
 			}
+			current = result
 
 		case *map[string]any:
 			if v == nil {
 				return nil, ErrNilPointer
 			}
-			if result, exists := (*v)[key]; exists {
-				current = result
-			} else {
+			result, exists := (*v)[key]
+			if !exists {
 				return nil, ErrKeyNotFound
 			}
+			current = result
 
 		case []any:
 			index, err := validateAndAccessArray(key, len(v))
@@ -80,11 +80,10 @@ func find(val any, path Path) (*Reference, error) {
 				current = mapEntry.Interface()
 
 			case reflect.Struct:
-				if structField(key, &objVal) {
-					current = objVal.Interface()
-				} else {
+				if !structField(key, &objVal) {
 					return nil, ErrFieldNotFound
 				}
+				current = objVal.Interface()
 
 			default:
 				return nil, ErrNotFound

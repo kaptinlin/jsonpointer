@@ -45,7 +45,6 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 	return v, nil
 }
 
-// mapValueByPathKey looks up a map entry using a JSON Pointer path key.
 func mapValueByPathKey(mapVal reflect.Value, key string) (reflect.Value, error) {
 	mapKey := reflect.ValueOf(key)
 	mapKeyType := mapVal.Type().Key()
@@ -242,13 +241,12 @@ func Parent(path Path) (Path, error) {
 //	}
 func IsValidIndex(index string) bool {
 	if index == "-" {
-		return true // Special case for array end marker
+		return true
 	}
 	n, err := strconv.ParseInt(index, 10, 64)
 	if err != nil {
 		return false
 	}
-	// Check if string representation matches parsed value and is non-negative
 	return strconv.FormatInt(n, 10) == index && n >= 0
 }
 
