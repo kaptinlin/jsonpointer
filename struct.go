@@ -1,6 +1,7 @@
 package jsonpointer
 
 import (
+	"cmp"
 	"reflect"
 	"strings"
 	"sync"
@@ -66,8 +67,5 @@ func getFieldName(field *reflect.StructField) string {
 	}
 
 	name, _, _ := strings.Cut(tag, ",")
-	if name != "" {
-		return name
-	}
-	return field.Name
+	return cmp.Or(name, field.Name)
 }
