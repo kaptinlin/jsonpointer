@@ -8,7 +8,6 @@ const (
 	MaxPathLength = 256
 )
 
-// validatePointerString validates a JSON Pointer string.
 func validatePointerString(pointer string) error {
 	if pointer == "" {
 		return nil
@@ -38,8 +37,6 @@ func validatePointerString(pointer string) error {
 	return nil
 }
 
-// validatePath validates a Path array.
-// Returns an error if the path exceeds the maximum allowed length.
 func validatePath(path Path) error {
 	if len(path) > MaxPathLength {
 		return ErrPathTooLong

@@ -266,6 +266,7 @@ func TestIsInteger(t *testing.T) {
 		{name: "negative", value: "-1", want: false},
 		{name: "empty", value: "", want: false},
 		{name: "leading zero", value: "01", want: true},
+		{name: "fullwidth digits", value: "１２", want: false},
 	}
 
 	for _, tc := range tests {

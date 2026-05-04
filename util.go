@@ -274,15 +274,15 @@ func IsInteger(str string) bool {
 	if len(str) == 0 {
 		return false
 	}
-	for _, r := range str {
-		if r < '0' || r > '9' {
+	for i := range len(str) {
+		if str[i] < '0' || str[i] > '9' {
 			return false
 		}
 	}
 	return true
 }
 
-func validateArrayIndex(key string, length int) (int, error) {
+func validateAndAccessArray(key string, length int) (int, error) {
 	if key == "-" {
 		return -1, ErrIndexOutOfBounds
 	}
@@ -290,18 +290,7 @@ func validateArrayIndex(key string, length int) (int, error) {
 	if index < 0 {
 		return -1, ErrInvalidIndex
 	}
-	if index > length {
-		return -1, ErrIndexOutOfBounds
-	}
-	return index, nil
-}
-
-func validateAndAccessArray(key string, length int) (int, error) {
-	index, err := validateArrayIndex(key, length)
-	if err != nil {
-		return -1, err
-	}
-	if index == length {
+	if index >= length {
 		return -1, ErrIndexOutOfBounds
 	}
 	return index, nil

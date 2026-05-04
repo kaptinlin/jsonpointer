@@ -143,7 +143,6 @@ func get(val any, path Path) (any, error) {
 	current := val
 	fastPathDepth := 0
 
-	// Ultra-fast path - direct access without token creation
 	for i := range pathLength {
 		step := path[i]
 
@@ -155,7 +154,6 @@ func get(val any, path Path) (any, error) {
 		}
 	}
 
-	// Type assertion fallback for remaining path
 	for i := fastPathDepth; i < pathLength; i++ {
 		step := path[i]
 
