@@ -48,6 +48,108 @@ func TestGetByPointer(t *testing.T) {
 	})
 }
 
+func TestGetByPointerTraversalCoverage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("supports typed slices through reflection", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := GetByPointer([]string{"zero", "one"}, "/1")
+		require.NoError(t, err)
+		assert.Equal(t, "one", val)
+	})
+
+	t.Run("supports struct tags and nested typed slices", func(t *testing.T) {
+		t.Parallel()
+
+		doc := publicAPICoverageContainer{Items: []int{1, 2, 3}}
+
+		val, err := GetByPointer(doc, "/items/2")
+		require.NoError(t, err)
+		assert.Equal(t, 3, val)
+	})
+
+	t.Run("returns invalid index for non numeric array token", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := GetByPointer(map[string]any{"items": []any{"zero"}}, "/items/abc")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrInvalidIndex)
+		assert.Nil(t, val)
+	})
+
+	t.Run("returns out of bounds for array end marker", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := GetByPointer(map[string]any{"items": []any{"zero"}}, "/items/-")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, val)
+	})
+
+	t.Run("returns not found when scalar traversal continues", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := GetByPointer("scalar", "/field")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrNotFound)
+		assert.Nil(t, val)
+	})
+
+	t.Run("returns nil pointer error inside pointer chain", func(t *testing.T) {
+		t.Parallel()
+
+		var child *publicAPICoverageContainer
+		doc := nestedPointerCoverageContainer{Child: &child}
+
+		val, err := GetByPointer(doc, "/child/items")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrNilPointer)
+		assert.Nil(t, val)
+	})
+}
+
+func TestPointerTraversalDoesNotValidateSyntax(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		pointer string
+		doc     map[string]any
+		want    string
+	}{
+		{
+			name:    "invalid escape digit remains a literal traversal key",
+			pointer: "/~2",
+			doc:     map[string]any{"~2": "value"},
+			want:    "value",
+		},
+		{
+			name:    "dangling escape remains a literal traversal key",
+			pointer: "/foo~",
+			doc:     map[string]any{"foo~": "value"},
+			want:    "value",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.ErrorIs(t, Validate(tc.pointer), ErrPointerInvalid)
+
+			val, err := GetByPointer(tc.doc, tc.pointer)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, val)
+
+			ref, err := FindByPointer(tc.doc, tc.pointer)
+			require.NoError(t, err)
+			require.NotNil(t, ref)
+			assert.Equal(t, tc.want, ref.Val)
+		})
+	}
+}
+
 func TestReferenceTypePredicates(t *testing.T) {
 	t.Parallel()
 

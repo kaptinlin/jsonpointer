@@ -1,6 +1,7 @@
 package jsonpointer
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -144,6 +145,27 @@ func TestValidatePath(t *testing.T) {
 		err := ValidatePath(exactPath)
 		assert.NoError(t, err)
 	})
+}
+
+func TestPathCompatibilityErrorsAreSentinels(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  error
+	}{
+		{name: "invalid path", err: ErrInvalidPath},
+		{name: "invalid path step", err: ErrInvalidPathStep},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := fmt.Errorf("wrapped: %w", tc.err)
+			assert.ErrorIs(t, err, tc.err)
+		})
+	}
 }
 
 func TestValidateEdgeCases(t *testing.T) {

@@ -23,6 +23,22 @@ func ExampleGet() {
 	// Output: Alice
 }
 
+func ExampleGetByPointer() {
+	doc := map[string]any{
+		"users": []any{
+			map[string]any{"name": "Alice"},
+		},
+	}
+
+	name, err := jsonpointer.GetByPointer(doc, "/users/0/name")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(name)
+	// Output: Alice
+}
+
 func ExampleFindByPointer() {
 	doc := map[string]any{
 		"foo/bar": map[string]any{
