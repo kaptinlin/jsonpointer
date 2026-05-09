@@ -566,3 +566,153 @@ func TestNilValueTraversal(t *testing.T) {
 		assert.Nil(t, ref)
 	})
 }
+
+type nestedCollectionContainer struct {
+	Labels *map[string]any `json:"labels"`
+	Items  *[]any          `json:"items"`
+	Values []any           `json:"values"`
+}
+
+func TestGetTraversesContainersAfterStructFields(t *testing.T) {
+	t.Parallel()
+
+	labels := map[string]any{"name": "Ada"}
+	items := []any{"zero", "one"}
+	doc := nestedCollectionContainer{
+		Labels: &labels,
+		Items:  &items,
+		Values: []any{"first", "second"},
+	}
+
+	t.Run("reads map pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "labels", "name")
+		require.NoError(t, err)
+		assert.Equal(t, "Ada", val)
+	})
+
+	t.Run("returns key not found from map pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "labels", "missing")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrKeyNotFound)
+		assert.Nil(t, val)
+	})
+
+	t.Run("reads slice pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "items", "1")
+		require.NoError(t, err)
+		assert.Equal(t, "one", val)
+	})
+
+	t.Run("returns out of bounds from slice pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "items", "2")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, val)
+	})
+
+	t.Run("reads slice field", func(t *testing.T) {
+		t.Parallel()
+
+		val, err := Get(doc, "values", "1")
+		require.NoError(t, err)
+		assert.Equal(t, "second", val)
+	})
+}
+
+func TestGetNilInterfacePointer(t *testing.T) {
+	t.Parallel()
+
+	var doc *any
+
+	val, err := Get(doc, "field")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrNilPointer)
+	assert.Nil(t, val)
+}
+
+func TestFindReportsContainerTraversalErrors(t *testing.T) {
+	t.Parallel()
+
+	t.Run("missing key in map pointer returns key not found", func(t *testing.T) {
+		t.Parallel()
+
+		doc := map[string]any{"name": "Ada"}
+
+		ref, err := Find(&doc, "missing")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrKeyNotFound)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("out of bounds in slice pointer returns out of bounds", func(t *testing.T) {
+		t.Parallel()
+
+		doc := []any{"zero", "one"}
+
+		ref, err := Find(&doc, "2")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("out of bounds in typed array returns out of bounds", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find([1]string{"zero"}, "1")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("scalar traversal returns not found", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find("scalar", "field")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrNotFound)
+		assert.Nil(t, ref)
+	})
+}
+
+func TestFindByPointerReportsContainerTraversalErrors(t *testing.T) {
+	t.Parallel()
+
+	t.Run("missing key in map pointer returns key not found", func(t *testing.T) {
+		t.Parallel()
+
+		doc := map[string]any{"name": "Ada"}
+
+		ref, err := FindByPointer(&doc, "/missing")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrKeyNotFound)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("out of bounds in slice pointer returns out of bounds", func(t *testing.T) {
+		t.Parallel()
+
+		doc := []any{"zero", "one"}
+
+		ref, err := FindByPointer(&doc, "/2")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, ref)
+	})
+
+	t.Run("out of bounds in typed array returns out of bounds", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := FindByPointer([1]string{"zero"}, "/1")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrIndexOutOfBounds)
+		assert.Nil(t, ref)
+	})
+}
