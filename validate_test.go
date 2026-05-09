@@ -42,8 +42,10 @@ func TestValidate(t *testing.T) {
 	t.Run("valid pointer with escaped characters", func(t *testing.T) {
 		t.Parallel()
 
-		err := Validate("/foo~0bar/baz~1qux")
-		assert.NoError(t, err)
+		for _, pointer := range []string{"/foo~0bar/baz~1qux", "/~0~1/~1~0"} {
+			err := Validate(pointer)
+			assert.NoError(t, err)
+		}
 	})
 
 	t.Run("invalid pointer without leading slash", func(t *testing.T) {
@@ -62,6 +64,7 @@ func TestValidate(t *testing.T) {
 		}{
 			{name: "invalid escape digit", pointer: "/~2"},
 			{name: "dangling escape at end", pointer: "/foo~"},
+			{name: "dangling escape after valid escape", pointer: "/~0~"},
 		}
 
 		for _, tc := range tests {

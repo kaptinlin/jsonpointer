@@ -21,16 +21,16 @@ func validatePointerString(pointer string) error {
 		return ErrPointerTooLong
 	}
 
-	for i := 0; i < len(pointer); i++ {
-		if pointer[i] == '~' {
-			if i+1 >= len(pointer) {
-				return ErrPointerInvalid
-			}
-			next := pointer[i+1]
-			if next != '0' && next != '1' {
-				return ErrPointerInvalid
-			}
-			i++
+	for i := range len(pointer) {
+		if pointer[i] != '~' {
+			continue
+		}
+		if i+1 >= len(pointer) {
+			return ErrPointerInvalid
+		}
+		next := pointer[i+1]
+		if next != '0' && next != '1' {
+			return ErrPointerInvalid
 		}
 	}
 
