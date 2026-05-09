@@ -13,29 +13,11 @@ func find(val any, path Path) (*Reference, error) {
 		obj = current
 		key = step
 
-		if current == nil {
-			return nil, ErrNotFound
-		}
-
-		result, handled, err := tryArrayAccess(current, step)
+		var err error
+		current, err = traverseStep(current, step)
 		if err != nil {
 			return nil, err
 		}
-		if handled {
-			current = result
-			continue
-		}
-
-		result, handled, err = tryObjectAccess(current, step)
-		if err != nil {
-			return nil, err
-		}
-		if handled {
-			current = result
-			continue
-		}
-
-		return nil, ErrNotFound
 	}
 
 	return &Reference{Val: current, Obj: obj, Key: key}, nil

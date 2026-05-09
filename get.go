@@ -151,32 +151,36 @@ func get(val any, path Path) (any, error) {
 	}
 
 	for i := fastPathDepth; i < pathLength; i++ {
-		step := path[i]
-
-		if current == nil {
-			return nil, ErrNotFound
-		}
-
-		result, handled, err := tryArrayAccess(current, step)
+		var err error
+		current, err = traverseStep(current, path[i])
 		if err != nil {
 			return nil, err
 		}
-		if handled {
-			current = result
-			continue
-		}
-
-		result, handled, err = tryObjectAccess(current, step)
-		if err != nil {
-			return nil, err
-		}
-		if handled {
-			current = result
-			continue
-		}
-
-		return nil, ErrNotFound
 	}
 
 	return current, nil
+}
+
+func traverseStep(current any, step string) (any, error) {
+	if current == nil {
+		return nil, ErrNotFound
+	}
+
+	result, handled, err := tryArrayAccess(current, step)
+	if err != nil {
+		return nil, err
+	}
+	if handled {
+		return result, nil
+	}
+
+	result, handled, err = tryObjectAccess(current, step)
+	if err != nil {
+		return nil, err
+	}
+	if handled {
+		return result, nil
+	}
+
+	return nil, ErrNotFound
 }
