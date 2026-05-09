@@ -1,13 +1,7 @@
 package jsonpointer
 
-import (
-	"reflect"
-)
-
-// find locates a reference in a document using string path components.
 func find(val any, path Path) (*Reference, error) {
-	pathLength := len(path)
-	if pathLength == 0 {
+	if len(path) == 0 {
 		return &Reference{Val: val}, nil
 	}
 
@@ -15,80 +9,33 @@ func find(val any, path Path) (*Reference, error) {
 	var key string
 	current := val
 
-	for i := range pathLength {
+	for _, step := range path {
 		obj = current
-		key = path[i]
+		key = step
 
 		if current == nil {
 			return nil, ErrNotFound
 		}
 
-		switch v := current.(type) {
-		case map[string]any:
-			result, exists := v[key]
-			if !exists {
-				return nil, ErrKeyNotFound
-			}
-			current = result
-
-		case *map[string]any:
-			if v == nil {
-				return nil, ErrNilPointer
-			}
-			result, exists := (*v)[key]
-			if !exists {
-				return nil, ErrKeyNotFound
-			}
-			current = result
-
-		case []any:
-			index, err := validateAndAccessArray(key, len(v))
-			if err != nil {
-				return nil, err
-			}
-			current = v[index]
-
-		case *[]any:
-			if v == nil {
-				return nil, ErrNilPointer
-			}
-			index, err := validateAndAccessArray(key, len(*v))
-			if err != nil {
-				return nil, err
-			}
-			current = (*v)[index]
-
-		default:
-			objVal, err := derefValue(reflect.ValueOf(current))
-			if err != nil {
-				return nil, err
-			}
-
-			switch objVal.Kind() {
-			case reflect.Slice, reflect.Array:
-				index, err := validateAndAccessArray(key, objVal.Len())
-				if err != nil {
-					return nil, err
-				}
-				current = objVal.Index(index).Interface()
-
-			case reflect.Map:
-				mapEntry, err := mapValueByPathKey(objVal, key)
-				if err != nil {
-					return nil, err
-				}
-				current = mapEntry.Interface()
-
-			case reflect.Struct:
-				if !structField(key, &objVal) {
-					return nil, ErrFieldNotFound
-				}
-				current = objVal.Interface()
-
-			default:
-				return nil, ErrNotFound
-			}
+		result, handled, err := tryArrayAccess(current, step)
+		if err != nil {
+			return nil, err
 		}
+		if handled {
+			current = result
+			continue
+		}
+
+		result, handled, err = tryObjectAccess(current, step)
+		if err != nil {
+			return nil, err
+		}
+		if handled {
+			current = result
+			continue
+		}
+
+		return nil, ErrNotFound
 	}
 
 	return &Reference{Val: current, Obj: obj, Key: key}, nil

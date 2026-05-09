@@ -11,8 +11,6 @@ type structFields map[string]int
 
 var structFieldsCache sync.Map
 
-// structField looks up the specified field in a struct and updates value to point to that field if found.
-// Returns true if the field exists and is accessible, false otherwise.
 func structField(field string, value *reflect.Value) bool {
 	for value.Kind() == reflect.Pointer {
 		if value.IsNil() {
@@ -54,8 +52,8 @@ func getStructFields(t reflect.Type) structFields {
 		fields[name] = structFieldInfo.Index[0]
 	}
 
-	structFieldsCache.Store(t, fields)
-	return fields
+	cached, _ := structFieldsCache.LoadOrStore(t, fields)
+	return cached.(structFields)
 }
 
 func getFieldName(field *reflect.StructField) string {

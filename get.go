@@ -4,7 +4,6 @@ import (
 	"reflect"
 )
 
-// fastGet implements direct access without intermediate token creation.
 func fastGet(val any, step string) (any, bool) {
 	switch v := val.(type) {
 	case map[string]any:

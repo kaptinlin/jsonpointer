@@ -627,6 +627,51 @@ func TestGetTraversesContainersAfterStructFields(t *testing.T) {
 	})
 }
 
+func TestFindTraversesContainersAfterStructFields(t *testing.T) {
+	t.Parallel()
+
+	labels := map[string]any{"name": "Ada"}
+	items := []any{"zero", "one"}
+	doc := nestedCollectionContainer{
+		Labels: &labels,
+		Items:  &items,
+		Values: []any{"first", "second"},
+	}
+
+	t.Run("reads map pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find(doc, "labels", "name")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "Ada", ref.Val)
+		assert.Equal(t, "name", ref.Key)
+		assert.Same(t, &labels, ref.Obj)
+	})
+
+	t.Run("reads slice pointer field", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find(doc, "items", "1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "one", ref.Val)
+		assert.Equal(t, "1", ref.Key)
+		assert.Same(t, &items, ref.Obj)
+	})
+
+	t.Run("reads slice field", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find(doc, "values", "1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "second", ref.Val)
+		assert.Equal(t, "1", ref.Key)
+		assert.Equal(t, []any{"first", "second"}, ref.Obj)
+	})
+}
+
 func TestGetNilInterfacePointer(t *testing.T) {
 	t.Parallel()
 
