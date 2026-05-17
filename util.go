@@ -48,10 +48,11 @@ func derefValue(v reflect.Value) (reflect.Value, error) {
 func mapValueByPathKey(mapVal reflect.Value, key string) (reflect.Value, error) {
 	mapKey := reflect.ValueOf(key)
 	mapKeyType := mapVal.Type().Key()
+	stringType := reflect.TypeFor[string]()
 
 	switch {
-	case mapKey.Type().AssignableTo(mapKeyType):
-	case mapKey.Type().ConvertibleTo(mapKeyType):
+	case stringType.AssignableTo(mapKeyType):
+	case stringType.ConvertibleTo(mapKeyType):
 		mapKey = mapKey.Convert(mapKeyType)
 	default:
 		return reflect.Value{}, ErrNotFound
