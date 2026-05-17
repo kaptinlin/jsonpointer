@@ -74,7 +74,7 @@ Specification documents in [`SPECS/`](SPECS/) — package contracts, traversal s
 
 ### Must Follow
 
-- Go 1.26.2 — use modern standard library helpers where they simplify code.
+- Use the Go version declared in `go.mod`; use modern standard library helpers where they simplify code.
 - Follow [Google Go Best Practices](https://google.github.io/go-style/best-practices)
 - Follow [Google Go Style Decisions](https://google.github.io/go-style/decisions)
 - KISS/DRY/YAGNI — keep the package small, direct, and free of speculative APIs.
