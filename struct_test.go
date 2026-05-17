@@ -247,7 +247,10 @@ func TestNestedStruct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, _ := Get(profile, tt.path...)
+			result, err := Get(profile, tt.path...)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -284,7 +287,10 @@ func TestMixedMapAndStruct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, _ := Get(data, tt.path...)
+			result, err := Get(data, tt.path...)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -393,7 +399,10 @@ func TestPointerToStruct(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 
-				result, _ := Get(user, tt.path...)
+				result, err := Get(user, tt.path...)
+				if err != nil {
+					t.Fatalf("Get() error = %v", err)
+				}
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -489,7 +498,10 @@ func TestNestedPointerToStruct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, _ := Get(profile, tt.path...)
+			result, err := Get(profile, tt.path...)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -521,7 +533,10 @@ func TestMultipleLevelsPointers(t *testing.T) {
 	userPtr := &user
 
 	// This should still work by dereferencing all pointers
-	name, _ := Get(userPtr, "name")
+	name, err := Get(userPtr, "name")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
 	if name != "Charlie" {
 		t.Errorf("Get() with double pointer = %v, want %v", name, "Charlie")
 	}
@@ -582,7 +597,10 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 
-				result, _ := Get(company, tt.path...)
+				result, err := Get(company, tt.path...)
+				if err != nil {
+					t.Fatalf("Get() error = %v", err)
+				}
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -593,7 +611,10 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 		t.Run("Employee array access", func(t *testing.T) {
 			t.Parallel()
 
-			employees, _ := Get(company, "employees")
+			employees, err := Get(company, "employees")
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if employees == nil {
 				t.Error("Get() employees should not be nil")
 				return
@@ -632,7 +653,10 @@ func TestMixedStructMapComprehensive(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 
-				result, _ := Get(company, tt.path...)
+				result, err := Get(company, tt.path...)
+				if err != nil {
+					t.Fatalf("Get() error = %v", err)
+				}
 				if result != tt.expected {
 					t.Errorf("Get() = %v, want %v", result, tt.expected)
 				}
@@ -726,7 +750,10 @@ func TestMapContainingStructs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, _ := Get(data, tt.path...)
+			result, err := Get(data, tt.path...)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}
@@ -781,7 +808,10 @@ func TestMixedDataEdgeCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, _ := Get(data, tt.path...)
+			result, err := Get(data, tt.path...)
+			if err != nil {
+				t.Fatalf("Get() error = %v", err)
+			}
 			if result != tt.expected {
 				t.Errorf("Get() = %v, want %v", result, tt.expected)
 			}

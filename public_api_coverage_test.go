@@ -668,7 +668,9 @@ func TestFindTraversesContainersAfterStructFields(t *testing.T) {
 		require.NotNil(t, ref)
 		assert.Equal(t, "second", ref.Val)
 		assert.Equal(t, "1", ref.Key)
-		assert.Equal(t, []any{"first", "second"}, ref.Obj)
+		if diff := cmp.Diff([]any{"first", "second"}, ref.Obj); diff != "" {
+			t.Errorf("Find() slice parent mismatch (-want +got):\n%s", diff)
+		}
 	})
 }
 
