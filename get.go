@@ -48,6 +48,22 @@ func fastSliceGet(values []any, step string) (any, bool) {
 	return values[index], true
 }
 
+func sliceValue(values []any, step string) (any, error) {
+	index, err := validateAndAccessArray(step, len(values))
+	if err != nil {
+		return nil, err
+	}
+	return values[index], nil
+}
+
+func stringMapValue(values map[string]any, step string) (any, error) {
+	result, ok := values[step]
+	if !ok {
+		return nil, ErrKeyNotFound
+	}
+	return result, nil
+}
+
 func get(val any, path Path) (any, error) {
 	pathLength := len(path)
 	if pathLength == 0 {
@@ -86,38 +102,22 @@ func traverseStep(current any, step string) (any, error) {
 
 	switch value := current.(type) {
 	case []any:
-		index, err := validateAndAccessArray(step, len(value))
-		if err != nil {
-			return nil, err
-		}
-		return value[index], nil
+		return sliceValue(value, step)
 
 	case *[]any:
 		if value == nil {
 			return nil, ErrNilPointer
 		}
-		index, err := validateAndAccessArray(step, len(*value))
-		if err != nil {
-			return nil, err
-		}
-		return (*value)[index], nil
+		return sliceValue(*value, step)
 
 	case map[string]any:
-		result, ok := value[step]
-		if !ok {
-			return nil, ErrKeyNotFound
-		}
-		return result, nil
+		return stringMapValue(value, step)
 
 	case *map[string]any:
 		if value == nil {
 			return nil, ErrNilPointer
 		}
-		result, ok := (*value)[step]
-		if !ok {
-			return nil, ErrKeyNotFound
-		}
-		return result, nil
+		return stringMapValue(*value, step)
 	}
 
 	value, err := derefValue(reflect.ValueOf(current))

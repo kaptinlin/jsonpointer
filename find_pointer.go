@@ -49,11 +49,11 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 		switch current := obj.(type) {
 		case map[string]any:
 			key = unescapeComponent(keyStr)
-			next, ok := current[key]
-			if !ok {
-				return nil, ErrKeyNotFound
+			var err error
+			val, err = stringMapValue(current, key)
+			if err != nil {
+				return nil, err
 			}
-			val = next
 			continue
 
 		case *map[string]any:
@@ -61,32 +61,32 @@ func findByPointer(pointer string, val any) (*Reference, error) {
 				return nil, ErrNilPointer
 			}
 			key = unescapeComponent(keyStr)
-			next, ok := (*current)[key]
-			if !ok {
-				return nil, ErrKeyNotFound
+			var err error
+			val, err = stringMapValue(*current, key)
+			if err != nil {
+				return nil, err
 			}
-			val = next
 			continue
 
 		case []any:
-			index, err := validateAndAccessArray(keyStr, len(current))
+			next, err := sliceValue(current, keyStr)
 			if err != nil {
 				return nil, err
 			}
 			key = keyStr
-			val = current[index]
+			val = next
 			continue
 
 		case *[]any:
 			if current == nil {
 				return nil, ErrNilPointer
 			}
-			index, err := validateAndAccessArray(keyStr, len(*current))
+			next, err := sliceValue(*current, keyStr)
 			if err != nil {
 				return nil, err
 			}
 			key = keyStr
-			val = (*current)[index]
+			val = next
 			continue
 		}
 
