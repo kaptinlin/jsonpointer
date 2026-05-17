@@ -162,8 +162,8 @@ func formatJSONPointer(path Path) string {
 	}
 
 	capacity := len(path)
-	for _, comp := range path {
-		capacity += len(comp) + 2
+	for _, component := range path {
+		capacity += len(component)
 	}
 
 	var b strings.Builder
