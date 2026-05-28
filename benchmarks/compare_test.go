@@ -1,8 +1,9 @@
 package benchmarks
 
 import (
-	"github.com/go-json-experiment/json"
 	"testing"
+
+	"github.com/go-json-experiment/json"
 
 	// Our implementation
 	ourjp "github.com/kaptinlin/jsonpointer"

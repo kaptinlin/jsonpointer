@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-json-experiment/json"
+
 	jp "github.com/kaptinlin/jsonpointer"
 )
 
