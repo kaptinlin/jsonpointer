@@ -833,7 +833,15 @@ func TestNilPointerHandling(t *testing.T) {
 		t.Errorf("Get() with nil pointer = %v, want nil", result)
 	}
 
-	ref, err := FindByPointer(user, "/name")
+	ref, err := Find(user, "name")
+	if !errors.Is(err, ErrNilPointer) {
+		t.Fatalf("Find() error = %v, want %v", err, ErrNilPointer)
+	}
+	if ref != nil {
+		t.Error("Find() should return nil reference for nil pointer")
+	}
+
+	ref, err = FindByPointer(user, "/name")
 	if !errors.Is(err, ErrNilPointer) {
 		t.Fatalf("FindByPointer() error = %v, want %v", err, ErrNilPointer)
 	}
