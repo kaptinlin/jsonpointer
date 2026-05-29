@@ -50,7 +50,7 @@ type ObjectReference[T any] struct {
 //	isArray(ref.obj) && typeof ref.key === 'number';
 func IsArrayReference(ref Reference) bool {
 	objType, ok := referenceObjectType(ref)
-	if !ok || objType.Kind() != reflect.Slice {
+	if !ok || (objType.Kind() != reflect.Slice && objType.Kind() != reflect.Array) {
 		return false
 	}
 
@@ -69,8 +69,13 @@ func IsObjectReference(ref Reference) bool {
 }
 
 func referenceObjectType(ref Reference) (reflect.Type, bool) {
-	if ref.Obj == nil || ref.Key == "" {
+	if ref.Obj == nil {
 		return nil, false
 	}
-	return reflect.TypeOf(ref.Obj), true
+
+	objType := reflect.TypeOf(ref.Obj)
+	for objType.Kind() == reflect.Pointer {
+		objType = objType.Elem()
+	}
+	return objType, true
 }

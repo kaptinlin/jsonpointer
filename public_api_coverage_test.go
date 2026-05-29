@@ -176,6 +176,52 @@ func TestReferenceTypePredicates(t *testing.T) {
 		assert.False(t, IsArrayReference(ref))
 	})
 
+	t.Run("identifies object references with empty keys", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find(map[string]any{"": "empty"}, "")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+
+		assert.True(t, IsObjectReference(*ref))
+		assert.False(t, IsArrayReference(*ref))
+	})
+
+	t.Run("identifies object references with pointer parents", func(t *testing.T) {
+		t.Parallel()
+
+		doc := map[string]any{"name": "value"}
+		ref, err := Find(&doc, "name")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+
+		assert.True(t, IsObjectReference(*ref))
+		assert.False(t, IsArrayReference(*ref))
+	})
+
+	t.Run("identifies array references for arrays", func(t *testing.T) {
+		t.Parallel()
+
+		ref, err := Find([2]string{"zero", "one"}, "1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+
+		assert.True(t, IsArrayReference(*ref))
+		assert.False(t, IsObjectReference(*ref))
+	})
+
+	t.Run("identifies array references with pointer parents", func(t *testing.T) {
+		t.Parallel()
+
+		doc := []any{"zero", "one"}
+		ref, err := Find(&doc, "1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+
+		assert.True(t, IsArrayReference(*ref))
+		assert.False(t, IsObjectReference(*ref))
+	})
+
 	t.Run("rejects references without parent context", func(t *testing.T) {
 		t.Parallel()
 
