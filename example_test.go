@@ -58,6 +58,17 @@ func ExampleFindByPointer() {
 	// tilde~key
 }
 
+func ExampleIsArrayReference() {
+	ref := jsonpointer.Reference{Val: "one", Obj: []any{"zero", "one"}, Key: "1"}
+	leadingZero := jsonpointer.Reference{Val: "one", Obj: []any{"zero", "one"}, Key: "01"}
+
+	fmt.Println(jsonpointer.IsArrayReference(ref))
+	fmt.Println(jsonpointer.IsArrayReference(leadingZero))
+	// Output:
+	// true
+	// false
+}
+
 func ExampleGet_struct() {
 	type user struct {
 		Name  string `json:"name"`

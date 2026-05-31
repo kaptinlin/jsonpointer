@@ -161,11 +161,28 @@ func TestReferenceTypePredicates(t *testing.T) {
 		assert.False(t, IsObjectReference(ref))
 	})
 
-	t.Run("rejects non numeric array keys", func(t *testing.T) {
+	t.Run("rejects non canonical array keys", func(t *testing.T) {
 		t.Parallel()
 
-		ref := Reference{Val: "value", Obj: []any{"value"}, Key: "first"}
-		assert.False(t, IsArrayReference(ref))
+		tests := []struct {
+			name string
+			key  string
+		}{
+			{name: "non numeric", key: "first"},
+			{name: "negative", key: "-1"},
+			{name: "signed", key: "+1"},
+			{name: "leading zero", key: "01"},
+			{name: "array end marker", key: "-"},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				ref := Reference{Val: "value", Obj: []any{"value"}, Key: tt.key}
+				assert.False(t, IsArrayReference(ref))
+			})
+		}
 	})
 
 	t.Run("identifies object references", func(t *testing.T) {
@@ -481,6 +498,81 @@ func TestPointerSliceTraversal(t *testing.T) {
 		assert.Same(t, &doc, ref.Obj)
 	})
 
+	t.Run("traverses pointer to interface wrapped slice", func(t *testing.T) {
+		t.Parallel()
+
+		var doc any = []any{"zero", "one"}
+
+		val, err := Get(&doc, "1")
+		require.NoError(t, err)
+		assert.Equal(t, "one", val)
+
+		ref, err := Find(&doc, "1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "one", ref.Val)
+		assert.Equal(t, "1", ref.Key)
+		assert.Same(t, &doc, ref.Obj)
+		assert.True(t, IsArrayReference(*ref))
+
+		ref, err = FindByPointer(&doc, "/1")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "one", ref.Val)
+		assert.Equal(t, "1", ref.Key)
+		assert.Same(t, &doc, ref.Obj)
+		assert.True(t, IsArrayReference(*ref))
+	})
+
+	t.Run("pointer to interface wrapped slice preserves index errors", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name    string
+			path    string
+			pointer string
+			wantErr error
+		}{
+			{name: "invalid", path: "bad", pointer: "/bad", wantErr: ErrInvalidIndex},
+			{name: "out of bounds", path: "2", pointer: "/2", wantErr: ErrIndexOutOfBounds},
+			{name: "array end marker", path: "-", pointer: "/-", wantErr: ErrIndexOutOfBounds},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				operations := []struct {
+					name string
+					run  func(*any) error
+				}{
+					{name: "get", run: func(doc *any) error {
+						_, err := Get(doc, tc.path)
+						return err
+					}},
+					{name: "find", run: func(doc *any) error {
+						_, err := Find(doc, tc.path)
+						return err
+					}},
+					{name: "find by pointer", run: func(doc *any) error {
+						_, err := FindByPointer(doc, tc.pointer)
+						return err
+					}},
+				}
+
+				for _, op := range operations {
+					t.Run(op.name, func(t *testing.T) {
+						t.Parallel()
+
+						var doc any = []any{"zero", "one"}
+						err := op.run(&doc)
+						assert.ErrorIs(t, err, tc.wantErr)
+					})
+				}
+			})
+		}
+	})
+
 	t.Run("get supports pointer to interface wrapped map", func(t *testing.T) {
 		t.Parallel()
 
@@ -489,6 +581,66 @@ func TestPointerSliceTraversal(t *testing.T) {
 		val, err := Get(&doc, "foo")
 		require.NoError(t, err)
 		assert.Equal(t, "bar", val)
+	})
+
+	t.Run("find supports pointer to interface wrapped map", func(t *testing.T) {
+		t.Parallel()
+
+		var doc any = map[string]any{"foo": "bar"}
+
+		ref, err := Find(&doc, "foo")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "bar", ref.Val)
+		assert.Equal(t, "foo", ref.Key)
+		assert.Same(t, &doc, ref.Obj)
+		assert.True(t, IsObjectReference(*ref))
+	})
+
+	t.Run("find by pointer supports pointer to interface wrapped map", func(t *testing.T) {
+		t.Parallel()
+
+		var doc any = map[string]any{"foo": "bar"}
+
+		ref, err := FindByPointer(&doc, "/foo")
+		require.NoError(t, err)
+		require.NotNil(t, ref)
+		assert.Equal(t, "bar", ref.Val)
+		assert.Equal(t, "foo", ref.Key)
+		assert.Same(t, &doc, ref.Obj)
+		assert.True(t, IsObjectReference(*ref))
+	})
+
+	t.Run("pointer to interface wrapped map preserves missing key errors", func(t *testing.T) {
+		t.Parallel()
+
+		operations := []struct {
+			name string
+			run  func(*any) error
+		}{
+			{name: "get", run: func(doc *any) error {
+				_, err := Get(doc, "missing")
+				return err
+			}},
+			{name: "find", run: func(doc *any) error {
+				_, err := Find(doc, "missing")
+				return err
+			}},
+			{name: "find by pointer", run: func(doc *any) error {
+				_, err := FindByPointer(doc, "/missing")
+				return err
+			}},
+		}
+
+		for _, op := range operations {
+			t.Run(op.name, func(t *testing.T) {
+				t.Parallel()
+
+				var doc any = map[string]any{"foo": "bar"}
+				err := op.run(&doc)
+				assert.ErrorIs(t, err, ErrKeyNotFound)
+			})
+		}
 	})
 
 	t.Run("get returns nil pointer error for nil slice pointer", func(t *testing.T) {

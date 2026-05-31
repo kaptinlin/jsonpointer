@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseJsonPointer(t *testing.T) {
@@ -167,6 +168,20 @@ func TestParent(t *testing.T) {
 
 		_, err := Parent(Path{})
 		assert.ErrorIs(t, err, ErrNoParent)
+	})
+
+	t.Run("returns detached parent path", func(t *testing.T) {
+		t.Parallel()
+
+		path := Path{"foo", "bar", "baz"}
+		parent, err := Parent(path)
+		require.NoError(t, err)
+
+		parent[0] = "changed"
+
+		if diff := cmp.Diff(Path{"foo", "bar", "baz"}, path); diff != "" {
+			t.Errorf("Parent() aliased input path (-want +got):\n%s", diff)
+		}
 	})
 }
 

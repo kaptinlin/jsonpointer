@@ -1,6 +1,7 @@
 package jsonpointer
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -147,6 +148,16 @@ func TestValidatePath(t *testing.T) {
 
 		err := ValidatePath(exactPath)
 		assert.NoError(t, err)
+	})
+
+	t.Run("does not return compatibility shape errors", func(t *testing.T) {
+		t.Parallel()
+
+		longPath := make(Path, MaxPathLength+1)
+		err := ValidatePath(longPath)
+		assert.ErrorIs(t, err, ErrPathTooLong)
+		assert.False(t, errors.Is(err, ErrInvalidPath))
+		assert.False(t, errors.Is(err, ErrInvalidPathStep))
 	})
 }
 

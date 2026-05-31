@@ -50,7 +50,7 @@ A typed object reference contains:
 - `IsArrayReference(ref Reference) bool`
 - `IsObjectReference(ref Reference) bool`
 
-The predicates inspect `Reference.Obj` and `Reference.Key`; `Find` and `FindByPointer` still return `Reference`, not the generic typed wrappers.
+The predicates inspect `Reference.Obj` and `Reference.Key`; `Find` and `FindByPointer` still return `Reference`, not the generic typed wrappers. `IsArrayReference` accepts only canonical non-negative array index keys, not `-`, negative, signed, or leading-zero strings.
 
 ## Pointer and Path Utilities
 

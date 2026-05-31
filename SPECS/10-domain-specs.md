@@ -11,6 +11,7 @@ This spec defines the domain rules for paths, pointers, traversal, and errors. I
 - `Parse` splits a pointer on `/` and unescapes `~0` to `~` and `~1` to `/`.
 - `Format` joins path tokens with `/` and escapes only `~` and `/`.
 - `IsRoot`, `Parent`, `IsChild`, `IsPathEqual`, `IsValidIndex`, and `IsInteger` operate on string tokens, not on a separate token type.
+- `Parent` returns a detached parent path so mutating it does not mutate the input path.
 
 > **Why**: a string-first public model matches RFC 6901 and keeps the API simple for callers that already manipulate path segments as strings.
 >
@@ -26,6 +27,7 @@ Read traversal supports:
 - slices and arrays
 - structs
 - pointers to any supported container
+- interface values that wrap any supported container
 
 Empty path traversal returns the current value. Empty pointer traversal returns the root value.
 
@@ -42,9 +44,10 @@ Empty path traversal returns the current value. Empty pointer traversal returns 
 
 ### Pointer Handling
 
-- Traversal dereferences pointers until it reaches a concrete value.
+- Traversal dereferences pointers and unwraps non-nil interfaces until it reaches a concrete value.
 - If a required pointer in that chain is nil, traversal returns `ErrNilPointer`.
-- Nil is not silently treated as missing data once traversal has committed to dereferencing it.
+- Nil interfaces behave like nil values and return `ErrNotFound` when traversal must continue.
+- Nil is not silently treated as missing data once traversal has committed to dereferencing a pointer.
 
 ## Array Semantics
 

@@ -41,7 +41,7 @@ This spec defines how the package is organized and where performance-sensitive b
 
 ## Reflection Rules
 
-- Pointer dereferencing is centralized through `derefValue`.
+- Pointer dereferencing and interface unwrapping are centralized through `derefValue`.
 - Reflective map access converts the string token to the map key type when conversion is legal.
 - Struct field lookup is centralized through `structField` and backed by a `sync.Map` cache.
 - Struct caches store the resolved external field name, respecting JSON tags and excluding hidden fields.
