@@ -35,7 +35,8 @@ Empty path traversal returns the current value. Empty pointer traversal returns 
 
 - Struct lookup uses the JSON tag name when present.
 - A JSON tag with an empty name falls back to the Go field name.
-- Unexported fields and `json:"-"` fields are not addressable.
+- Unexported fields and exact `json:"-"` fields are not addressable.
+- A tag such as `json:"-,"` uses `-` as a literal field name, matching `encoding/json`.
 - Reflective map traversal converts the string path token to the map key type when Go allows the conversion.
 
 > **Why**: callers should be able to traverse ordinary Go values directly instead of pre-normalizing everything into generic JSON-shaped containers.
