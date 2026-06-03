@@ -7,8 +7,8 @@ replace github.com/kaptinlin/jsonpointer => ../
 
 require (
 	github.com/bragdond/jsonpointer-go v1.0.0
-	github.com/dolmen-go/jsonptr v0.0.0-20240328010033-38530b85cd9c
-	github.com/go-json-experiment/json v0.0.0-20260520185125-572e7c383686
+	github.com/dolmen-go/jsonptr v0.0.0-20260529085001-d6b11e72da90
+	github.com/go-json-experiment/json v0.0.0-20260601182631-00ed12fed2a6
 	github.com/go-openapi/jsonpointer v0.23.1
 	github.com/kaptinlin/jsonpointer v0.4.18
 	github.com/woodsbury/jsonpointer v0.7.2
