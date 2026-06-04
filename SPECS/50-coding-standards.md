@@ -31,7 +31,7 @@ This spec defines the standards for changing code, docs, tests, and configuratio
 ## Testing and Validation Standards
 
 - Run `task test` and `task lint` for code changes.
-- Run `task markdownlint` for markdown changes.
+- Run `task specs-check` for markdown changes.
 - Run `task yamllint` for YAML changes.
 - Use benchmarks when changing hot traversal code.
 - Keep documentation-structure checks in `lefthook.yml` or lint rules, not in `_test.go` files.
