@@ -2,64 +2,87 @@
 
 ## Overview
 
-This library provides read-only JSON Pointer traversal and pointer utilities for Go. It targets behavioral compatibility with the TypeScript `jsonjoy-com/json-pointer` implementation and RFC 6901 while supporting native Go values such as typed slices, arrays, structs, maps, and pointers.
+This library provides read-only JSON Pointer traversal and pointer utilities for
+Go. The public API is centered on an immutable `Pointer` value: parse or build a
+pointer, then use it to resolve values or references.
+
+The package follows RFC 6901 for pointer string syntax and escaping while
+supporting Go-native traversal over decoded JSON data and ordinary Go values.
 
 ## Product Goals
 
-- Match the reference implementation for pointer syntax, escaping, and traversal semantics.
+- Keep one obvious public model: `Pointer`.
+- Parse pointer strings strictly so malformed syntax cannot become lookup data.
+- Preserve raw-token construction for callers that already have token strings.
 - Keep read APIs panic-free and error-returning.
-- Preserve zero-allocation hot paths for common `map[string]any` and `[]any` workloads.
-- Stay small: pointer traversal and validation only, not document mutation.
+- Preserve fast common paths for `map[string]any` and `[]any`.
+- Stay small: pointer traversal, reference context, errors, and token helpers
+  only.
 
 ## Scope
 
 ### In Scope
 
-- Read traversal through `Get`, `Find`, `GetByPointer`, and `FindByPointer`.
-- Pointer parsing, formatting, escaping, unescaping, and validation helpers.
-- Path utilities such as root checks, parent derivation, and index predicates.
-- Native Go traversal over maps, slices, arrays, structs, and pointers to those values.
+- Strict pointer parsing through `Parse`.
+- Raw-token pointer construction through `FromTokens`.
+- Value traversal through `Pointer.Value` and `Value`.
+- Reference traversal through `Pointer.Reference` and `ReferenceOf`.
+- Pointer formatting, token copying, parent and child derivation.
+- Escape, unescape, index, and integer token helpers.
+- Native Go traversal over maps, slices, arrays, structs, pointers, and
+  interface values.
 
 ### Out of Scope
 
 - Mutation APIs such as set, delete, append, patch, or merge helpers.
-- Schema validation, JSON Patch, or JSONPath features.
-- Stateful compiled-pointer objects or caching layers beyond internal field metadata.
+- Schema validation, JSON Patch, JSONPath, filters, wildcards, or query DSLs.
+- Stateful compiled-pointer caches beyond the immutable `Pointer` value.
+- Pluggable resolver interfaces or traversal policy systems.
+- CLI diagnostics, repair suggestions, file IO, or product-specific envelopes.
 
-> **Why**: the package is most useful as a tiny, predictable dependency for JSON Pointer reads and pointer utilities.
+> **Why**: the package is most useful as a tiny, predictable dependency for JSON
+> Pointer reads and pointer utilities.
 >
-> **Rejected**: turning the library into a broader document-editing toolkit.
+> **Rejected**: turning the library into a broader document-editing or querying
+> toolkit.
 
 ## Compatibility Contract
 
-- The TypeScript repository is the behavioral baseline for pointer semantics and public API naming.
-- RFC 6901 controls pointer string syntax, escaping, and array index rules.
-- Go-specific extensions are allowed only when they make native Go data traversable without changing JSON Pointer meaning.
-- When current Go behavior intentionally differs for performance or Go ergonomics, the difference must be documented in `SPECS/20-api-specs.md` or `SPECS/40-architecture-specs.md`.
+- RFC 6901 controls pointer string syntax, escaping, and array token rules.
+- Malformed pointer strings are rejected by `Parse`, `Value`, and
+  `ReferenceOf`.
+- Go-specific traversal extensions are allowed only when they do not change JSON
+  Pointer meaning.
+- Errors remain inspectable through `errors.Is`; traversal context is available
+  through `errors.As` with `*Error`.
 
-> **Why**: parity is the library's core value, but Go callers still need to traverse ordinary Go values without marshaling everything into `map[string]any` first.
->
-> **Rejected**: strict JSON-only traversal that ignores structs, typed slices, or non-string Go map keys.
+This API intentionally does not preserve the older mutable `Path` model or
+permissive pointer-string traversal.
 
 ## Canonical Specifications
 
-- `SPECS/10-domain-specs.md` defines pointer, path, traversal, and error semantics.
-- `SPECS/20-api-specs.md` defines the exported surface and compatibility notes.
-- `SPECS/40-architecture-specs.md` defines package structure and performance strategy.
-- `SPECS/50-coding-standards.md` defines contribution, documentation, and testing rules.
+- `SPECS/10-domain-specs.md` defines pointer, token, traversal, and error
+  semantics.
+- `SPECS/20-api-specs.md` defines the exported surface.
+- `SPECS/40-architecture-specs.md` defines package structure and performance
+  strategy.
+- `SPECS/50-coding-standards.md` defines contribution, documentation, and
+  testing rules.
 
 ## Forbidden
 
 - Do not add mutation APIs without a new spec that expands scope.
-- Do not change traversal or error behavior without updating the relevant spec and tests.
-- Do not duplicate design rules outside `SPECS/`; `CLAUDE.md` stays operational.
-- Do not trade away TypeScript compatibility for convenience-only Go behavior.
+- Do not add permissive pointer parsing or implicit repair behavior.
+- Do not add public traversal interfaces before real consumers need them.
+- Do not duplicate traversal semantics across separate public paths.
+- Do not trade the fast common read path for convenience-only behavior.
 
 ## Acceptance Criteria
 
-- [ ] Scope remains limited to pointer traversal, validation, and helper utilities.
-- [ ] TypeScript compatibility remains the default decision rule for behavioral changes.
-- [ ] Any Go-specific extension is documented in the domain or API specs.
+- [ ] Public code centers on `Pointer`.
+- [ ] Invalid pointer strings cannot produce usable pointers.
+- [ ] Raw-token construction keeps literal token data distinct from pointer
+      syntax.
+- [ ] Scope remains limited to pointer traversal, reference context, errors, and
+      token helpers.
 - [ ] The canonical design guidance lives under `SPECS/`.
-
-**Origin:** Migrated from `CLAUDE.md`.

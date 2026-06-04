@@ -12,7 +12,7 @@ import (
 
 var errWriteFailed = errors.New("write failed")
 
-const wantOutput = "name: Alice\nescaped value: ready\nescaped key: tilde~key\nstruct email: bob@example.com\npath: [users 0 name]\npointer: /users/0/name\nvalid pointer: true\n"
+const wantOutput = "name: Alice\nescaped value: ready\nescaped key: tilde~key\nstruct email: bob@example.com\ntokens: [users 0 name]\npointer: /users/0/name\n"
 
 func TestDefaultExampleData(t *testing.T) {
 	t.Parallel()
@@ -58,7 +58,7 @@ func (failWriter) Write([]byte) (int, error) {
 	return 0, errWriteFailed
 }
 
-func TestWriteExampleReturnsGetByPointerError(t *testing.T) {
+func TestWriteExampleReturnsNamePointerError(t *testing.T) {
 	t.Parallel()
 
 	data := defaultExampleData()
@@ -70,7 +70,7 @@ func TestWriteExampleReturnsGetByPointerError(t *testing.T) {
 	}
 }
 
-func TestWriteExampleReturnsFindByPointerError(t *testing.T) {
+func TestWriteExampleReturnsReferenceError(t *testing.T) {
 	t.Parallel()
 
 	data := defaultExampleData()

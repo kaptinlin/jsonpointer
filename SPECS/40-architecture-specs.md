@@ -2,73 +2,94 @@
 
 ## Overview
 
-This spec defines how the package is organized and where performance-sensitive behavior belongs. The architecture optimizes common JSON-shaped data first and falls back to reflection only when required for broader Go compatibility.
+This spec defines how the package is organized and where performance-sensitive
+behavior belongs. The architecture optimizes common JSON-shaped data first and
+falls back to reflection only when required for broader Go compatibility.
 
 ## Package Layout
 
-- `jsonpointer.go`: public API entry points
-- `types.go`: exported types and type predicates
-- `errors.go`: exported sentinel errors
-- `get.go`: value traversal
-- `find.go`: reference traversal with parent tracking
-- `find_pointer.go`: direct pointer-string traversal
-- `util.go`: escape, unescape, parse, format, and path helpers
+- `jsonpointer.go`: public parsing, one-shot traversal, and token helpers
+- `types.go`: `Pointer`, `Reference`, and their methods
+- `errors.go`: exported sentinel errors and structured `Error`
+- `get.go`: shared value and reference resolver
+- `util.go`: parse, format, escape, unescape, map, index, and reflection helpers
 - `validate.go`: validation limits and validation helpers
-- `struct.go`: cached struct field lookup
-- `*_test.go`, `fuzz_test.go`, and `benchmarks/`: verification and performance coverage
+- `struct.go`: cached struct-field lookup
+- `*_test.go`, `fuzz_test.go`, `examples/`, and `benchmarks/`: verification and
+  performance coverage
 
 ## Traversal Strategy
 
-### `Get`
+`Pointer.Value` and `Pointer.Reference` share the same internal stepping
+behavior. Each token is resolved once through the same container rules:
 
-`Get` follows a layered approach:
+1. Common `map[string]any`, `*map[string]any`, `[]any`, and `*[]any` values are
+   handled directly.
+2. Pointer and interface values are dereferenced consistently.
+3. Typed slices, arrays, maps, and structs use reflective fallback.
+4. Struct lookup uses cached field metadata.
 
-1. `fastGet` handles common `map[string]any`, `[]any`, and pointer variants without token allocation.
-2. `tryArrayAccess` and `tryObjectAccess` extend support to typed collections and structs.
-3. Reflection is the final fallback for generic Go values.
+`Reference` keeps the last parent container and token while using the same step
+function as value traversal.
 
-### `Find`
-
-`Find` keeps the last parent container and key while traversing so it can return a `Reference` without re-walking the document.
-
-### `FindByPointer`
-
-`FindByPointer` scans the pointer string directly instead of allocating a `Path` first. It preserves the same traversal semantics while avoiding an intermediate slice on the hot path.
-
-> **Why**: most real workloads spend time in repeated reads over JSON-like maps and slices. Optimizing those cases first yields the best payoff without dropping generic Go traversal.
+> **Why**: value lookup and reference lookup should not drift. Fast paths are
+> implementation details inside one semantic path.
 >
-> **Rejected**: a reflection-only traversal implementation or a compiled-pointer object layer for every call site.
+> **Rejected**: a separate direct pointer-string traversal pipeline.
+
+## Pointer Construction Strategy
+
+- `Parse` validates pointer-string syntax before token construction.
+- `FromTokens` copies raw tokens and validates token count plus canonical string
+  length.
+- `Pointer.String` formats from raw tokens.
+- `Pointer.Tokens` returns a copy.
+
+Strict pointer parsing is a boundary cost. Reusing parsed pointers avoids paying
+that cost on repeated reads.
 
 ## Reflection Rules
 
-- Pointer dereferencing and interface unwrapping are centralized through `derefValue`.
-- Reflective map access converts the string token to the map key type when conversion is legal.
-- Struct field lookup is centralized through `structField` and backed by a `sync.Map` cache.
-- Struct caches store the resolved external field name, respecting JSON tags and excluding hidden fields.
+- Pointer dereferencing and interface unwrapping are centralized through
+  `derefValue`.
+- Reflective map access converts the string token to the map key type when
+  conversion is legal.
+- Struct field lookup is centralized through `structField` and backed by a
+  `sync.Map` cache.
+- Struct caches store selected field indexes using JSON tag names and
+  embedded-field dominance.
 
 ## Performance Rules
 
-- Hot-path improvements must avoid new allocations in the common `map[string]any` and `[]any` cases.
+- Hot-path improvements must avoid new allocations in successful common
+  `map[string]any` and `[]any` traversal.
 - Reflection should be a fallback, not the first choice.
+- Reference context and structured errors should cost only when requested or
+  when an error occurs.
 - Significant traversal changes should be checked against the benchmark suite.
-- Validation cost should remain explicit rather than silently folded into pointer traversal.
+- Benchmark numbers are instruments, not product goals.
 
-> **Why**: the package sells both correctness and speed. Hidden extra work in the hot path is a regression even when tests still pass.
+> **Why**: the package sells both correctness and speed. Hidden extra work in the
+> hot path is a regression even when tests still pass.
 >
-> **Rejected**: convenience changes that shift steady-state read cost onto every caller.
+> **Rejected**: convenience changes that shift steady-state read cost onto every
+> caller.
 
 ## Forbidden
 
-- Do not add a second traversal pipeline that duplicates existing logic without a measurable win.
-- Do not move validation into hot traversal paths unless the API contract changes.
-- Do not introduce caches beyond field metadata without clear invalidation-free semantics.
+- Do not add a second traversal pipeline that duplicates resolver semantics.
+- Do not parse pointer strings inside `Pointer.Value` or `Pointer.Reference`.
+- Do not introduce public resolver interfaces or plugin hooks without real
+  consumers.
+- Do not introduce caches beyond field metadata without clear invalidation-free
+  semantics.
 - Do not let architecture docs drift outside `SPECS/`.
 
 ## Acceptance Criteria
 
 - [ ] Package responsibilities stay separated by concern.
+- [ ] `Value` and `Reference` share traversal semantics.
 - [ ] Common traversal paths remain optimized before reflection fallback.
 - [ ] Struct metadata caching remains the only long-lived cache.
-- [ ] Pointer-string traversal keeps its direct-scan architecture.
-
-**Origin:** Migrated from `CLAUDE.md`.
+- [ ] Pointer-string parsing stays at construction and one-shot helper
+      boundaries.

@@ -52,29 +52,39 @@ func defaultExampleData() exampleData {
 }
 
 func writeExample(out io.Writer, data exampleData) error {
-	name, err := jsonpointer.GetByPointer(data.doc, data.namePath)
+	namePointer, err := jsonpointer.Parse(data.namePath)
 	if err != nil {
 		return err
 	}
-	ref, err := jsonpointer.FindByPointer(data.doc, data.escapePath)
+	name, err := namePointer.Value(data.doc)
 	if err != nil {
 		return err
 	}
-	email, err := jsonpointer.Get(&data.user, "email")
+	escapePointer, err := jsonpointer.Parse(data.escapePath)
+	if err != nil {
+		return err
+	}
+	ref, err := escapePointer.Reference(data.doc)
+	if err != nil {
+		return err
+	}
+	emailPointer, err := jsonpointer.FromTokens("email")
+	if err != nil {
+		return err
+	}
+	email, err := emailPointer.Value(&data.user)
 	if err != nil {
 		return err
 	}
 
-	path := jsonpointer.Parse(data.namePath)
 	output := fmt.Sprintf(
-		"name: %v\nescaped value: %v\nescaped key: %v\nstruct email: %v\npath: %v\npointer: %v\nvalid pointer: %v\n",
+		"name: %v\nescaped value: %v\nescaped key: %v\nstruct email: %v\ntokens: %v\npointer: %v\n",
 		name,
-		ref.Val,
-		ref.Key,
+		ref.Value(),
+		ref.Token(),
 		email,
-		path,
-		jsonpointer.Format(path...),
-		jsonpointer.Validate(data.namePath) == nil,
+		namePointer.Tokens(),
+		namePointer.String(),
 	)
 	_, err = io.WriteString(out, output)
 	return err

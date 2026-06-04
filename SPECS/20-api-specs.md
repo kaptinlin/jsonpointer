@@ -2,125 +2,119 @@
 
 ## Overview
 
-This spec defines the exported API surface and the contracts callers can rely on. It covers public functions, exported types, validation limits, and compatibility notes that are visible outside the package.
+This spec defines the exported API surface and the contracts callers can rely
+on. The surface centers on `Pointer`, an immutable JSON Pointer value.
 
-## Traversal APIs
-
-| API | Contract |
-| --- | --- |
-| `Get(doc any, path ...string) (any, error)` | Returns the value at `path`. An empty path returns `doc`. |
-| `Find(doc any, path ...string) (*Reference, error)` | Returns the value plus its parent object and key. An empty path returns `&Reference{Val: doc}`. |
-| `GetByPointer(doc any, pointer string) (any, error)` | Uses pointer parsing semantics and then traverses the result. An empty pointer returns `doc`. |
-| `FindByPointer(doc any, pointer string) (*Reference, error)` | Traverses directly from the pointer string and returns a `Reference`. An empty pointer returns `&Reference{Val: doc}`. |
-
-`GetByPointer` and `FindByPointer` do not call `Validate` automatically. Callers that need strict pointer syntax checks must call `Validate` explicitly.
-
-> **Why**: keeping pointer validation explicit preserves the fast traversal path and avoids scanning the same pointer twice.
->
-> **Rejected**: implicit validation inside every pointer-based read.
-
-## Reference Types
-
-### `Reference`
-
-`Reference` is the generic traversal result:
-
-- `Val`: the resolved value
-- `Obj`: the parent container when a parent exists
-- `Key`: the last traversed key or index, encoded as a string
-
-### `ArrayReference[T]`
-
-A typed array reference contains:
-
-- `Val *T`
-- `Obj []T`
-- `Key int`
-
-### `ObjectReference[T]`
-
-A typed object reference contains:
-
-- `Val T`
-- `Obj map[string]T`
-- `Key string`
-
-### Type Predicates
-
-- `IsArrayReference(ref Reference) bool`
-- `IsObjectReference(ref Reference) bool`
-
-The predicates inspect `Reference.Obj` and `Reference.Key`; `Find` and `FindByPointer` still return `Reference`, not the generic typed wrappers. `IsArrayReference` accepts only canonical non-negative array index keys, not `-`, negative, signed, or leading-zero strings.
-
-## Pointer and Path Utilities
+## Pointer Construction
 
 | API | Contract |
 | --- | --- |
-| `Parse(pointer string) Path` | Parses a pointer into path tokens without returning an error. |
-| `Format(path ...string) string` | Formats path tokens into a pointer string. |
-| `Escape(component string) string` | Escapes `~` and `/` for a single path token. |
-| `Unescape(component string) string` | Reverses `Escape` semantics for a single path token. |
-| `IsChild(parent, child Path) bool` | Returns whether `child` has `parent` as a strict prefix. |
-| `IsPathEqual(p1, p2 Path) bool` | Returns whether two paths are identical. |
-| `IsRoot(path Path) bool` | Returns whether the path points at the root value. |
-| `Parent(path Path) (Path, error)` | Returns the parent path or `ErrNoParent` for the root path. |
-| `IsValidIndex(index string) bool` | Returns whether the token is a valid array index or `-`. |
+| `Parse(pointer string) (Pointer, error)` | Parses strict RFC 6901 pointer syntax. Empty string returns root. |
+| `FromTokens(tokens ...string) (Pointer, error)` | Builds a pointer from raw token strings and copies the input. |
+| `Root() Pointer` | Returns the root pointer. |
+
+`Parse` rejects malformed pointer syntax. `FromTokens` accepts literal token data
+such as `"~2"` because raw tokens are not encoded pointer syntax.
+
+## Pointer Methods
+
+| API | Contract |
+| --- | --- |
+| `(Pointer).String() string` | Returns the canonical pointer string. |
+| `(Pointer).Tokens() []string` | Returns a detached token copy. |
+| `(Pointer).IsRoot() bool` | Reports whether the pointer targets the root. |
+| `(Pointer).Parent() (Pointer, error)` | Returns the parent pointer or `ErrNoParent` for root. |
+| `(Pointer).Child(tokens ...string) (Pointer, error)` | Returns a new pointer with tokens appended. |
+| `(Pointer).Value(doc any) (any, error)` | Resolves the value at the pointer. |
+| `(Pointer).Reference(doc any) (Reference, error)` | Resolves the value plus parent context. |
+
+Pointer values are immutable from the caller's perspective. Methods that expose
+or append tokens do not share mutable caller-owned slices.
+
+## One-Shot Helpers
+
+| API | Contract |
+| --- | --- |
+| `Value(doc any, pointer string) (any, error)` | Parses strictly, then resolves a value. |
+| `ReferenceOf(doc any, pointer string) (Reference, error)` | Parses strictly, then resolves a reference. |
+
+These helpers are conveniences over `Parse`; they are not a second traversal
+model.
+
+## Reference Type
+
+`Reference` exposes named facts through methods:
+
+- `Value() any`
+- `Parent() (any, bool)`
+- `Token() string`
+- `Pointer() Pointer`
+
+Root references have no parent and return `(nil, false)` from `Parent`.
+
+## Token Utilities
+
+| API | Contract |
+| --- | --- |
+| `EscapeToken(token string) string` | Escapes `~` and `/` for one raw token. |
+| `UnescapeToken(encoded string) (string, error)` | Decodes `~0` and `~1`; rejects malformed escapes. |
+| `IsValidIndex(token string) bool` | Returns whether the token is a valid array index or `-`. |
 | `IsInteger(str string) bool` | Returns whether the string is composed only of decimal digits. |
 
-## Validation Surface
-
-### Functions
-
-- `Validate(pointer string) error`
-- `ValidatePath(path Path) error`
+## Validation Limits
 
 ### Constants
 
 - `MaxPointerLength = 1024`
 - `MaxPathLength = 256`
 
-`Validate` accepts the empty string, requires a leading `/` for non-empty pointers, enforces the pointer length limit, and rejects invalid `~` escape sequences.
-
-`ValidatePath` currently checks only the path length limit.
+`MaxPointerLength` applies to pointer strings and canonical strings built from
+raw tokens. `MaxPathLength` applies to token count.
 
 ## Exported Errors
 
-### TypeScript-Compatibility Errors
+### Pointer Construction Errors
+
+- `ErrInvalidPointer`
+- `ErrPointerTooLong`
+- `ErrPathTooLong`
+
+### Traversal Errors
 
 - `ErrInvalidIndex`
+- `ErrIndexOutOfBounds`
+- `ErrKeyNotFound`
+- `ErrFieldNotFound`
+- `ErrNilPointer`
 - `ErrNotFound`
 - `ErrNoParent`
-- `ErrPointerInvalid`
-- `ErrPointerTooLong`
-- `ErrInvalidPath`
-- `ErrPathTooLong`
-- `ErrInvalidPathStep`
 
-### Go-Specific Errors
+### Structured Error
 
-- `ErrIndexOutOfBounds`
-- `ErrNilPointer`
-- `ErrFieldNotFound`
-- `ErrKeyNotFound`
+`Error` wraps parse or traversal failures when pointer context is known:
 
-Errors are part of the public compatibility surface and should remain stable.
+- `Error() string`
+- `Unwrap() error`
+- `Pointer() Pointer`
+- `Token() string`
+- `Depth() int`
 
-> **Why**: callers often use `errors.Is` against these sentinels, so changing them is an API break even when function signatures stay the same.
->
-> **Rejected**: hiding traversal failures behind formatted string errors.
+Callers should use `errors.Is` for class checks and `errors.As` with `*Error`
+for pointer context. Error messages are for people and should not be parsed.
 
 ## Forbidden
 
-- Do not add implicit pointer validation to traversal APIs without updating this spec and benchmarks.
-- Do not change exported error values casually.
-- Do not return typed `ArrayReference[T]` or `ObjectReference[T]` from `Find` or `FindByPointer`.
+- Do not add permissive parsing helpers that turn malformed pointer strings into
+  lookup tokens.
+- Do not expose a mutable `Path` as the central public API.
+- Do not expose raw `Reference` fields.
+- Do not return typed `ArrayReference[T]` or `ObjectReference[T]` shapes unless
+  traversal APIs actually produce those values.
 - Do not document unimplemented behavior as if the current API guarantees it.
 
 ## Acceptance Criteria
 
 - [ ] The exported function list here matches the package surface.
 - [ ] Validation limits match `MaxPointerLength` and `MaxPathLength`.
-- [ ] Compatibility notes cover the non-validating pointer traversal behavior.
-- [ ] Error docs remain stable enough for `errors.Is` users.
-
-**Origin:** Migrated from `CLAUDE.md`.
+- [ ] `Parse` and one-shot helpers reject invalid pointer syntax.
+- [ ] Error docs remain stable enough for `errors.Is` and `errors.As` users.
