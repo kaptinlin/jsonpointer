@@ -97,6 +97,21 @@ tasks:
           go work sync
         fi
 
+
+  submodule:update:
+    desc: Init/reset nested git submodules for this repository
+    cmds:
+      - |
+        set -eu
+        if [ ! -f .gitmodules ]; then
+          echo "No nested submodules."
+          exit 0
+        fi
+        git submodule sync --recursive
+        git submodule update --init --recursive --remote --force
+        git submodule foreach --recursive 'git reset --hard && git clean -fd' || true
+        git submodule sync --recursive
+        git submodule update --init --recursive --remote --force
   test:
     desc: Run all tests with race detection
     cmds:
@@ -162,8 +177,18 @@ tasks:
     desc: Check if go.mod and go.sum are tidy
     cmds:
       - echo "Checking go.mod and go.sum are tidy..."
-      - go mod tidy
-      - git diff --exit-code -- go.mod go.sum
+      - |
+        before="$(mktemp -d)"
+        cp go.mod "$before/go.mod"
+        if [ -f go.sum ]; then
+          cp go.sum "$before/go.sum"
+        fi
+        go mod tidy
+        diff -u "$before/go.mod" go.mod
+        if [ -f "$before/go.sum" ] || [ -f go.sum ]; then
+          touch "$before/go.sum" go.sum
+          diff -u "$before/go.sum" go.sum
+        fi
 
   specs-check:
     desc: Ensure design and spec docs live under SPECS
