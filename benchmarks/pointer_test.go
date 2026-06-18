@@ -39,10 +39,7 @@ func BenchmarkParse(b *testing.B) {
 
 func BenchmarkFromTokens(b *testing.B) {
 	for b.Loop() {
-		p, err := jsonpointer.FromTokens("users", "0", "profile", "settings", "notifications", "email")
-		if err != nil {
-			b.Fatal(err)
-		}
+		p := jsonpointer.FromTokens("users", "0", "profile", "settings", "notifications", "email")
 		benchPtr = p
 	}
 }
@@ -116,19 +113,15 @@ func BenchmarkTraversalErrors(b *testing.B) {
 	}
 }
 
-func BenchmarkTypedTraversal(b *testing.B) {
-	type settings struct {
-		Theme string `json:"theme"`
-	}
-	type profile struct {
-		Settings settings `json:"settings"`
-	}
-	type user struct {
-		Profile profile `json:"profile"`
-	}
+func BenchmarkTypedContainerTraversal(b *testing.B) {
+	type mapKey string
 
-	doc := user{Profile: profile{Settings: settings{Theme: "dark"}}}
-	p := mustPointer(b, "/profile/settings/theme")
+	doc := map[string]any{
+		"groups": []map[mapKey]string{
+			{"theme": "dark"},
+		},
+	}
+	p := mustPointer(b, "/groups/0/theme")
 
 	for b.Loop() {
 		value, err := p.Value(doc)

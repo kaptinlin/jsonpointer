@@ -2,7 +2,6 @@ package jsonpointer
 
 import (
 	"reflect"
-	"strconv"
 	"strings"
 )
 
@@ -174,29 +173,9 @@ func mapValueByToken(mapVal reflect.Value, token string) (reflect.Value, error) 
 	return mapEntry, nil
 }
 
-// IsValidIndex reports whether token is a valid JSON Pointer array index token.
-func IsValidIndex(token string) bool {
-	if token == "-" {
-		return true
-	}
-	n, err := strconv.ParseInt(token, 10, 64)
-	if err != nil {
-		return false
-	}
-	return strconv.FormatInt(n, 10) == token && n >= 0
-}
-
-// IsInteger reports whether str contains only decimal digits.
-func IsInteger(str string) bool {
-	if len(str) == 0 {
-		return false
-	}
-	for i := range len(str) {
-		if str[i] < '0' || str[i] > '9' {
-			return false
-		}
-	}
-	return true
+// IsArrayIndex reports whether token is a readable JSON Pointer array index.
+func IsArrayIndex(token string) bool {
+	return fastAtoi(token) >= 0
 }
 
 func validateAndAccessArray(token string, length int) (int, error) {

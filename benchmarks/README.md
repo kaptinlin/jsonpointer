@@ -11,7 +11,7 @@ Focused benchmark coverage for the `Pointer`-centered API.
 - parsed `Pointer.Reference`
 - one-shot `Value`
 - traversal error wrapping
-- typed struct fallback
+- typed container fallback
 
 ## Usage
 

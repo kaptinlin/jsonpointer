@@ -8,7 +8,7 @@ func Parse(pointer string) (Pointer, error) {
 	if err != nil {
 		return Pointer{}, err
 	}
-	return newPointer(tokens)
+	return newPointer(tokens), nil
 }
 
 // Value parses pointer and resolves it against doc.

@@ -24,7 +24,6 @@ func TestParseStrict(t *testing.T) {
 		{name: "missing leading slash", pointer: "users/0/name", wantErr: ErrInvalidPointer},
 		{name: "bad escape", pointer: "/~2", wantErr: ErrInvalidPointer},
 		{name: "trailing tilde", pointer: "/foo~", wantErr: ErrInvalidPointer},
-		{name: "too long", pointer: "/" + strings.Repeat("a", MaxPointerLength), wantErr: ErrPointerTooLong},
 	}
 
 	for _, tt := range tests {
@@ -47,8 +46,7 @@ func TestParseStrict(t *testing.T) {
 
 func TestFromTokensBuildsImmutablePointer(t *testing.T) {
 	tokens := []string{"users", "~2", "name/first"}
-	p, err := FromTokens(tokens...)
-	require.NoError(t, err)
+	p := FromTokens(tokens...)
 
 	tokens[0] = "mutated"
 	got := p.Tokens()
@@ -62,6 +60,18 @@ func TestFromTokensBuildsImmutablePointer(t *testing.T) {
 	assert.Equal(t, p.Tokens(), parsed.Tokens())
 }
 
+func TestPointerConstructionHasNoLengthPolicy(t *testing.T) {
+	token := strings.Repeat("a", 2048)
+
+	parsed, err := Parse("/" + token)
+	require.NoError(t, err)
+	assert.Equal(t, []string{token}, parsed.Tokens())
+
+	fromTokens := FromTokens(token)
+	assert.Equal(t, []string{token}, fromTokens.Tokens())
+	assert.Equal(t, "/"+token, fromTokens.String())
+}
+
 func TestPointerParentChildAndRoot(t *testing.T) {
 	root := Root()
 	assert.True(t, root.IsRoot())
@@ -70,8 +80,7 @@ func TestPointerParentChildAndRoot(t *testing.T) {
 	_, err := root.Parent()
 	require.ErrorIs(t, err, ErrNoParent)
 
-	child, err := root.Child("users", "0")
-	require.NoError(t, err)
+	child := root.Child("users", "0")
 	assert.Equal(t, "/users/0", child.String())
 
 	parent, err := child.Parent()
@@ -106,28 +115,15 @@ func TestTokenEscaping(t *testing.T) {
 }
 
 func TestIndexHelpers(t *testing.T) {
-	valid := []string{"0", "1", "10", "-"}
+	valid := []string{"0", "1", "10"}
 	for _, token := range valid {
-		assert.True(t, IsValidIndex(token), token)
+		assert.True(t, IsArrayIndex(token), token)
 	}
 
-	invalid := []string{"", "01", "-1", "+1", "1.2", "abc"}
+	invalid := []string{"", "01", "-1", "+1", "1.2", "abc", "-"}
 	for _, token := range invalid {
-		assert.False(t, IsValidIndex(token), token)
+		assert.False(t, IsArrayIndex(token), token)
 	}
-
-	assert.True(t, IsInteger("123"))
-	assert.False(t, IsInteger(""))
-	assert.False(t, IsInteger("12a"))
-}
-
-func TestPointerLengthLimits(t *testing.T) {
-	tokens := make([]string, MaxPathLength+1)
-	_, err := FromTokens(tokens...)
-	require.ErrorIs(t, err, ErrPathTooLong)
-
-	_, err = FromTokens(strings.Repeat("a", MaxPointerLength))
-	require.ErrorIs(t, err, ErrPointerTooLong)
 }
 
 func TestTraversalErrorContext(t *testing.T) {
@@ -140,6 +136,26 @@ func TestTraversalErrorContext(t *testing.T) {
 	assert.Equal(t, p.String(), pointerErr.Pointer().String())
 	assert.Equal(t, "1", pointerErr.Token())
 	assert.Equal(t, 1, pointerErr.Depth())
+}
+
+func TestTraversalErrorIncludesEmptyToken(t *testing.T) {
+	p := mustPointer(t, "/empty/")
+	_, err := p.Value(map[string]any{"empty": map[string]any{}})
+	require.ErrorIs(t, err, ErrKeyNotFound)
+
+	var pointerErr *Error
+	require.True(t, errors.As(err, &pointerErr))
+	assert.Equal(t, "", pointerErr.Token())
+	assert.Equal(t, 1, pointerErr.Depth())
+	assert.Equal(t, `map key not found at /empty/ token ""`, pointerErr.Error())
+}
+
+func TestParseErrorHasNoTraversalContext(t *testing.T) {
+	_, err := Parse("/~2")
+	require.ErrorIs(t, err, ErrInvalidPointer)
+
+	var pointerErr *Error
+	assert.False(t, errors.As(err, &pointerErr))
 }
 
 func mustPointer(t *testing.T, pointer string) Pointer {

@@ -51,10 +51,7 @@ func ExamplePointer_Reference() {
 }
 
 func ExampleFromTokens() {
-	p, err := jsonpointer.FromTokens("foo/bar", "tilde~key")
-	if err != nil {
-		log.Fatal(err)
-	}
+	p := jsonpointer.FromTokens("foo/bar", "tilde~key")
 
 	fmt.Println(p.String())
 	fmt.Println(p.Tokens())

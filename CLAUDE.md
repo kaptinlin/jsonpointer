@@ -1,7 +1,7 @@
 # JSON Pointer
 
 A read-only JSON Pointer (RFC 6901) library for Go with strict parsing,
-immutable `Pointer` values, explicit errors, and Go-native traversal.
+immutable `Pointer` values, explicit errors, and JSON-shaped Go traversal.
 
 For installation, usage examples, and API-oriented guidance, see
 [README.md](README.md).
@@ -23,8 +23,7 @@ jsonpointer/
 ├── types.go            # Pointer, Reference, and their methods
 ├── get.go              # Shared value/reference resolver
 ├── util.go             # Parse, format, escape, unescape, map, and index helpers
-├── validate.go         # Pointer length and token-count validation limits
-├── struct.go           # Cached struct-field lookup
+├── validate.go         # Pointer-string syntax validation
 ├── errors.go           # Exported sentinels and structured Error
 ├── example_test.go     # Executable examples kept in sync by go test
 ├── examples/           # Runnable demo program
@@ -56,7 +55,7 @@ traversal semantics, and coding standards:
 | --- | --- |
 | [`SPECS/00-overview.md`](SPECS/00-overview.md) | Package scope, priorities, and compatibility boundaries |
 | [`SPECS/10-domain-specs.md`](SPECS/10-domain-specs.md) | Pointer, token, traversal, and error semantics |
-| [`SPECS/20-api-specs.md`](SPECS/20-api-specs.md) | Public functions, exported types, errors, and validation limits |
+| [`SPECS/20-api-specs.md`](SPECS/20-api-specs.md) | Public functions, exported types, errors, and token helpers |
 | [`SPECS/40-architecture-specs.md`](SPECS/40-architecture-specs.md) | Package layout, traversal pipeline, and performance strategy |
 | [`SPECS/50-coding-standards.md`](SPECS/50-coding-standards.md) | Contribution, documentation, and validation rules |
 
@@ -67,7 +66,7 @@ traversal semantics, and coding standards:
 - **YAGNI**: stop at strict parsing, traversal, reference context, errors, and
   token utilities.
 - **SRP**: keep public API entry points, resolver behavior, validation helpers,
-  and struct metadata lookup separated by concern.
+  and token utilities separated by concern.
 - **Simplicity as art**: the common path is `Parse`, then `Pointer.Value` or
   `Pointer.Reference`.
 - **Errors as teachers**: preserve sentinel classes and add pointer, token, and
@@ -97,8 +96,8 @@ traversal semantics, and coding standards:
   documents a Go-specific extension.
 - Keep read APIs panic-free and explicit.
 - Keep common `map[string]any` and `[]any` traversal on the fast path;
-  reflection stays a fallback for typed Go values.
-- Keep pointer validation at construction and one-shot helper boundaries.
+  reflection stays a fallback for typed container mechanics only.
+- Keep pointer-string validation at `Parse` and one-shot helper boundaries.
 - Update `README.md`, `example_test.go`, and relevant `SPECS/` files together
   when public behavior changes.
 - Keep `AGENTS.md` as a symlink to `CLAUDE.md`; do not duplicate the file.
@@ -123,8 +122,8 @@ traversal semantics, and coding standards:
 - Use Go's `testing` package with `testify/assert` and `testify/require` in
   package tests.
 - Keep coverage for strict parsing, raw-token construction, pointer immutability,
-  map and slice traversal, typed slices and arrays, struct tag lookup, pointer
-  dereference, escaped tokens, validation limits, and structured errors.
+  map and slice traversal, typed maps, typed slices and arrays, pointer
+  dereference, escaped tokens, read-honest array indexes, and structured errors.
 - Keep executable examples in `example_test.go` aligned with `README.md` and the
   runnable demo in `examples/`.
 - Run `task test` and `task lint` for code changes.
@@ -138,8 +137,8 @@ traversal semantics, and coding standards:
 
 - Optimize common `map[string]any` and `[]any` traversal paths before reflective
   fallbacks.
-- Benchmark changes to `get.go`, `struct.go`, pointer construction, or token
-  utility hot paths.
+- Benchmark changes to `get.go`, pointer construction, or token utility hot
+  paths.
 - Run `task bench` after touching traversal performance-sensitive code.
 
 ## Dependency Issue Reporting

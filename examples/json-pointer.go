@@ -10,14 +10,8 @@ import (
 	"github.com/kaptinlin/jsonpointer"
 )
 
-type user struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
 type exampleData struct {
 	doc        map[string]any
-	user       user
 	namePath   string
 	escapePath string
 }
@@ -45,7 +39,6 @@ func defaultExampleData() exampleData {
 				"tilde~key": "ready",
 			},
 		},
-		user:       user{Name: "Bob", Email: "bob@example.com"},
 		namePath:   "/users/0/name",
 		escapePath: "/foo~1bar/tilde~0key",
 	}
@@ -68,17 +61,14 @@ func writeExample(out io.Writer, data exampleData) error {
 	if err != nil {
 		return err
 	}
-	emailPointer, err := jsonpointer.FromTokens("email")
-	if err != nil {
-		return err
-	}
-	email, err := emailPointer.Value(&data.user)
+	emailPointer := jsonpointer.FromTokens("users", "0", "email")
+	email, err := emailPointer.Value(data.doc)
 	if err != nil {
 		return err
 	}
 
 	output := fmt.Sprintf(
-		"name: %v\nescaped value: %v\nescaped key: %v\nstruct email: %v\ntokens: %v\npointer: %v\n",
+		"name: %v\nescaped value: %v\nescaped key: %v\nemail: %v\ntokens: %v\npointer: %v\n",
 		name,
 		ref.Value(),
 		ref.Token(),

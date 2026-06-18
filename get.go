@@ -34,11 +34,10 @@ func resolveReference(doc any, pointer Pointer) (Reference, error) {
 	}
 
 	return Reference{
-		value:     current,
-		parent:    parent,
-		hasParent: true,
-		token:     token,
-		pointer:   pointer,
+		value:   current,
+		parent:  parent,
+		token:   token,
+		pointer: pointer,
 	}, nil
 }
 
@@ -78,12 +77,6 @@ func step(current any, token string) (any, error) {
 		return value.Index(index).Interface(), nil
 	case reflect.Map:
 		result, err := mapValueByToken(value, token)
-		if err != nil {
-			return nil, err
-		}
-		return result.Interface(), nil
-	case reflect.Struct:
-		result, err := structField(value, token)
 		if err != nil {
 			return nil, err
 		}

@@ -4,7 +4,7 @@
 
 This spec defines how the package is organized and where performance-sensitive
 behavior belongs. The architecture optimizes common JSON-shaped data first and
-falls back to reflection only when required for broader Go compatibility.
+falls back to reflection only for typed container mechanics.
 
 ## Package Layout
 
@@ -13,8 +13,7 @@ falls back to reflection only when required for broader Go compatibility.
 - `errors.go`: exported sentinel errors and structured `Error`
 - `get.go`: shared value and reference resolver
 - `util.go`: parse, format, escape, unescape, map, index, and reflection helpers
-- `validate.go`: validation limits and validation helpers
-- `struct.go`: cached struct-field lookup
+- `validate.go`: pointer-string syntax validation helpers
 - `*_test.go`, `fuzz_test.go`, `examples/`, and `benchmarks/`: verification and
   performance coverage
 
@@ -26,8 +25,8 @@ behavior. Each token is resolved once through the same container rules:
 1. Common `map[string]any`, `*map[string]any`, `[]any`, and `*[]any` values are
    handled directly.
 2. Pointer and interface values are dereferenced consistently.
-3. Typed slices, arrays, maps, and structs use reflective fallback.
-4. Struct lookup uses cached field metadata.
+3. Typed slices, arrays, and maps use reflective fallback.
+4. Structs and other non-container values are not traversable.
 
 `Reference` keeps the last parent container and token while using the same step
 function as value traversal.
@@ -40,8 +39,7 @@ function as value traversal.
 ## Pointer Construction Strategy
 
 - `Parse` validates pointer-string syntax before token construction.
-- `FromTokens` copies raw tokens and validates token count plus canonical string
-  length.
+- `FromTokens` copies raw tokens without interpreting pointer-string syntax.
 - `Pointer.String` formats from raw tokens.
 - `Pointer.Tokens` returns a copy.
 
@@ -54,16 +52,13 @@ that cost on repeated reads.
   `derefValue`.
 - Reflective map access converts the string token to the map key type when
   conversion is legal.
-- Struct field lookup is centralized through `structField` and backed by a
-  `sync.Map` cache.
-- Struct caches store selected field indexes using JSON tag names and
-  embedded-field dominance.
+- Structs intentionally fall through as non-traversable values.
 
 ## Performance Rules
 
 - Hot-path improvements must avoid new allocations in successful common
   `map[string]any` and `[]any` traversal.
-- Reflection should be a fallback, not the first choice.
+- Reflection should be a container fallback, not the first choice.
 - Reference context and structured errors should cost only when requested or
   when an error occurs.
 - Significant traversal changes should be checked against the benchmark suite.
@@ -81,15 +76,15 @@ that cost on repeated reads.
 - Do not parse pointer strings inside `Pointer.Value` or `Pointer.Reference`.
 - Do not introduce public resolver interfaces or plugin hooks without real
   consumers.
-- Do not introduce caches beyond field metadata without clear invalidation-free
-  semantics.
+- Do not introduce caches beyond immutable pointer values without clear
+  invalidation-free semantics.
 - Do not let architecture docs drift outside `SPECS/`.
 
 ## Acceptance Criteria
 
 - [ ] Package responsibilities stay separated by concern.
 - [ ] `Value` and `Reference` share traversal semantics.
-- [ ] Common traversal paths remain optimized before reflection fallback.
-- [ ] Struct metadata caching remains the only long-lived cache.
+- [ ] Common traversal paths remain optimized before typed-container fallback.
+- [ ] No struct metadata cache or field-selection layer exists.
 - [ ] Pointer-string parsing stays at construction and one-shot helper
       boundaries.

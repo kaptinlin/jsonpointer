@@ -10,22 +10,16 @@ import (
 
 func TestPointerValueTraversal(t *testing.T) {
 	type mapKey string
-	type profile struct {
-		Email string `json:"email"`
-	}
-	type user struct {
-		Name    string  `json:"name"`
-		Profile profile `json:"profile"`
-	}
 
+	mapPointer := map[string]any{"name": "Pointer"}
 	doc := map[string]any{
 		"users": []any{
 			map[string]any{"name": "Alice"},
-			user{Name: "Bob", Profile: profile{Email: "bob@example.com"}},
 		},
 		"typedSlice": []int{10, 20, 30},
 		"typedMap":   map[mapKey]string{"one": "typed"},
 		"array":      [2]string{"zero", "one"},
+		"mapPointer": &mapPointer,
 		"empty":      map[string]any{"": "empty-key"},
 	}
 
@@ -35,10 +29,10 @@ func TestPointerValueTraversal(t *testing.T) {
 		want    any
 	}{
 		{name: "map and slice", pointer: "/users/0/name", want: "Alice"},
-		{name: "struct tag", pointer: "/users/1/profile/email", want: "bob@example.com"},
 		{name: "typed slice", pointer: "/typedSlice/2", want: 30},
 		{name: "typed map", pointer: "/typedMap/one", want: "typed"},
 		{name: "array", pointer: "/array/1", want: "one"},
+		{name: "pointer to map", pointer: "/mapPointer/name", want: "Pointer"},
 		{name: "empty token", pointer: "/empty/", want: "empty-key"},
 		{name: "root", pointer: "", want: doc},
 	}
@@ -91,7 +85,7 @@ func TestPointerReferenceRoot(t *testing.T) {
 
 func TestPointerValueErrors(t *testing.T) {
 	type user struct {
-		Name string `json:"name"`
+		Name string
 	}
 
 	var nilUser *user
@@ -108,7 +102,7 @@ func TestPointerValueErrors(t *testing.T) {
 		{name: "leading zero index", doc: []any{"zero"}, pointer: "/01", wantErr: ErrInvalidIndex, token: "01", depth: 0},
 		{name: "array end marker", doc: []any{"zero"}, pointer: "/-", wantErr: ErrIndexOutOfBounds, token: "-", depth: 0},
 		{name: "out of bounds", doc: []any{"zero"}, pointer: "/1", wantErr: ErrIndexOutOfBounds, token: "1", depth: 0},
-		{name: "missing field", doc: user{}, pointer: "/email", wantErr: ErrFieldNotFound, token: "email", depth: 0},
+		{name: "struct", doc: user{Name: "Ada"}, pointer: "/Name", wantErr: ErrNotFound, token: "Name", depth: 0},
 		{name: "nil pointer", doc: nilUser, pointer: "/name", wantErr: ErrNilPointer, token: "name", depth: 0},
 		{name: "scalar", doc: "value", pointer: "/name", wantErr: ErrNotFound, token: "name", depth: 0},
 	}

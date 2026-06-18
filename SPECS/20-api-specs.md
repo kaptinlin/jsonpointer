@@ -10,7 +10,7 @@ on. The surface centers on `Pointer`, an immutable JSON Pointer value.
 | API | Contract |
 | --- | --- |
 | `Parse(pointer string) (Pointer, error)` | Parses strict RFC 6901 pointer syntax. Empty string returns root. |
-| `FromTokens(tokens ...string) (Pointer, error)` | Builds a pointer from raw token strings and copies the input. |
+| `FromTokens(tokens ...string) Pointer` | Builds a pointer from raw token strings and copies the input. |
 | `Root() Pointer` | Returns the root pointer. |
 
 `Parse` rejects malformed pointer syntax. `FromTokens` accepts literal token data
@@ -24,7 +24,7 @@ such as `"~2"` because raw tokens are not encoded pointer syntax.
 | `(Pointer).Tokens() []string` | Returns a detached token copy. |
 | `(Pointer).IsRoot() bool` | Reports whether the pointer targets the root. |
 | `(Pointer).Parent() (Pointer, error)` | Returns the parent pointer or `ErrNoParent` for root. |
-| `(Pointer).Child(tokens ...string) (Pointer, error)` | Returns a new pointer with tokens appended. |
+| `(Pointer).Child(tokens ...string) Pointer` | Returns a new pointer with tokens appended. |
 | `(Pointer).Value(doc any) (any, error)` | Resolves the value at the pointer. |
 | `(Pointer).Reference(doc any) (Reference, error)` | Resolves the value plus parent context. |
 
@@ -58,40 +58,26 @@ Root references have no parent and return `(nil, false)` from `Parent`.
 | --- | --- |
 | `EscapeToken(token string) string` | Escapes `~` and `/` for one raw token. |
 | `UnescapeToken(encoded string) (string, error)` | Decodes `~0` and `~1`; rejects malformed escapes. |
-| `IsValidIndex(token string) bool` | Returns whether the token is a valid array index or `-`. |
-| `IsInteger(str string) bool` | Returns whether the string is composed only of decimal digits. |
-
-## Validation Limits
-
-### Constants
-
-- `MaxPointerLength = 1024`
-- `MaxPathLength = 256`
-
-`MaxPointerLength` applies to pointer strings and canonical strings built from
-raw tokens. `MaxPathLength` applies to token count.
+| `IsArrayIndex(token string) bool` | Returns whether the token is a readable array index. |
 
 ## Exported Errors
 
 ### Pointer Construction Errors
 
 - `ErrInvalidPointer`
-- `ErrPointerTooLong`
-- `ErrPathTooLong`
 
 ### Traversal Errors
 
 - `ErrInvalidIndex`
 - `ErrIndexOutOfBounds`
 - `ErrKeyNotFound`
-- `ErrFieldNotFound`
 - `ErrNilPointer`
 - `ErrNotFound`
 - `ErrNoParent`
 
 ### Structured Error
 
-`Error` wraps parse or traversal failures when pointer context is known:
+`Error` wraps traversal failures when pointer context is known:
 
 - `Error() string`
 - `Unwrap() error`
@@ -115,6 +101,5 @@ for pointer context. Error messages are for people and should not be parsed.
 ## Acceptance Criteria
 
 - [ ] The exported function list here matches the package surface.
-- [ ] Validation limits match `MaxPointerLength` and `MaxPathLength`.
 - [ ] `Parse` and one-shot helpers reject invalid pointer syntax.
 - [ ] Error docs remain stable enough for `errors.Is` and `errors.As` users.

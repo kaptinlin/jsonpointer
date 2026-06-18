@@ -1,17 +1,6 @@
 package jsonpointer
 
-const (
-	// MaxPointerLength is the maximum allowed length for JSON Pointer strings.
-	MaxPointerLength = 1024
-
-	// MaxPathLength is the maximum allowed number of pointer tokens.
-	MaxPathLength = 256
-)
-
 func validatePointerString(pointer string) error {
-	if len(pointer) > MaxPointerLength {
-		return ErrPointerTooLong
-	}
 	if pointer == "" {
 		return nil
 	}
@@ -30,16 +19,6 @@ func validatePointerString(pointer string) error {
 			return ErrInvalidPointer
 		}
 		i++
-	}
-	return nil
-}
-
-func validateTokens(tokens []string) error {
-	if len(tokens) > MaxPathLength {
-		return ErrPathTooLong
-	}
-	if pointerLength(tokens) > MaxPointerLength {
-		return ErrPointerTooLong
 	}
 	return nil
 }

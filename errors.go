@@ -8,12 +8,6 @@ import (
 var (
 	// ErrInvalidPointer is returned when a JSON Pointer string is invalid.
 	ErrInvalidPointer = errors.New("invalid pointer")
-
-	// ErrPointerTooLong is returned when a pointer string exceeds MaxPointerLength.
-	ErrPointerTooLong = errors.New("pointer too long")
-
-	// ErrPathTooLong is returned when a pointer contains too many tokens.
-	ErrPathTooLong = errors.New("path too long")
 )
 
 var (
@@ -26,9 +20,6 @@ var (
 	// ErrKeyNotFound is returned when a map key is missing.
 	ErrKeyNotFound = errors.New("map key not found")
 
-	// ErrFieldNotFound is returned when a struct field is missing or hidden.
-	ErrFieldNotFound = errors.New("struct field not found")
-
 	// ErrNilPointer is returned when traversal must dereference a nil pointer.
 	ErrNilPointer = errors.New("cannot traverse through nil pointer")
 
@@ -39,7 +30,7 @@ var (
 	ErrNoParent = errors.New("no parent")
 )
 
-// Error wraps a pointer parse or traversal failure with machine-readable context.
+// Error wraps a traversal failure with machine-readable pointer context.
 type Error struct {
 	cause   error
 	pointer Pointer
@@ -65,7 +56,7 @@ func (e *Error) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
-	if e.token == "" {
+	if e.depth < 0 {
 		return fmt.Sprintf("%s at %s", e.cause, e.pointer.String())
 	}
 	return fmt.Sprintf("%s at %s token %q", e.cause, e.pointer.String(), e.token)

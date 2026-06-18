@@ -33,27 +33,27 @@ Read traversal supports:
 
 - maps
 - slices and arrays
-- structs
+- string-keyed typed maps
 - pointers to supported values
 - interface values that wrap supported values
 
 Root traversal returns the current value. Traversal never mutates the document.
 
-### Struct and Map Access
+Struct values are not field-selected. Callers that want to use JSON Pointer over
+struct fields should first project those structs into a JSON document shape.
 
-- Struct lookup uses JSON tag names when present.
-- A JSON tag with an empty name falls back to the Go field name.
-- Unexported fields and exact `json:"-"` fields are not addressable.
-- A tag such as `json:"-,"` uses `-` as a literal field name.
-- Embedded fields follow `encoding/json`-style dominance: shallower fields win,
-  tagged fields win at the same depth, and ambiguous same-depth candidates are
-  hidden.
-- Reflective map traversal converts string tokens to the map key type when Go
-  permits that conversion.
+### Map Access
 
-> **Why**: Go-native traversal is useful only when its projection rules are
-> predictable. Struct support should feel like JSON field selection, not a local
-> tag dialect.
+Direct `map[string]any` traversal uses the token as the map key. Reflective map
+traversal converts string tokens to the map key type when Go permits that
+conversion.
+
+> **Why**: map, slice, array, pointer, and interface traversal are container
+> mechanics. Struct field selection is a naming and projection contract that
+> belongs outside a small JSON Pointer kernel.
+>
+> **Rejected**: cloning `encoding/json` field-selection rules, name providers,
+> or custom lookup interfaces.
 
 ### Pointer Handling
 
@@ -86,13 +86,10 @@ Root traversal returns the current value. Traversal never mutates the document.
 ### Pointer Construction Errors
 
 - Invalid pointer syntax: `ErrInvalidPointer`
-- Pointer string longer than `MaxPointerLength`: `ErrPointerTooLong`
-- Pointer containing more than `MaxPathLength` tokens: `ErrPathTooLong`
 
 ### Traversal Errors
 
 - Missing map entry: `ErrKeyNotFound`
-- Missing struct field: `ErrFieldNotFound`
 - Nil pointer during dereference: `ErrNilPointer`
 - Invalid array token: `ErrInvalidIndex`
 - Array bounds failure: `ErrIndexOutOfBounds`
@@ -105,8 +102,8 @@ token, and zero-based token depth.
 ## Forbidden
 
 - Do not read through the `-` array marker.
-- Do not expose unexported struct fields or `json:"-"` fields through traversal.
-- Do not collapse key, field, index, and nil-pointer failures into one generic
+- Do not add struct field selection to traversal.
+- Do not collapse key, index, and nil-pointer failures into one generic
   error.
 - Do not silently accept malformed pointer-string escapes.
 - Do not reintroduce a public mutable path slice as the central model.
@@ -117,7 +114,7 @@ token, and zero-based token depth.
 - [ ] Invalid pointer strings fail before traversal.
 - [ ] Raw-token construction supports literal strings that look like malformed
       escapes.
-- [ ] Traversal supports native Go containers without marshal/unmarshal
+- [ ] Traversal supports JSON-shaped Go containers without marshal/unmarshal
       round-trips.
 - [ ] Array read behavior rejects invalid or out-of-range indexes explicitly.
 - [ ] Error docs match public behavior.

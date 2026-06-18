@@ -7,7 +7,7 @@ Go. The public API is centered on an immutable `Pointer` value: parse or build a
 pointer, then use it to resolve values or references.
 
 The package follows RFC 6901 for pointer string syntax and escaping while
-supporting Go-native traversal over decoded JSON data and ordinary Go values.
+supporting traversal over JSON-shaped Go values.
 
 ## Product Goals
 
@@ -28,9 +28,9 @@ supporting Go-native traversal over decoded JSON data and ordinary Go values.
 - Value traversal through `Pointer.Value` and `Value`.
 - Reference traversal through `Pointer.Reference` and `ReferenceOf`.
 - Pointer formatting, token copying, parent and child derivation.
-- Escape, unescape, index, and integer token helpers.
-- Native Go traversal over maps, slices, arrays, structs, pointers, and
-  interface values.
+- Escape, unescape, and array-index token helpers.
+- Native Go traversal over maps, slices, arrays, string-keyed typed maps,
+  pointers, and interface values.
 
 ### Out of Scope
 
@@ -74,6 +74,7 @@ permissive pointer-string traversal.
 - Do not add mutation APIs without a new spec that expands scope.
 - Do not add permissive pointer parsing or implicit repair behavior.
 - Do not add public traversal interfaces before real consumers need them.
+- Do not add struct field-selection rules, name providers, or lookup hooks.
 - Do not duplicate traversal semantics across separate public paths.
 - Do not trade the fast common read path for convenience-only behavior.
 

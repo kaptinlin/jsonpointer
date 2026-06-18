@@ -13,18 +13,15 @@ func Root() Pointer {
 }
 
 // FromTokens builds a pointer from raw, unescaped token strings.
-func FromTokens(tokens ...string) (Pointer, error) {
+func FromTokens(tokens ...string) Pointer {
 	return newPointer(tokens)
 }
 
-func newPointer(tokens []string) (Pointer, error) {
-	if err := validateTokens(tokens); err != nil {
-		return Pointer{}, err
-	}
+func newPointer(tokens []string) Pointer {
 	if len(tokens) == 0 {
-		return Root(), nil
+		return Root()
 	}
-	return Pointer{tokens: slices.Clone(tokens)}, nil
+	return Pointer{tokens: slices.Clone(tokens)}
 }
 
 // String returns the canonical RFC 6901 string form.
@@ -47,11 +44,11 @@ func (p Pointer) Parent() (Pointer, error) {
 	if p.IsRoot() {
 		return Pointer{}, ErrNoParent
 	}
-	return newPointer(p.tokens[:len(p.tokens)-1])
+	return newPointer(p.tokens[:len(p.tokens)-1]), nil
 }
 
 // Child returns a new pointer with tokens appended.
-func (p Pointer) Child(tokens ...string) (Pointer, error) {
+func (p Pointer) Child(tokens ...string) Pointer {
 	combined := slices.Concat(p.tokens, tokens)
 	return newPointer(combined)
 }
@@ -68,41 +65,31 @@ func (p Pointer) Reference(doc any) (Reference, error) {
 
 // Reference is a resolved value with its parent traversal context.
 type Reference struct {
-	value     any
-	parent    any
-	hasParent bool
-	token     string
-	pointer   Pointer
+	value   any
+	parent  any
+	token   string
+	pointer Pointer
 }
 
 // Value returns the resolved value.
-func (r *Reference) Value() any {
-	if r == nil {
-		return nil
-	}
+func (r Reference) Value() any {
 	return r.value
 }
 
 // Parent returns the parent container when the reference is not the root.
-func (r *Reference) Parent() (any, bool) {
-	if r == nil {
+func (r Reference) Parent() (any, bool) {
+	if r.pointer.IsRoot() {
 		return nil, false
 	}
-	return r.parent, r.hasParent
+	return r.parent, true
 }
 
 // Token returns the final pointer token used to reach the value.
-func (r *Reference) Token() string {
-	if r == nil {
-		return ""
-	}
+func (r Reference) Token() string {
 	return r.token
 }
 
 // Pointer returns the pointer that produced the reference.
-func (r *Reference) Pointer() Pointer {
-	if r == nil {
-		return Root()
-	}
+func (r Reference) Pointer() Pointer {
 	return r.pointer
 }

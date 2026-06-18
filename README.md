@@ -13,14 +13,14 @@ immutable `Pointer` value.
   of becoming lookup keys.
 - **Raw token construction**: build pointers from literal Go strings without
   confusing token text with pointer-string syntax.
-- **Go-native traversal**: read maps, slices, arrays, structs, pointers, and
-  interface-wrapped values.
+- **Go-native traversal**: read JSON-shaped maps, slices, arrays, typed
+  string-keyed maps, pointers, and interface-wrapped values.
 - **Explicit errors**: keep `errors.Is` sentinel checks and use `errors.As` for
   pointer, token, and depth context.
 - **Small API**: parse or build a `Pointer`, then ask it for a value or
   reference.
 - **Fast common paths**: optimize decoded JSON shapes such as `map[string]any`
-  and `[]any` before reflective fallbacks.
+  and `[]any` before typed-container fallbacks.
 
 ## Installation
 
@@ -68,20 +68,19 @@ func main() {
 | API | Description |
 | --- | --- |
 | `Parse(pointer string) (Pointer, error)` | Parse a strict JSON Pointer string |
-| `FromTokens(tokens ...string) (Pointer, error)` | Build a pointer from raw token strings |
+| `FromTokens(tokens ...string) Pointer` | Build a pointer from raw token strings |
 | `Root() Pointer` | Return the root pointer |
 | `(Pointer).String() string` | Format the canonical JSON Pointer string |
 | `(Pointer).Tokens() []string` | Return a copy of the raw tokens |
 | `(Pointer).Parent() (Pointer, error)` | Return the parent pointer |
-| `(Pointer).Child(tokens ...string) (Pointer, error)` | Return a child pointer |
+| `(Pointer).Child(tokens ...string) Pointer` | Return a child pointer |
 | `(Pointer).Value(doc any) (any, error)` | Resolve a value |
 | `(Pointer).Reference(doc any) (Reference, error)` | Resolve a value with parent context |
 | `Value(doc any, pointer string) (any, error)` | Strict one-shot value lookup |
 | `ReferenceOf(doc any, pointer string) (Reference, error)` | Strict one-shot reference lookup |
 | `EscapeToken(token string) string` | Escape one raw token |
 | `UnescapeToken(encoded string) (string, error)` | Decode one escaped token strictly |
-| `IsValidIndex(token string) bool` | Report whether a token is an array index or `-` |
-| `IsInteger(str string) bool` | Report whether a string contains only decimal digits |
+| `IsArrayIndex(token string) bool` | Report whether a token is a readable array index |
 
 `Parse("/~2")` returns `ErrInvalidPointer`. `FromTokens("~2")` succeeds because
 `"~2"` is literal token data, not pointer-string syntax.
@@ -104,10 +103,7 @@ Root references have no parent and return `(nil, false)` from `Parent`.
 ### Build from raw tokens
 
 ```go
-p, err := jsonpointer.FromTokens("foo/bar", "tilde~key")
-if err != nil {
-	log.Fatal(err)
-}
+p := jsonpointer.FromTokens("foo/bar", "tilde~key")
 fmt.Println(p.String())
 ```
 
@@ -139,39 +135,34 @@ fmt.Println(ref.Value())
 fmt.Println(ref.Token())
 ```
 
-### Traverse structs and pointers
+### Traverse typed containers
 
 ```go
-type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+type Key string
+
+doc := map[string]any{
+	"labels": map[Key]string{
+		"status": "ready",
+	},
 }
 
-p, err := jsonpointer.FromTokens("email")
+p := jsonpointer.FromTokens("labels", "status")
+status, err := p.Value(doc)
 if err != nil {
 	log.Fatal(err)
 }
-
-email, err := p.Value(&User{Name: "Alice", Email: "alice@example.com"})
-if err != nil {
-	log.Fatal(err)
-}
-fmt.Println(email)
+fmt.Println(status)
 ```
 
-Struct traversal uses exported fields, JSON tag names, exact `json:"-"` hiding,
-`json:"-,"` as the literal `-` name, and `encoding/json`-style dominance for
-embedded fields.
+Traversal follows JSON-shaped containers. Structs are not field-selected; convert
+struct values to a JSON document shape before using JSON Pointer over fields.
 
 ## Error Handling
 
 Common sentinel errors include:
 
 - `ErrInvalidPointer`
-- `ErrPointerTooLong`
-- `ErrPathTooLong`
 - `ErrKeyNotFound`
-- `ErrFieldNotFound`
 - `ErrInvalidIndex`
 - `ErrIndexOutOfBounds`
 - `ErrNilPointer`
@@ -194,8 +185,9 @@ _ = value
 ## Performance
 
 The package optimizes common `map[string]any` and `[]any` reads and falls back to
-reflection for typed Go values. Reuse parsed pointers when resolving the same
-location repeatedly.
+reflection only for typed container mechanics such as slices, arrays, maps,
+pointers, and interfaces. Reuse parsed pointers when resolving the same location
+repeatedly.
 
 See [benchmarks/README.md](benchmarks/README.md) for benchmark coverage.
 

@@ -12,7 +12,7 @@ import (
 
 var errWriteFailed = errors.New("write failed")
 
-const wantOutput = "name: Alice\nescaped value: ready\nescaped key: tilde~key\nstruct email: bob@example.com\ntokens: [users 0 name]\npointer: /users/0/name\n"
+const wantOutput = "name: Alice\nescaped value: ready\nescaped key: tilde~key\nemail: alice@example.com\ntokens: [users 0 name]\npointer: /users/0/name\n"
 
 func TestDefaultExampleData(t *testing.T) {
 	t.Parallel()
