@@ -28,8 +28,10 @@ behavior. Each token is resolved once through the same container rules:
 3. Typed slices, arrays, and maps use reflective fallback.
 4. Structs and other non-container values are not traversable.
 
-`Reference` keeps the last parent container and token while using the same step
-function as value traversal.
+`Reference` keeps the last normalized parent container and token while using the
+same step function as value traversal. Parent context is captured after the
+current value has been dereferenced or unwrapped for the successful step, so
+reference results do not expose incidental pointer or interface wrappers.
 
 > **Why**: value lookup and reference lookup should not drift. Fast paths are
 > implementation details inside one semantic path.

@@ -23,13 +23,15 @@ func resolveReference(doc any, pointer Pointer) (Reference, error) {
 	var parent any
 	var token string
 	for depth, stepToken := range pointer.tokens {
-		parent = current
-		token = stepToken
-
 		next, err := step(current, stepToken)
 		if err != nil {
 			return Reference{}, newError(err, pointer, depth)
 		}
+		parent, err = referenceParent(current)
+		if err != nil {
+			return Reference{}, newError(err, pointer, depth)
+		}
+		token = stepToken
 		current = next
 	}
 
@@ -84,6 +86,14 @@ func step(current any, token string) (any, error) {
 	default:
 		return nil, ErrNotFound
 	}
+}
+
+func referenceParent(current any) (any, error) {
+	value, err := derefValue(reflect.ValueOf(current))
+	if err != nil {
+		return nil, err
+	}
+	return value.Interface(), nil
 }
 
 func sliceValue(values []any, token string) (any, error) {

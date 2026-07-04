@@ -65,12 +65,22 @@ conversion.
 - Nil is not silently treated as missing data once traversal has committed to
   dereferencing a pointer.
 
+### Reference Context
+
+For non-root references, `Reference.Parent` returns the concrete container that
+consumed the final token after pointer dereferencing and interface unwrapping.
+Root references have no parent.
+
+> **Why**: parent context should describe the JSON-shaped traversal point, not an
+> incidental Go wrapper used to reach it.
+
 ## Array Semantics
 
 - Array indexes must be non-negative base-10 integers.
 - Leading zeros are rejected except for `0` itself.
 - `-` is the array end marker, but read APIs treat it as out of bounds.
 - A non-numeric index returns `ErrInvalidIndex`.
+- A numeric index too large to represent returns `ErrIndexOutOfBounds`.
 - An index greater than or equal to the collection length returns
   `ErrIndexOutOfBounds`.
 - A readable index must be strictly less than the collection length.

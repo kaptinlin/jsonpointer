@@ -24,8 +24,7 @@ go test -bench=. -benchmem
 From the repository root:
 
 ```bash
-cd benchmarks
-go test -bench=. -benchmem
+task bench
 ```
 
 ## Reading Results

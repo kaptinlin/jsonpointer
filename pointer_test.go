@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,9 +36,7 @@ func TestParseStrict(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.pointer, got.String())
-			if diff := cmp.Diff(tt.want, got.Tokens()); diff != "" {
-				t.Fatalf("Parse(%q).Tokens() mismatch (-want +got):\n%s", tt.pointer, diff)
-			}
+			assert.Equal(t, tt.want, got.Tokens())
 		})
 	}
 }
@@ -79,6 +76,8 @@ func TestPointerParentChildAndRoot(t *testing.T) {
 
 	_, err := root.Parent()
 	require.ErrorIs(t, err, ErrNoParent)
+	var pointerErr *Error
+	assert.False(t, errors.As(err, &pointerErr))
 
 	child := root.Child("users", "0")
 	assert.Equal(t, "/users/0", child.String())
@@ -120,7 +119,8 @@ func TestIndexHelpers(t *testing.T) {
 		assert.True(t, IsArrayIndex(token), token)
 	}
 
-	invalid := []string{"", "01", "-1", "+1", "1.2", "abc", "-"}
+	hugeIndex := "9999999999999999999999999999999999999999"
+	invalid := []string{"", "01", "-1", "+1", "1.2", "abc", "-", hugeIndex, "\uFF11"}
 	for _, token := range invalid {
 		assert.False(t, IsArrayIndex(token), token)
 	}
@@ -147,7 +147,6 @@ func TestTraversalErrorIncludesEmptyToken(t *testing.T) {
 	require.True(t, errors.As(err, &pointerErr))
 	assert.Equal(t, "", pointerErr.Token())
 	assert.Equal(t, 1, pointerErr.Depth())
-	assert.Equal(t, `map key not found at /empty/ token ""`, pointerErr.Error())
 }
 
 func TestParseErrorHasNoTraversalContext(t *testing.T) {

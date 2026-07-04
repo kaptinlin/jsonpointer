@@ -11,6 +11,7 @@ For installation, usage examples, and API-oriented guidance, see
 ```bash
 task test          # Run package tests with the race detector
 task lint          # Run golangci-lint and go.mod/go.sum tidy checks
+task specs-check   # Validate spec and design doc placement
 task yamllint      # Lint YAML files
 task bench         # Run benchmark suites
 ```
@@ -82,6 +83,12 @@ traversal semantics, and coding standards:
 - **Strict at the boundary**: malformed pointer strings fail before traversal.
 - **Raw tokens stay raw**: token text such as `"~2"` is valid through
   `FromTokens` even though it is invalid pointer-string syntax.
+- **Reference context is JSON-shaped**: `Reference.Parent()` returns the
+  dereferenced container that consumed the final token, not pointer or interface
+  wrappers.
+- **Array errors stay small**: invalid array token syntax returns
+  `ErrInvalidIndex`; `-`, out-of-range indexes, and canonical indexes too large
+  to represent return `ErrIndexOutOfBounds`.
 
 ## Coding Rules
 
@@ -127,6 +134,7 @@ traversal semantics, and coding standards:
 - Keep executable examples in `example_test.go` aligned with `README.md` and the
   runnable demo in `examples/`.
 - Run `task test` and `task lint` for code changes.
+- Run `task specs-check` for markdown/spec changes.
 - Run `task yamllint` for YAML changes.
 
 ## Dependencies

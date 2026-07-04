@@ -105,30 +105,44 @@ func unescapeToken(encoded string) (string, error) {
 	return b.String(), nil
 }
 
-func fastAtoi(s string) int {
-	if len(s) == 0 {
-		return -1
+type arrayIndexState uint8
+
+const (
+	arrayIndexInvalid arrayIndexState = iota
+	arrayIndexValue
+	arrayIndexOverflow
+	arrayIndexDash
+)
+
+func parseArrayIndex(token string) (int, arrayIndexState) {
+	if token == "-" {
+		return 0, arrayIndexDash
 	}
-	if s == "0" {
-		return 0
+	if len(token) == 0 {
+		return 0, arrayIndexInvalid
 	}
-	if s[0] == '0' {
-		return -1
+	if token == "0" {
+		return 0, arrayIndexValue
+	}
+	if token[0] == '0' {
+		return 0, arrayIndexInvalid
 	}
 
+	const maxInt = int(^uint(0) >> 1)
+
 	var n int
-	for i := range len(s) {
-		c := s[i]
+	for i := range len(token) {
+		c := token[i]
 		if c < '0' || c > '9' {
-			return -1
+			return 0, arrayIndexInvalid
 		}
-		next := n*10 + int(c-'0')
-		if next < n {
-			return -1
+		digit := int(c - '0')
+		if n > (maxInt-digit)/10 {
+			return 0, arrayIndexOverflow
 		}
-		n = next
+		n = n*10 + digit
 	}
-	return n
+	return n, arrayIndexValue
 }
 
 func derefValue(v reflect.Value) (reflect.Value, error) {
@@ -173,17 +187,21 @@ func mapValueByToken(mapVal reflect.Value, token string) (reflect.Value, error) 
 	return mapEntry, nil
 }
 
-// IsArrayIndex reports whether token is a readable JSON Pointer array index.
+// IsArrayIndex reports whether token is a canonical, representable array index.
 func IsArrayIndex(token string) bool {
-	return fastAtoi(token) >= 0
+	_, state := parseArrayIndex(token)
+	return state == arrayIndexValue
 }
 
 func validateAndAccessArray(token string, length int) (int, error) {
-	if token == "-" {
+	index, state := parseArrayIndex(token)
+	switch state {
+	case arrayIndexInvalid:
+		return -1, ErrInvalidIndex
+	case arrayIndexOverflow, arrayIndexDash:
 		return -1, ErrIndexOutOfBounds
-	}
-	index := fastAtoi(token)
-	if index < 0 {
+	case arrayIndexValue:
+	default:
 		return -1, ErrInvalidIndex
 	}
 	if index >= length {

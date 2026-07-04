@@ -51,6 +51,8 @@ model.
 - `Pointer() Pointer`
 
 Root references have no parent and return `(nil, false)` from `Parent`.
+Non-root references return the dereferenced container that consumed the final
+token as their parent context.
 
 ## Token Utilities
 
@@ -58,13 +60,17 @@ Root references have no parent and return `(nil, false)` from `Parent`.
 | --- | --- |
 | `EscapeToken(token string) string` | Escapes `~` and `/` for one raw token. |
 | `UnescapeToken(encoded string) (string, error)` | Decodes `~0` and `~1`; rejects malformed escapes. |
-| `IsArrayIndex(token string) bool` | Returns whether the token is a readable array index. |
+| `IsArrayIndex(token string) bool` | Returns whether the token is a canonical, representable array index. |
 
 ## Exported Errors
 
 ### Pointer Construction Errors
 
 - `ErrInvalidPointer`
+
+### Pointer Navigation Errors
+
+- `ErrNoParent`
 
 ### Traversal Errors
 
@@ -73,7 +79,6 @@ Root references have no parent and return `(nil, false)` from `Parent`.
 - `ErrKeyNotFound`
 - `ErrNilPointer`
 - `ErrNotFound`
-- `ErrNoParent`
 
 ### Structured Error
 

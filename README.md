@@ -80,7 +80,7 @@ func main() {
 | `ReferenceOf(doc any, pointer string) (Reference, error)` | Strict one-shot reference lookup |
 | `EscapeToken(token string) string` | Escape one raw token |
 | `UnescapeToken(encoded string) (string, error)` | Decode one escaped token strictly |
-| `IsArrayIndex(token string) bool` | Report whether a token is a readable array index |
+| `IsArrayIndex(token string) bool` | Report whether a token is a canonical, representable array index |
 
 `Parse("/~2")` returns `ErrInvalidPointer`. `FromTokens("~2")` succeeds because
 `"~2"` is literal token data, not pointer-string syntax.
@@ -96,7 +96,10 @@ func main() {
 | `Token() string` | The final token used to reach the value |
 | `Pointer() Pointer` | The pointer used for traversal |
 
-Root references have no parent and return `(nil, false)` from `Parent`.
+Root references have no parent and return `(nil, false)` from `Parent`. For
+non-root references, `Parent` is the dereferenced container that consumed the
+final token, so pointer and interface wrappers do not leak into reference
+context.
 
 ## Examples
 
@@ -159,15 +162,22 @@ struct values to a JSON document shape before using JSON Pointer over fields.
 
 ## Error Handling
 
-Common sentinel errors include:
+Pointer construction and navigation sentinel errors include:
 
 - `ErrInvalidPointer`
+- `ErrNoParent`
+
+Traversal sentinel errors include:
+
 - `ErrKeyNotFound`
 - `ErrInvalidIndex`
 - `ErrIndexOutOfBounds`
 - `ErrNilPointer`
 - `ErrNotFound`
-- `ErrNoParent`
+
+For arrays, malformed index tokens such as `01`, `+1`, non-ASCII digits, or
+decimal text return `ErrInvalidIndex`. `-`, indexes outside the collection, and
+canonical decimal indexes too large to represent return `ErrIndexOutOfBounds`.
 
 Use `errors.Is` for error classes and `errors.As` when traversal context matters:
 
@@ -202,6 +212,7 @@ task bench
 ```bash
 task test          # Run package tests with the race detector
 task lint          # Run golangci-lint and tidy checks
+task specs-check   # Validate spec and design doc placement
 task yamllint      # Lint YAML files
 task bench         # Run benchmark suites
 ```

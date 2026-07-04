@@ -143,6 +143,7 @@ tasks:
     cmds:
       - echo "Running benchmarks..."
       - go test -race -bench=. -benchmem ./...
+      - cd benchmarks && go test -bench=. -benchmem
 
   lint:
     desc: Run all linters
@@ -178,14 +179,27 @@ tasks:
     cmds:
       - echo "Checking go.mod and go.sum are tidy..."
       - |
+        set -e
         before="$(mktemp -d)"
         cp go.mod "$before/go.mod"
+        had_sum=0
         if [ -f go.sum ]; then
           cp go.sum "$before/go.sum"
+          had_sum=1
         fi
+        cleanup() {
+          cp "$before/go.mod" go.mod
+          if [ "$had_sum" -eq 1 ]; then
+            cp "$before/go.sum" go.sum
+          else
+            rm -f go.sum
+          fi
+          rm -rf "$before"
+        }
+        trap cleanup EXIT
         go mod tidy
         diff -u "$before/go.mod" go.mod
-        if [ -f "$before/go.sum" ] || [ -f go.sum ]; then
+        if [ "$had_sum" -eq 1 ] || [ -f go.sum ]; then
           touch "$before/go.sum" go.sum
           diff -u "$before/go.sum" go.sum
         fi
@@ -231,7 +245,7 @@ tasks:
       - go vet ./...
 
   verify:
-    desc: Run all verification steps (deps, format, vet, lint, test, vuln)
+    desc: Run core code verification steps (deps, format, vet, lint, test, vuln)
     cmds:
       - task: deps
       - task: fmt
@@ -239,4 +253,4 @@ tasks:
       - task: lint
       - task: test
       - task: vuln
-      - echo "All verification steps completed successfully ✅"
+      - echo "Core verification steps completed successfully ✅"
