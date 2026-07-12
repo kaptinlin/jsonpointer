@@ -12,15 +12,16 @@ falls back to reflection only for typed container mechanics.
 - `types.go`: `Pointer`, `Reference`, and their methods
 - `errors.go`: exported sentinel errors and structured `Error`
 - `get.go`: shared value and reference resolver
-- `util.go`: parse, format, escape, unescape, map, index, and reflection helpers
-- `validate.go`: pointer-string syntax validation helpers
+- `util.go`: strict pointer decoding, formatting, token, map, index, and
+  reflection helpers
 - `*_test.go`, `fuzz_test.go`, `examples/`, and `benchmarks/`: verification and
   performance coverage
 
 ## Traversal Strategy
 
-`Pointer.Value` and `Pointer.Reference` share the same internal stepping
-behavior. Each token is resolved once through the same container rules:
+`Pointer.Value` and `Pointer.Reference` share one internal walker for token
+order, depth, and structured error wrapping. Each token is resolved once through
+the same container rules:
 
 1. Common `map[string]any`, `*map[string]any`, `[]any`, and `*[]any` values are
    handled directly.
@@ -28,10 +29,11 @@ behavior. Each token is resolved once through the same container rules:
 3. Typed slices, arrays, and maps use reflective fallback.
 4. Structs and other non-container values are not traversable.
 
-`Reference` keeps the last normalized parent container and token while using the
-same step function as value traversal. Parent context is captured after the
-current value has been dereferenced or unwrapped for the successful step, so
-reference results do not expose incidental pointer or interface wrappers.
+`Reference` keeps the final normalized parent container and token while using
+the same walker and step function as value traversal. Parent context is captured
+by the successful terminal step after the current value has been dereferenced or
+unwrapped, so reference results do not expose incidental pointer or interface
+wrappers.
 
 > **Why**: value lookup and reference lookup should not drift. Fast paths are
 > implementation details inside one semantic path.
@@ -40,7 +42,8 @@ reference results do not expose incidental pointer or interface wrappers.
 
 ## Pointer Construction Strategy
 
-- `Parse` validates pointer-string syntax before token construction.
+- `Parse` owns pointer-string structure and sends each segment through the same
+  strict decoder used by `UnescapeToken`; no parallel escape validator exists.
 - `FromTokens` copies raw tokens without interpreting pointer-string syntax.
 - `Pointer.String` formats from raw tokens.
 - `Pointer.Tokens` returns a copy.
@@ -52,6 +55,8 @@ that cost on repeated reads.
 
 - Pointer dereferencing and interface unwrapping are centralized through
   `derefValue`.
+- `derefValue` detects wrapper cycles by pointer identity and returns an error;
+  it does not use an arbitrary depth limit or scan the document graph.
 - Reflective map access converts the string token to the map key type when
   conversion is legal.
 - Structs intentionally fall through as non-traversable values.
@@ -86,6 +91,8 @@ that cost on repeated reads.
 
 - [ ] Package responsibilities stay separated by concern.
 - [ ] `Value` and `Reference` share traversal semantics.
+- [ ] One strict decoder owns token escape validation for parsing and public
+      token decoding.
 - [ ] Common traversal paths remain optimized before typed-container fallback.
 - [ ] No struct metadata cache or field-selection layer exists.
 - [ ] Pointer-string parsing stays at construction and one-shot helper

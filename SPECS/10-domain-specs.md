@@ -60,8 +60,12 @@ conversion.
 - Traversal dereferences pointers and unwraps non-nil interfaces until it reaches
   a concrete value.
 - If a required pointer is nil, traversal returns `ErrNilPointer`.
-- Nil interfaces behave like nil values and return `ErrNotFound` when traversal
-  must continue.
+- Nil interfaces behave like nil values and return `ErrNotTraversable` when
+  traversal must continue.
+- Pointer and interface wrapper cycles return `ErrNotTraversable` instead of
+  looping or relying on an arbitrary dereference limit.
+- Root traversal consumes no token, so it returns the original document without
+  dereferencing it, including a self-referential wrapper.
 - Nil is not silently treated as missing data once traversal has committed to
   dereferencing a pointer.
 
@@ -78,9 +82,11 @@ Root references have no parent.
 
 - Array indexes must be non-negative base-10 integers.
 - Leading zeros are rejected except for `0` itself.
-- `-` is the array end marker, but read APIs treat it as out of bounds.
+- `-` refers to the nonexistent member after the last array element, so read
+  APIs treat it as out of bounds.
 - A non-numeric index returns `ErrInvalidIndex`.
-- A numeric index too large to represent returns `ErrIndexOutOfBounds`.
+- A canonical decimal index may have any length; if it cannot identify an
+  existing element, traversal returns `ErrIndexOutOfBounds`.
 - An index greater than or equal to the collection length returns
   `ErrIndexOutOfBounds`.
 - A readable index must be strictly less than the collection length.
@@ -103,7 +109,7 @@ Root references have no parent.
 - Nil pointer during dereference: `ErrNilPointer`
 - Invalid array token: `ErrInvalidIndex`
 - Array bounds failure: `ErrIndexOutOfBounds`
-- Unsupported or non-traversable value: `ErrNotFound`
+- Unsupported or non-traversable value: `ErrNotTraversable`
 
 Traversal failures wrap the sentinel in `*Error` when pointer context is known.
 `errors.Is` checks the class. `errors.As` exposes the requested pointer, failing
@@ -126,5 +132,7 @@ token, and zero-based token depth.
       escapes.
 - [ ] Traversal supports JSON-shaped Go containers without marshal/unmarshal
       round-trips.
+- [ ] Pointer and interface wrapper chains terminate with either a concrete
+      container or a structured traversal error.
 - [ ] Array read behavior rejects invalid or out-of-range indexes explicitly.
 - [ ] Error docs match public behavior.

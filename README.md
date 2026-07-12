@@ -80,7 +80,7 @@ func main() {
 | `ReferenceOf(doc any, pointer string) (Reference, error)` | Strict one-shot reference lookup |
 | `EscapeToken(token string) string` | Escape one raw token |
 | `UnescapeToken(encoded string) (string, error)` | Decode one escaped token strictly |
-| `IsArrayIndex(token string) bool` | Report whether a token is a canonical, representable array index |
+| `IsArrayIndex(token string) bool` | Report whether a token has canonical array-index syntax |
 
 `Parse("/~2")` returns `ErrInvalidPointer`. `FromTokens("~2")` succeeds because
 `"~2"` is literal token data, not pointer-string syntax.
@@ -173,11 +173,14 @@ Traversal sentinel errors include:
 - `ErrInvalidIndex`
 - `ErrIndexOutOfBounds`
 - `ErrNilPointer`
-- `ErrNotFound`
+- `ErrNotTraversable`
 
 For arrays, malformed index tokens such as `01`, `+1`, non-ASCII digits, or
 decimal text return `ErrInvalidIndex`. `-`, indexes outside the collection, and
-canonical decimal indexes too large to represent return `ErrIndexOutOfBounds`.
+arbitrarily long canonical indexes outside the collection return
+`ErrIndexOutOfBounds`.
+Values that cannot consume another token return `ErrNotTraversable`; a nil Go
+pointer returns the more specific `ErrNilPointer`.
 
 Use `errors.Is` for error classes and `errors.As` when traversal context matters:
 

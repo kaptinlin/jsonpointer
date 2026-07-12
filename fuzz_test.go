@@ -1,6 +1,9 @@
 package jsonpointer
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func FuzzParseRoundTrip(f *testing.F) {
 	f.Add("")
@@ -24,8 +27,8 @@ func FuzzParseRoundTrip(f *testing.F) {
 		if err != nil {
 			t.Fatalf("Parse(%q) after String() returned error: %v", p.String(), err)
 		}
-		if p.String() != roundtrip.String() {
-			t.Fatalf("roundtrip mismatch: %q -> %q", p.String(), roundtrip.String())
+		if !slices.Equal(p.Tokens(), roundtrip.Tokens()) {
+			t.Fatalf("roundtrip token mismatch: %q -> %q", p.Tokens(), roundtrip.Tokens())
 		}
 	})
 }

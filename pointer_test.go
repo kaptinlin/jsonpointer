@@ -114,13 +114,13 @@ func TestTokenEscaping(t *testing.T) {
 }
 
 func TestIndexHelpers(t *testing.T) {
-	valid := []string{"0", "1", "10"}
+	hugeIndex := "9999999999999999999999999999999999999999"
+	valid := []string{"0", "1", "10", hugeIndex}
 	for _, token := range valid {
 		assert.True(t, IsArrayIndex(token), token)
 	}
 
-	hugeIndex := "9999999999999999999999999999999999999999"
-	invalid := []string{"", "01", "-1", "+1", "1.2", "abc", "-", hugeIndex, "\uFF11"}
+	invalid := []string{"", "01", "-1", "+1", "1.2", "abc", "-", "\uFF11"}
 	for _, token := range invalid {
 		assert.False(t, IsArrayIndex(token), token)
 	}

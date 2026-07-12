@@ -60,7 +60,7 @@ token as their parent context.
 | --- | --- |
 | `EscapeToken(token string) string` | Escapes `~` and `/` for one raw token. |
 | `UnescapeToken(encoded string) (string, error)` | Decodes `~0` and `~1`; rejects malformed escapes. |
-| `IsArrayIndex(token string) bool` | Returns whether the token is a canonical, representable array index. |
+| `IsArrayIndex(token string) bool` | Returns whether the token has canonical array-index syntax. |
 
 ## Exported Errors
 
@@ -78,7 +78,7 @@ token as their parent context.
 - `ErrIndexOutOfBounds`
 - `ErrKeyNotFound`
 - `ErrNilPointer`
-- `ErrNotFound`
+- `ErrNotTraversable`
 
 ### Structured Error
 

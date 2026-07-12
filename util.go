@@ -6,11 +6,11 @@ import (
 )
 
 func parsePointer(pointer string) ([]string, error) {
-	if err := validatePointerString(pointer); err != nil {
-		return nil, err
-	}
 	if pointer == "" {
 		return nil, nil
+	}
+	if pointer[0] != '/' {
+		return nil, ErrInvalidPointer
 	}
 
 	tokens := make([]string, 0, strings.Count(pointer, "/"))
@@ -105,60 +105,34 @@ func unescapeToken(encoded string) (string, error) {
 	return b.String(), nil
 }
 
-type arrayIndexState uint8
-
-const (
-	arrayIndexInvalid arrayIndexState = iota
-	arrayIndexValue
-	arrayIndexOverflow
-	arrayIndexDash
-)
-
-func parseArrayIndex(token string) (int, arrayIndexState) {
-	if token == "-" {
-		return 0, arrayIndexDash
-	}
-	if len(token) == 0 {
-		return 0, arrayIndexInvalid
-	}
-	if token == "0" {
-		return 0, arrayIndexValue
-	}
-	if token[0] == '0' {
-		return 0, arrayIndexInvalid
-	}
-
-	const maxInt = int(^uint(0) >> 1)
-
-	var n int
-	for i := range len(token) {
-		c := token[i]
-		if c < '0' || c > '9' {
-			return 0, arrayIndexInvalid
-		}
-		digit := int(c - '0')
-		if n > (maxInt-digit)/10 {
-			return 0, arrayIndexOverflow
-		}
-		n = n*10 + digit
-	}
-	return n, arrayIndexValue
-}
-
 func derefValue(v reflect.Value) (reflect.Value, error) {
+	type pointerIdentity struct {
+		typeOf reflect.Type
+		value  uintptr
+	}
+
+	var seen map[pointerIdentity]struct{}
 	for {
 		if !v.IsValid() {
-			return reflect.Value{}, ErrNotFound
+			return reflect.Value{}, ErrNotTraversable
 		}
 		switch v.Kind() {
 		case reflect.Pointer:
 			if v.IsNil() {
 				return reflect.Value{}, ErrNilPointer
 			}
+			identity := pointerIdentity{typeOf: v.Type(), value: v.Pointer()}
+			if _, ok := seen[identity]; ok {
+				return reflect.Value{}, ErrNotTraversable
+			}
+			if seen == nil {
+				seen = make(map[pointerIdentity]struct{})
+			}
+			seen[identity] = struct{}{}
 			v = v.Elem()
 		case reflect.Interface:
 			if v.IsNil() {
-				return reflect.Value{}, ErrNotFound
+				return reflect.Value{}, ErrNotTraversable
 			}
 			v = v.Elem()
 		default:
@@ -177,7 +151,7 @@ func mapValueByToken(mapVal reflect.Value, token string) (reflect.Value, error) 
 	case stringType.ConvertibleTo(mapKeyType):
 		mapKey = mapKey.Convert(mapKeyType)
 	default:
-		return reflect.Value{}, ErrNotFound
+		return reflect.Value{}, ErrNotTraversable
 	}
 
 	mapEntry := mapVal.MapIndex(mapKey)
@@ -187,25 +161,45 @@ func mapValueByToken(mapVal reflect.Value, token string) (reflect.Value, error) 
 	return mapEntry, nil
 }
 
-// IsArrayIndex reports whether token is a canonical, representable array index.
+func isArrayIndex(token string) bool {
+	if token == "0" {
+		return true
+	}
+	if len(token) == 0 || token[0] < '1' || token[0] > '9' {
+		return false
+	}
+	for i := 1; i < len(token); i++ {
+		if token[i] < '0' || token[i] > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// IsArrayIndex reports whether token has canonical RFC 6901 array-index syntax.
 func IsArrayIndex(token string) bool {
-	_, state := parseArrayIndex(token)
-	return state == arrayIndexValue
+	return isArrayIndex(token)
 }
 
 func validateAndAccessArray(token string, length int) (int, error) {
-	index, state := parseArrayIndex(token)
-	switch state {
-	case arrayIndexInvalid:
-		return -1, ErrInvalidIndex
-	case arrayIndexOverflow, arrayIndexDash:
+	if token == "-" {
 		return -1, ErrIndexOutOfBounds
-	case arrayIndexValue:
-	default:
+	}
+	if !isArrayIndex(token) {
 		return -1, ErrInvalidIndex
 	}
-	if index >= length {
+	if length == 0 {
 		return -1, ErrIndexOutOfBounds
+	}
+
+	maxIndex := length - 1
+	var index int
+	for i := range len(token) {
+		digit := int(token[i] - '0')
+		if index > maxIndex/10 || index == maxIndex/10 && digit > maxIndex%10 {
+			return -1, ErrIndexOutOfBounds
+		}
+		index = index*10 + digit
 	}
 	return index, nil
 }

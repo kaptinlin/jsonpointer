@@ -1,6 +1,7 @@
 package jsonpointer_test
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -70,4 +71,19 @@ func ExampleValue() {
 
 	fmt.Println(name)
 	// Output: Alice
+}
+
+func ExampleError() {
+	p := jsonpointer.FromTokens("name")
+	_, err := p.Value("not an object")
+
+	fmt.Println(errors.Is(err, jsonpointer.ErrNotTraversable))
+
+	var pointerErr *jsonpointer.Error
+	if errors.As(err, &pointerErr) {
+		fmt.Println(pointerErr.Pointer(), pointerErr.Token(), pointerErr.Depth())
+	}
+	// Output:
+	// true
+	// /name name 0
 }

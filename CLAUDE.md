@@ -23,8 +23,7 @@ jsonpointer/
 ├── jsonpointer.go      # Public Parse, one-shot traversal, and token helpers
 ├── types.go            # Pointer, Reference, and their methods
 ├── get.go              # Shared value/reference resolver
-├── util.go             # Parse, format, escape, unescape, map, and index helpers
-├── validate.go         # Pointer-string syntax validation
+├── util.go             # Strict decode, format, traversal, and token helpers
 ├── errors.go           # Exported sentinels and structured Error
 ├── example_test.go     # Executable examples kept in sync by go test
 ├── examples/           # Runnable demo program
@@ -66,7 +65,7 @@ traversal semantics, and coding standards:
   expose pointer helpers.
 - **YAGNI**: stop at strict parsing, traversal, reference context, errors, and
   token utilities.
-- **SRP**: keep public API entry points, resolver behavior, validation helpers,
+- **SRP**: keep public API entry points, shared traversal, strict token decoding,
   and token utilities separated by concern.
 - **Simplicity as art**: the common path is `Parse`, then `Pointer.Value` or
   `Pointer.Reference`.
@@ -87,8 +86,8 @@ traversal semantics, and coding standards:
   dereferenced container that consumed the final token, not pointer or interface
   wrappers.
 - **Array errors stay small**: invalid array token syntax returns
-  `ErrInvalidIndex`; `-`, out-of-range indexes, and canonical indexes too large
-  to represent return `ErrIndexOutOfBounds`.
+  `ErrInvalidIndex`; `-` and canonical indexes outside the collection return
+  `ErrIndexOutOfBounds`, regardless of token length or machine word size.
 
 ## Coding Rules
 
@@ -105,6 +104,10 @@ traversal semantics, and coding standards:
 - Keep common `map[string]any` and `[]any` traversal on the fast path;
   reflection stays a fallback for typed container mechanics only.
 - Keep pointer-string validation at `Parse` and one-shot helper boundaries.
+- Keep one strict token decoder shared by `Parse` and `UnescapeToken`; do not
+  reintroduce a parallel pointer-string escape validator.
+- Keep pointer and interface normalization terminating; wrapper cycles return
+  `ErrNotTraversable` when traversal must consume a token.
 - Update `README.md`, `example_test.go`, and relevant `SPECS/` files together
   when public behavior changes.
 - Keep `AGENTS.md` as a symlink to `CLAUDE.md`; do not duplicate the file.

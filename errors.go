@@ -23,8 +23,8 @@ var (
 	// ErrNilPointer is returned when traversal must dereference a nil pointer.
 	ErrNilPointer = errors.New("cannot traverse through nil pointer")
 
-	// ErrNotFound is returned when a value cannot be traversed.
-	ErrNotFound = errors.New("not found")
+	// ErrNotTraversable is returned when a value cannot consume a pointer token.
+	ErrNotTraversable = errors.New("value is not traversable")
 
 	// ErrNoParent is returned when asking for the parent of the root pointer.
 	ErrNoParent = errors.New("no parent")

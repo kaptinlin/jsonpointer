@@ -3,66 +3,79 @@ package jsonpointer
 import "reflect"
 
 func resolveValue(doc any, pointer Pointer) (any, error) {
-	current := doc
-	for depth, token := range pointer.tokens {
-		next, err := step(current, token)
-		if err != nil {
-			return nil, newError(err, pointer, depth)
-		}
-		current = next
-	}
-	return current, nil
+	value, _, err := walk(doc, pointer, nil)
+	return value, err
 }
 
 func resolveReference(doc any, pointer Pointer) (Reference, error) {
-	if pointer.IsRoot() {
-		return Reference{value: doc, pointer: pointer}, nil
-	}
-
-	current := doc
 	var parent any
-	var token string
-	for depth, stepToken := range pointer.tokens {
-		next, err := step(current, stepToken)
-		if err != nil {
-			return Reference{}, newError(err, pointer, depth)
-		}
-		parent, err = referenceParent(current)
-		if err != nil {
-			return Reference{}, newError(err, pointer, depth)
-		}
-		token = stepToken
-		current = next
+	value, token, err := walk(doc, pointer, &parent)
+	if err != nil {
+		return Reference{}, err
 	}
 
 	return Reference{
-		value:   current,
+		value:   value,
 		parent:  parent,
 		token:   token,
 		pointer: pointer,
 	}, nil
 }
 
-func step(current any, token string) (any, error) {
+func walk(doc any, pointer Pointer, parent *any) (any, string, error) {
+	current := doc
+	var token string
+	for depth, stepToken := range pointer.tokens {
+		var parentOutput *any
+		if parent != nil && depth == len(pointer.tokens)-1 {
+			parentOutput = parent
+		}
+		next, err := step(current, stepToken, parentOutput)
+		if err != nil {
+			return nil, "", newError(err, pointer, depth)
+		}
+		token = stepToken
+		current = next
+	}
+	return current, token, nil
+}
+
+func step(current any, token string, parent *any) (any, error) {
 	if current == nil {
-		return nil, ErrNotFound
+		return nil, ErrNotTraversable
 	}
 
 	switch value := current.(type) {
 	case map[string]any:
-		return stringMapValue(value, token)
+		next, err := stringMapValue(value, token)
+		if err == nil && parent != nil {
+			*parent = value
+		}
+		return next, err
 	case *map[string]any:
 		if value == nil {
 			return nil, ErrNilPointer
 		}
-		return stringMapValue(*value, token)
+		next, err := stringMapValue(*value, token)
+		if err == nil && parent != nil {
+			*parent = *value
+		}
+		return next, err
 	case []any:
-		return sliceValue(value, token)
+		next, err := sliceValue(value, token)
+		if err == nil && parent != nil {
+			*parent = value
+		}
+		return next, err
 	case *[]any:
 		if value == nil {
 			return nil, ErrNilPointer
 		}
-		return sliceValue(*value, token)
+		next, err := sliceValue(*value, token)
+		if err == nil && parent != nil {
+			*parent = *value
+		}
+		return next, err
 	}
 
 	value, err := derefValue(reflect.ValueOf(current))
@@ -76,24 +89,22 @@ func step(current any, token string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
+		if parent != nil {
+			*parent = value.Interface()
+		}
 		return value.Index(index).Interface(), nil
 	case reflect.Map:
 		result, err := mapValueByToken(value, token)
 		if err != nil {
 			return nil, err
 		}
+		if parent != nil {
+			*parent = value.Interface()
+		}
 		return result.Interface(), nil
 	default:
-		return nil, ErrNotFound
+		return nil, ErrNotTraversable
 	}
-}
-
-func referenceParent(current any) (any, error) {
-	value, err := derefValue(reflect.ValueOf(current))
-	if err != nil {
-		return nil, err
-	}
-	return value.Interface(), nil
 }
 
 func sliceValue(values []any, token string) (any, error) {
